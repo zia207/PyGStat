@@ -1,0 +1,2752 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>7. Indicator Kriging – PyGStat</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../Tutorial/10_disjunctive_kriging.html" rel="next">
+<link href="../Tutorial/06_05_regression_kriging_gnn.html" rel="prev">
+<link href="../Image/pygstat_logo_light.svg" rel="icon" type="image/svg+xml">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f1aadacce99040138bbb613f9330654f.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-bf6de5ccb156a65fc439966d4053cafd.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-c3ddef8e9936373b1ee063945a43a984.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-bf6de5ccb156a65fc439966d4053cafd.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../Image/pygstat_logo_light.svg" alt="" class="navbar-logo light-content">
+    <img src="../Image/pygstat_logo_light.svg" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">PyGStat</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../index.html" aria-current="page"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-getting-started" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Getting Started</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-getting-started">    
+        <li>
+    <a class="dropdown-item" href="../Tutorial/00_getting_started.html">
+ <span class="dropdown-text">Getting Started</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../install.html">
+ <span class="dropdown-text">PyGStat Installation</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-tutorial" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Tutorial</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-tutorial">    
+        <li class="dropdown-header">Core Interpolation</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/01_variogram_modeling.html">
+ <span class="dropdown-text">Variogram Modeling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/02_simple_kriging.html">
+ <span class="dropdown-text">Simple Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/03_ordinary_kriging.html">
+ <span class="dropdown-text">Ordinary Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/04_universal_kriging.html">
+ <span class="dropdown-text">Universal Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/05_cokriging.html">
+ <span class="dropdown-text">Cokriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/08_kriging_3d.html">
+ <span class="dropdown-text">3-D Kriging (KT3D)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Regression Kriging</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_01_regression_kriging_scikit_learn.html">
+ <span class="dropdown-text">scikit-learn</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_02_regression_kriging_H20.html">
+ <span class="dropdown-text">H2O AutoML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_03_regression_kriging_pytorch.html">
+ <span class="dropdown-text">PyTorch MLP</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_04_regression_krigingDNN_TF.html">
+ <span class="dropdown-text">TensorFlow / Keras</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_05_regression_kriging_gnn.html">
+ <span class="dropdown-text">Graph Neural Nets</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Indicators, Structure, and Space–Time</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/07_indicator_kriging.html">
+ <span class="dropdown-text">Indicator Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/10_disjunctive_kriging.html">
+ <span class="dropdown-text">Disjunctive Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/11_empirical_bayesian_kriging.html">
+ <span class="dropdown-text">Empirical Bayesian Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/09_soft_kriging.html">
+ <span class="dropdown-text">Soft Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/12_factorial_kriging.html">
+ <span class="dropdown-text">Factorial Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/13_krigingST.html">
+ <span class="dropdown-text">Spatio-Temporal OK</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/14_kriging_CNNLSTM.html">
+ <span class="dropdown-text">ConvLSTM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/15_kriging_STGNN.html">
+ <span class="dropdown-text">STGNN (TGCN / DCRNN)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/16_kriging_STGTN.html">
+ <span class="dropdown-text">STGTN (STTN / GMAN)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Poisson Kriging</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_01_poisson_Kriging_ata_atp.html">
+ <span class="dropdown-text">Area-to-Area / Area-to-Point</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_02_poisson_cokriging.html">
+ <span class="dropdown-text">Poisson Cokriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_03_poisson_kriging_ST.html">
+ <span class="dropdown-text">Spatio-Temporal Poisson</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Simulation</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/18_sgsim.html">
+ <span class="dropdown-text">SGSIM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/19_sisim.html">
+ <span class="dropdown-text">SISIM</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://sites.google.com/view/r-data-sci-env/home"> <i class="bi bi-house" role="img" aria-label="Upatta Analytics">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://pypi.org/project/pygstat/"> <i class="bi bi-box" role="img" aria-label="PyPI">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/zia207/pygstat"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/zia-ahmed207"> <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="mailto:zia207@gmail.com"> <i class="bi bi-envelope" role="img" aria-label="Email">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../Tutorial/07_indicator_kriging.html"><strong>Indicators, Structure, and Space–Time</strong></a></li><li class="breadcrumb-item"><a href="../Tutorial/07_indicator_kriging.html">Indicator Kriging</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../Tutorial/07_indicator_kriging.html"><strong>Indicators, Structure, and Space–Time</strong></a></li><li class="breadcrumb-item"><a href="../Tutorial/07_indicator_kriging.html">Indicator Kriging</a></li></ol></nav>
+      <h1 class="title">7. Indicator Kriging</h1>
+                      </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-center sidebar-header">
+      <a href="../index.html" class="sidebar-logo-link">
+      <img src="../Image/pygstat_logo_light.svg" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="../Image/pygstat_logo_light.svg" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Package Overview</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Core Interpolation</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/01_variogram_modeling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Variogram Modeling</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/02_simple_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Simple Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/03_ordinary_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Ordinary Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/04_universal_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Universal Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/05_cokriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cokriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/08_kriging_3d.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">3-D Kriging (KT3D)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Regression Kriging</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_01_regression_kriging_scikit_learn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">scikit-learn</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_02_regression_kriging_H20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">H2O AutoML</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_03_regression_kriging_pytorch.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PyTorch MLP</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_04_regression_krigingDNN_TF.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TensorFlow / Keras</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_05_regression_kriging_gnn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Graph Neural Nets</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Indicators, Structure, and Space–Time</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/07_indicator_kriging.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Indicator Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/10_disjunctive_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Disjunctive Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/11_empirical_bayesian_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Empirical Bayesian Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/09_soft_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Soft Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/12_factorial_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Factorial Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/13_krigingST.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spatio-Temporal OK</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/14_kriging_CNNLSTM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ConvLSTM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/15_kriging_STGNN.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">STGNN (TGCN / DCRNN)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/16_kriging_STGTN.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">STGTN (STTN / GMAN)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Poisson Kriging</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_01_poisson_Kriging_ata_atp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Area-to-Area / Area-to-Point</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_02_poisson_cokriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Poisson Cokriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_03_poisson_kriging_ST.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spatio-Temporal Poisson</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Simulation</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/18_sgsim.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">SGSIM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/19_sisim.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">SISIM</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On This Page</h2>
+   
+  <ul>
+  <li><a href="#table-of-contents" id="toc-table-of-contents" class="nav-link active" data-scroll-target="#table-of-contents">Table of Contents</a></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview">1. Overview</a></li>
+  <li><a href="#theory---indicator-transform-and-exceedance-probability" id="toc-theory---indicator-transform-and-exceedance-probability" class="nav-link" data-scroll-target="#theory---indicator-transform-and-exceedance-probability">2. Theory - Indicator Transform and Exceedance Probability</a></li>
+  <li><a href="#theory---indicator-variograms" id="toc-theory---indicator-variograms" class="nav-link" data-scroll-target="#theory---indicator-variograms">3. Theory - Indicator Variograms</a></li>
+  <li><a href="#theory---the-indicator-kriging-system" id="toc-theory---the-indicator-kriging-system" class="nav-link" data-scroll-target="#theory---the-indicator-kriging-system">4. Theory - The Indicator Kriging System</a></li>
+  <li><a href="#theory---conditional-cdf-and-e-type-estimates" id="toc-theory---conditional-cdf-and-e-type-estimates" class="nav-link" data-scroll-target="#theory---conditional-cdf-and-e-type-estimates">5. Theory - Conditional CDF and E-type Estimates</a></li>
+  <li><a href="#python-setup" id="toc-python-setup" class="nav-link" data-scroll-target="#python-setup">6. Python Setup</a>
+  <ul>
+  <li><a href="#cpu-and-gpu" id="toc-cpu-and-gpu" class="nav-link" data-scroll-target="#cpu-and-gpu">6.1 CPU and GPU</a></li>
+  </ul></li>
+  <li><a href="#load-and-explore-the-meuse-zinc-data" id="toc-load-and-explore-the-meuse-zinc-data" class="nav-link" data-scroll-target="#load-and-explore-the-meuse-zinc-data">7. Load and Explore the Meuse Zinc Data</a></li>
+  <li><a href="#choose-cutoffs-and-build-indicators" id="toc-choose-cutoffs-and-build-indicators" class="nav-link" data-scroll-target="#choose-cutoffs-and-build-indicators">8. Choose Cutoffs and Build Indicators</a></li>
+  <li><a href="#empirical-indicator-variograms" id="toc-empirical-indicator-variograms" class="nav-link" data-scroll-target="#empirical-indicator-variograms">9. Empirical Indicator Variograms</a></li>
+  <li><a href="#cross-validation-brier-score" id="toc-cross-validation-brier-score" class="nav-link" data-scroll-target="#cross-validation-brier-score">10. Cross-Validation (Brier Score)</a></li>
+  <li><a href="#predict-exceedance-probabilities-on-the-grid" id="toc-predict-exceedance-probabilities-on-the-grid" class="nav-link" data-scroll-target="#predict-exceedance-probabilities-on-the-grid">11. Predict Exceedance Probabilities on the Grid</a></li>
+  <li><a href="#e-type-estimate-of-zinc" id="toc-e-type-estimate-of-zinc" class="nav-link" data-scroll-target="#e-type-estimate-of-zinc">12. E-type Estimate of Zinc</a></li>
+  <li><a href="#cpu-vs-gpu-ik-timing" id="toc-cpu-vs-gpu-ik-timing" class="nav-link" data-scroll-target="#cpu-vs-gpu-ik-timing">13. CPU vs GPU IK Timing</a></li>
+  <li><a href="#summary-and-conclusions" id="toc-summary-and-conclusions" class="nav-link" data-scroll-target="#summary-and-conclusions">14. Summary and Conclusions</a></li>
+  <li><a href="#resources" id="toc-resources" class="nav-link" data-scroll-target="#resources">15. Resources</a>
+  <ul>
+  <li><a href="#textbooks" id="toc-textbooks" class="nav-link" data-scroll-target="#textbooks">Textbooks</a></li>
+  <li><a href="#key-papers" id="toc-key-papers" class="nav-link" data-scroll-target="#key-papers">Key papers</a></li>
+  <li><a href="#in-this-library" id="toc-in-this-library" class="nav-link" data-scroll-target="#in-this-library">In this library</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+
+<p><strong>Dataset:</strong> Meuse floodplain soil survey (<code>data/meuse.csv</code>, 155 samples) + prediction grid (<code>data/meuse_grid.csv</code>)</p>
+<p><strong>Target:</strong> Zinc (<code>zinc</code>, ppm)</p>
+<p><strong>Library:</strong> <code>pygstat.indicator_kriging</code> — ordinary indicator kriging in the GSLIB <code>ik3d</code> family (Deutsch &amp; Journel, <em>GSLIB</em>, 2nd ed.)</p>
+<hr>
+<section id="table-of-contents" class="level2">
+<h2 class="anchored" data-anchor-id="table-of-contents">Table of Contents</h2>
+<ol type="1">
+<li><a href="#1-overview">Overview</a></li>
+<li><a href="#2-theory--indicator-transform-and-exceedance-probability">Theory - Indicator Transform and Exceedance Probability</a></li>
+<li><a href="#3-theory--indicator-variograms">Theory - Indicator Variograms</a></li>
+<li><a href="#4-theory--the-indicator-kriging-system">Theory - The Indicator Kriging System</a></li>
+<li><a href="#5-theory--conditional-cdf-and-e-type-estimates">Theory - Conditional CDF and E-type Estimates</a></li>
+<li><a href="#6-python-setup">Python Setup</a></li>
+<li><a href="#7-load-and-explore-the-meuse-zinc-data">Load and Explore the Meuse Zinc Data</a></li>
+<li><a href="#8-choose-cutoffs-and-build-indicators">Choose Cutoffs and Build Indicators</a></li>
+<li><a href="#9-empirical-indicator-variograms">Empirical Indicator Variograms</a></li>
+<li><a href="#10-cross-validation-brier-score">Cross-Validation (Brier Score)</a></li>
+<li><a href="#11-predict-exceedance-probabilities-on-the-grid">Predict Exceedance Probabilities on the Grid</a></li>
+<li><a href="#12-e-type-estimate-of-zinc">E-type Estimate of Zinc</a></li>
+<li><a href="#13-cpu-vs-gpu-ik-timing">CPU vs GPU IK Timing</a></li>
+<li><a href="#14-summary-and-conclusions">Summary and Conclusions</a></li>
+<li><a href="#15-resources">Resources</a></li>
+</ol>
+<hr>
+</section>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">1. Overview</h2>
+<p><strong>Indicator Kriging (IK)</strong> is a non-parametric interpolator: instead of kriging the continuous variable <span class="math inline">\(Z(\mathbf{x})\)</span> itself, it kriges a family of binary <em>indicators</em> <span class="math inline">\(I(\mathbf{x}; z_k)\)</span> that record whether <span class="math inline">\(Z\)</span> exceeds a cutoff <span class="math inline">\(z_k\)</span>. The kriged indicator is an estimate of the <strong>exceedance probability</strong> <span class="math inline">\(P[Z(\mathbf{x}_0) \ge z_k]\)</span>. Stacking several cutoffs builds a local conditional distribution, from which an <strong>E-type</strong> (expected-value) map of zinc can be recovered without assuming Gaussianity.</p>
+<p>That matters for Meuse zinc. The 155 floodplain samples are <strong>right-skewed</strong> (min 113 ppm, median 326 ppm, max 1 839 ppm). Ordinary kriging of the raw grades would smear the high-grade river-bank samples across the floodplain and would need a Gaussian assumption to turn <span class="math inline">\((\hat{Z}, \sigma_K)\)</span> into exceedance probabilities. Indicator kriging does neither: each cutoff has its own variogram, so the spatial continuity of “high zinc” can differ from that of “moderate zinc”.</p>
+<p>GSLIB’s <code>ik3d</code> (Deutsch &amp; Journel, <em>GSLIB: Geostatistical Software Library</em>, 2nd ed.) is the reference implementation. <strong><code>pygstat.IndicatorKriging</code></strong> is the library’s ordinary-indicator engine for 2-D point data — the same linear system as <code>ik3d</code>’s ordinary-kriging branch, with per-threshold spherical or exponential covariance, a local search neighborhood, and probabilities clipped to <span class="math inline">\([0, 1]\)</span>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>What we do</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Data</td>
+<td>Load <code>meuse.csv</code> (155 samples) and <code>meuse_grid.csv</code> (~3 100 floodplain nodes)</td>
+</tr>
+<tr class="even">
+<td>Cutoffs</td>
+<td>Nine zinc quantiles (10%–90%); skip 0% / 100% (degenerate indicators)</td>
+</tr>
+<tr class="odd">
+<td>Indicator variograms</td>
+<td>Empirical <span class="math inline">\(\gamma_I(h; z_k)\)</span> and a spherical fit at each cutoff</td>
+</tr>
+<tr class="even">
+<td>Cross-validation</td>
+<td>5-fold Brier score vs a no-skill (marginal frequency) baseline</td>
+</tr>
+<tr class="odd">
+<td>Mapping</td>
+<td><span class="math inline">\(P(\mathrm{Zn} \ge z_k)\)</span> on the Meuse grid at the 10th, 50th, and 90th percentiles</td>
+</tr>
+<tr class="even">
+<td>E-type</td>
+<td>Expected zinc from the local ccdf via <code>compute_etype_from_probabilities</code></td>
+</tr>
+</tbody>
+</table>
+<div class="line-block">CPU / GPU | Time k-NN <code>IndicatorKriging</code> on CPU vs GPU using <strong>sgsim</strong> Meuse-like zinc (<span class="math inline">\(n=8{,}000\)</span>) |</div>
+<p>By the end you will have probability maps of zinc exceedance, a Brier-score check that IK beats a naive baseline, an E-type map that can be compared with ordinary kriging of the raw grades, and a CPU vs GPU timing of the batched k-NN IK solve on a simulated Meuse field with <span class="math inline">\(n &gt; 5{,}000\)</span>.</p>
+<hr>
+</section>
+<section id="theory---indicator-transform-and-exceedance-probability" class="level2">
+<h2 class="anchored" data-anchor-id="theory---indicator-transform-and-exceedance-probability">2. Theory - Indicator Transform and Exceedance Probability</h2>
+<p>Let <span class="math inline">\(Z(\mathbf{x})\)</span> be the continuous grade (zinc, ppm) at location <span class="math inline">\(\mathbf{x} = (x, y)\)</span>. For a cutoff <span class="math inline">\(z_k\)</span>, the <strong>indicator</strong> used by <code>pygstat.IndicatorKriging</code> is the exceedance coding</p>
+<p><span class="math display">\[
+I(\mathbf{x}; z_k) =
+\begin{cases}
+1, &amp; Z(\mathbf{x}) \ge z_k \\
+0, &amp; Z(\mathbf{x}) &lt; z_k .
+\end{cases}
+\]</span></p>
+<p>(GSLIB <code>ik3d</code> more often stores the complementary cdf coding <span class="math inline">\(I(\mathbf{x}; z_k) = 1\)</span> if <span class="math inline">\(Z \le z_k\)</span>; the two are equivalent up to a flip, <span class="math inline">\(P[Z \ge z_k] = 1 - F(z_k^-)\)</span>.) Taking expectation,</p>
+<p><span class="math display">\[
+\mathbb{E}\big[I(\mathbf{x}_0; z_k)\big] = P\big[Z(\mathbf{x}_0) \ge z_k\big].
+\]</span></p>
+<p>Ordinary kriging of the <span class="math inline">\(0/1\)</span> data is therefore a <strong>direct estimator of the exceedance probability</strong>. The estimate <span class="math inline">\(I^*(\mathbf{x}_0; z_k)\)</span> is clipped to <span class="math inline">\([0, 1]\)</span> after solving the kriging system, because a raw linear combination of indicators is not guaranteed to stay inside the probability interval.</p>
+<p>A small worked example with cutoff <span class="math inline">\(z_k = 10\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Location</th>
+<th><span class="math inline">\(Z(\mathbf{x}_i)\)</span></th>
+<th><span class="math inline">\(I(\mathbf{x}_i; 10)\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>A</td>
+<td>5</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>B</td>
+<td>20</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>C</td>
+<td>15</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>Kriging those three 0/1 values at an unsampled point yields <span class="math inline">\(P[Z \ge 10]\)</span> there — not an estimate of the grade itself.</p>
+<hr>
+</section>
+<section id="theory---indicator-variograms" class="level2">
+<h2 class="anchored" data-anchor-id="theory---indicator-variograms">3. Theory - Indicator Variograms</h2>
+<p>Each cutoff has its <strong>own</strong> spatial continuity. High-grade zinc along the Meuse river may be more nuggety (or more anisotropic) than the mid-grade background, so a single variogram of <span class="math inline">\(Z\)</span> is the wrong covariance for every probability map. The experimental indicator semivariogram at cutoff <span class="math inline">\(z_k\)</span> is the usual Matheron estimator applied to <span class="math inline">\(I(\cdot; z_k)\)</span>:</p>
+<p><span class="math display">\[
+\gamma_I(h; z_k)
+= \frac{1}{2N(h)}
+\sum_{N(h)}
+\big[I(\mathbf{x}_i; z_k) - I(\mathbf{x}_i + \mathbf{h}; z_k)\big]^2 .
+\]</span></p>
+<p>Two useful identities follow at once:</p>
+<ul>
+<li><span class="math inline">\(\gamma_I\)</span> is identical for <span class="math inline">\(I\)</span> and <span class="math inline">\(1-I\)</span> (squared differences do not change), so the empirical curve from <code>fit_indicator_variogram</code> (which uses <span class="math inline">\(I(Z \le z_k)\)</span>) can be used as the covariance model for <code>IndicatorKriging</code> (which uses <span class="math inline">\(I(Z \ge z_k)\)</span>).</li>
+<li>The theoretical sill of a binary indicator is <span class="math inline">\(p_k(1-p_k)\)</span>, where <span class="math inline">\(p_k = P[Z \ge z_k]\)</span>. Extreme cutoffs (<span class="math inline">\(p_k \to 0\)</span> or <span class="math inline">\(1\)</span>) have almost no variance and noisy empirical variograms — which is why we drop the 0% and 100% quantiles.</li>
+</ul>
+<p>This notebook fits a <strong>spherical</strong> model at each cutoff,</p>
+<p><span class="math display">\[
+\gamma(h) =
+\begin{cases}
+c_0 + c\bigl(1.5\,h/a - 0.5\,(h/a)^3\bigr), &amp; h &lt; a \\
+c_0 + c, &amp; h \ge a,
+\end{cases}
+\]</span></p>
+<p>and passes the triple <span class="math inline">\((c_0, c, a)\)</span> to <code>IndicatorKriging.predict</code> as <code>variogram_params[z_k]</code>. The corresponding covariance used in the kriging system is <span class="math inline">\(C(h) = C(0) - \gamma(h)\)</span>, implemented as <code>_spherical_covariance</code> in <code>pygstat.indicator_kriging</code>.</p>
+<hr>
+</section>
+<section id="theory---the-indicator-kriging-system" class="level2">
+<h2 class="anchored" data-anchor-id="theory---the-indicator-kriging-system">4. Theory - The Indicator Kriging System</h2>
+<p>At a target <span class="math inline">\(\mathbf{x}_0\)</span>, ordinary indicator kriging uses the <span class="math inline">\(n\)</span> neighbouring indicators inside a search radius (capped at <code>max_neighbors</code>) and solves the same OK system as Tutorial 04, but with the <strong>indicator covariance</strong> <span class="math inline">\(C_I\)</span>:</p>
+<p><span class="math display">\[
+\begin{pmatrix}
+C_I &amp; \mathbf{1} \\
+\mathbf{1}^\top &amp; 0
+\end{pmatrix}
+\begin{pmatrix} \boldsymbol\lambda \\ \mu \end{pmatrix}
+=
+\begin{pmatrix} \mathbf{c}_{I,0} \\ 1 \end{pmatrix},
+\qquad
+I^*(\mathbf{x}_0; z_k)
+= \sum_{i=1}^{n} \lambda_i\, I(\mathbf{x}_i; z_k).
+\]</span></p>
+<p>The extra row <span class="math inline">\(\sum_i \lambda_i = 1\)</span> (Lagrange multiplier <span class="math inline">\(\mu\)</span>) makes the estimator unbiased for an unknown local mean — here the unknown local exceedance rate. <code>pygstat.IndicatorKriging</code> solves this with <code>scipy.linalg.solve</code> (symmetric) and falls back to least squares if the neighbourhood is degenerate. After clipping,</p>
+<p><span class="math display">\[
+I^*(\mathbf{x}_0; z_k) \;\approx\; P\big[Z(\mathbf{x}_0) \ge z_k\big] \in [0, 1].
+\]</span></p>
+<p><strong>Search neighbourhood.</strong> Distant 0/1 samples should not inform a local probability (and they make <span class="math inline">\(C_I\)</span> large and ill-conditioned). The implementation builds a <code>cKDTree</code> on the (optionally anisotropically transformed) coordinates and keeps at most <code>max_neighbors</code> points inside <code>search_radius</code>. Geometric anisotropy is the usual 2-D rotation-and-range-ratio transform (<code>anisotropy_angle</code>, <code>anisotropy_ratio</code>).</p>
+<p><strong>Simple numerical example of why order relations matter.</strong> Nothing in the linear system forces <span class="math inline">\(I^*(\mathbf{x}_0; z_{k}) \ge I^*(\mathbf{x}_0; z_{k+1})\)</span> when <span class="math inline">\(z_k &lt; z_{k+1}\)</span>. GSLIB <code>ik3d</code> applies an <em>order-relation correction</em> after kriging. <code>IndicatorKriging</code> currently clips each probability to <span class="math inline">\([0, 1]\)</span> independently; for well-separated quantiles on Meuse this is usually enough, but a decreasing rearrangement of the ccdf is the fully rigorous next step (see Goovaerts 1997, Ch. 7).</p>
+<hr>
+</section>
+<section id="theory---conditional-cdf-and-e-type-estimates" class="level2">
+<h2 class="anchored" data-anchor-id="theory---conditional-cdf-and-e-type-estimates">5. Theory - Conditional CDF and E-type Estimates</h2>
+<p>A set of cutoffs <span class="math inline">\(z_1 &lt; z_2 &lt; \cdots &lt; z_K\)</span> turns the probability maps into a discrete <strong>conditional cdf</strong> at every location:</p>
+<p><span class="math display">\[
+F(z_k \mid \mathbf{x}_0)
+= P\big[Z(\mathbf{x}_0) \le z_k\big]
+\approx 1 - I^*(\mathbf{x}_0; z_k).
+\]</span></p>
+<p>The <strong>E-type estimate</strong> (GSLIB’s name for the conditional expectation, “expected type”) is the mean of that local distribution. For a non-negative variable,</p>
+<p><span class="math display">\[
+Z_E(\mathbf{x}_0)
+= \mathbb{E}\big[Z(\mathbf{x}_0)\mid\text{data}\big]
+= \int_{0}^{\infty} P\big[Z(\mathbf{x}_0) \ge z\big]\, dz.
+\]</span></p>
+<p>With discrete cutoffs this is a trapezoid rule, including a lower tail from <span class="math inline">\(z_{\min}\)</span> (here 0 ppm) to <span class="math inline">\(z_1\)</span> where <span class="math inline">\(P \approx 1\)</span>, and an upper tail from <span class="math inline">\(z_K\)</span> to <span class="math inline">\(z_{\max}\)</span>:</p>
+<p><span class="math display">\[
+Z_E
+\approx
+\tfrac12(1 + p_1)(z_1 - z_{\min})
++ \sum_{k=1}^{K-1} \tfrac12(p_k + p_{k+1})(z_{k+1} - z_k)
++ \tfrac12 p_K (z_{\max} - z_K),
+\]</span></p>
+<p>where <span class="math inline">\(p_k = I^*(\mathbf{x}_0; z_k)\)</span>. That is exactly <code>pygstat.compute_etype_from_probabilities</code>. The E-type map is a <strong>smoothed</strong> grade map: it respects the local distribution (so it is not Gaussian OK) but it averages away the extremes that sequential indicator simulation (<code>sisim</code>) would keep.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Estimate</th>
+<th>What it is</th>
+<th>Typical use</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(I^*(\mathbf{x}_0; z_k)\)</span></td>
+<td><span class="math inline">\(P[Z \ge z_k]\)</span></td>
+<td>Risk / classification maps</td>
+</tr>
+<tr class="even">
+<td>E-type <span class="math inline">\(Z_E(\mathbf{x}_0)\)</span></td>
+<td><span class="math inline">\(\mathbb{E}[Z \mid \text{data}]\)</span></td>
+<td>Mean grade map without a Gaussian assumption</td>
+</tr>
+<tr class="odd">
+<td>Sequential indicator simulation</td>
+<td>Sampled ccdfs</td>
+<td>Uncertainty, <span class="math inline">\(P(Z &gt; z)\)</span> that preserves spatial variability</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="python-setup" class="level2">
+<h2 class="anchored" data-anchor-id="python-setup">6. Python Setup</h2>
+<section id="cpu-and-gpu" class="level3">
+<h3 class="anchored" data-anchor-id="cpu-and-gpu">6.1 CPU and GPU</h3>
+<p><code>IndicatorKriging</code> solves a <strong>local</strong> ordinary-kriging system at every prediction point. In the default <strong>k-nearest-neighbor</strong> mode (<code>search_radius=None</code>) every point has the same neighbor count <span class="math inline">\(k\)</span>, so pygstat stacks the systems into one <code>(n_{\mathrm{pred}}, k+1, k+1)</code> batched <code>xp.linalg.solve</code> — NumPy on CPU, CuPy on GPU.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 35%">
+<col style="width: 64%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>What it controls</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>use_gpu</code></td>
+<td>Batched k-NN indicator-kriging solve (NumPy or CuPy).</td>
+</tr>
+<tr class="even">
+<td><code>search_radius</code></td>
+<td>If set, neighbor counts vary by point and the batch path is skipped (<strong>CPU only</strong>).</td>
+</tr>
+</tbody>
+</table>
+<p><code>use_gpu</code> is:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 38%">
+<col style="width: 61%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Value</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>'auto'</code> (default)</td>
+<td>GPU when CuPy can run a kernel on this card. Falls back to CPU otherwise.</td>
+</tr>
+<tr class="even">
+<td><code>True</code></td>
+<td>Force GPU. Warns and falls back to CPU if CuPy is missing or cannot run a kernel.</td>
+</tr>
+<tr class="odd">
+<td><code>False</code></td>
+<td>Always CPU (NumPy/SciPy).</td>
+</tr>
+</tbody>
+</table>
+<p>This notebook probes the GPU once with <code>cupy_gpu_usable()</code> and stores the result in <code>USE_GPU</code>. <code>IndicatorKriging(...)</code> calls below pass <code>use_gpu=USE_GPU</code>. The Meuse floodplain maps in §11 use a <code>search_radius</code> neighborhood (GSLIB-style), which stays on CPU; <strong>§13</strong> times the k-NN GPU path on an <strong>SGS-simulated</strong> Meuse zinc field with <span class="math inline">\(n &gt; 5{,}000\)</span>.</p>
+<p>Install CuPy with <code>pip install pygstat[gpu]</code> (CUDA 11) or <code>pip install cupy-cuda12x</code> for CUDA 12.</p>
+<div id="f1cbae06" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:19:33.436123Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:19:33.435248Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:19:40.858211Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:19:40.857249Z&quot;}}" data-execution_count="1">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>matplotlib inline</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys, os, warnings</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep TensorFlow out of this process (optional RK backends).</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>sys.modules.setdefault(<span class="st">"tensorflow"</span>, <span class="va">None</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>sys.path.insert(<span class="dv">0</span>, os.path.abspath(<span class="st">"../src"</span>))</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.optimize <span class="im">import</span> minimize</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> brier_score_loss</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pygstat</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat <span class="im">import</span> (</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    IndicatorKriging,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    IndicatorKrigingCV,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    fit_indicator_variogram,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    compute_etype_from_probabilities,</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    sgsim,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat.utils.backend <span class="im">import</span> CUPY_AVAILABLE, cupy_gpu_usable</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"figure.dpi"</span>] <span class="op">=</span> <span class="dv">100</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"axes.grid"</span>] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"grid.alpha"</span>] <span class="op">=</span> <span class="fl">0.3</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"pygstat version:"</span>, pygstat.__version__)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># ── IK k-NN batched OK: CPU / GPU dispatch (CuPy) ──────────────────────────────</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># cupy_gpu_usable() runs a real kernel (not just `import cupy`). Older cards can</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co"># import CuPy and still fail at compile time; those stay on CPU.</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>USE_GPU <span class="op">=</span> cupy_gpu_usable()</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> USE_GPU:</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"CuPy            : </span><span class="sc">{</span>cp<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>        name <span class="op">=</span> cp.cuda.runtime.getDeviceProperties(<span class="dv">0</span>)[<span class="st">"name"</span>]</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(name, <span class="bu">bytes</span>):</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>            name <span class="op">=</span> name.decode()</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"GPU (CuPy)      : </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span>:</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"GPU (CuPy)      : available"</span>)</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Backend         : GPU (CuPy) — IK k-NN batched OK solve on GPU"</span>)</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> CUPY_AVAILABLE:</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>        <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"CuPy            : </span><span class="sc">{</span>cp<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss"> (installed, but cannot run a kernel on this GPU/CUDA setup)"</span>)</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"CuPy            : not installed  (pip install pygstat[gpu]  or  cupy-cuda12x)"</span>)</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Backend         : CPU (NumPy)"</span>)</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"use_gpu         : </span><span class="sc">{</span>USE_GPU<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>pygstat version: 0.1.0
+CuPy            : 14.2.0
+GPU (CuPy)      : NVIDIA GeForce RTX 2080 Ti
+Backend         : GPU (CuPy) — IK k-NN batched OK solve on GPU
+use_gpu         : True</code></pre>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="load-and-explore-the-meuse-zinc-data" class="level2">
+<h2 class="anchored" data-anchor-id="load-and-explore-the-meuse-zinc-data">7. Load and Explore the Meuse Zinc Data</h2>
+<p>The Meuse data are 155 topsoil samples from the floodplain of the Meuse river near Stein (NL), originally published with the <code>sp</code> / <code>gstat</code> R packages. Zinc is the classic demonstration variable: strongly right-skewed, with the highest grades along the river. The prediction grid is an irregular 40 m lattice covering the floodplain (~3 100 nodes).</p>
+<div id="c8fed83e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:19:40.861451Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:19:40.861015Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:19:40.895424Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:19:40.894504Z&quot;}}" data-execution_count="2">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="st">"../data/meuse.csv"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> pd.read_csv(<span class="st">"../data/meuse_grid.csv"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>coords <span class="op">=</span> df[[<span class="st">"x"</span>, <span class="st">"y"</span>]].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>zinc <span class="op">=</span> df[<span class="st">"zinc"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>coords_grid <span class="op">=</span> grid[[<span class="st">"x"</span>, <span class="st">"y"</span>]].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Samples: </span><span class="sc">{</span><span class="bu">len</span>(df)<span class="sc">}</span><span class="ss">    Grid nodes: </span><span class="sc">{</span><span class="bu">len</span>(grid)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Sample columns:"</span>, <span class="bu">list</span>(df.columns))</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Zinc (ppm) summary:"</span>)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df[<span class="st">"zinc"</span>].describe().<span class="bu">round</span>(<span class="dv">1</span>))</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Skewness: </span><span class="sc">{</span>pd<span class="sc">.</span>Series(zinc)<span class="sc">.</span>skew()<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>df.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Samples: 155    Grid nodes: 3103
+Sample columns: ['x', 'y', 'cadmium', 'copper', 'lead', 'zinc', 'elev', 'dist', 'om', 'ffreq', 'soil', 'lime', 'landuse', 'dist.m']
+
+Zinc (ppm) summary:
+count     155.0
+mean      469.7
+std       367.1
+min       113.0
+25%       198.0
+50%       326.0
+75%       674.5
+max      1839.0
+Name: zinc, dtype: float64
+Skewness: 1.486</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="2">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">x</th>
+<th data-quarto-table-cell-role="th">y</th>
+<th data-quarto-table-cell-role="th">cadmium</th>
+<th data-quarto-table-cell-role="th">copper</th>
+<th data-quarto-table-cell-role="th">lead</th>
+<th data-quarto-table-cell-role="th">zinc</th>
+<th data-quarto-table-cell-role="th">elev</th>
+<th data-quarto-table-cell-role="th">dist</th>
+<th data-quarto-table-cell-role="th">om</th>
+<th data-quarto-table-cell-role="th">ffreq</th>
+<th data-quarto-table-cell-role="th">soil</th>
+<th data-quarto-table-cell-role="th">lime</th>
+<th data-quarto-table-cell-role="th">landuse</th>
+<th data-quarto-table-cell-role="th">dist.m</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>181072</td>
+<td>333611</td>
+<td>11.7</td>
+<td>85</td>
+<td>299</td>
+<td>1022</td>
+<td>7.909</td>
+<td>0.001358</td>
+<td>13.6</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>Ah</td>
+<td>50</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>181025</td>
+<td>333558</td>
+<td>8.6</td>
+<td>81</td>
+<td>277</td>
+<td>1141</td>
+<td>6.983</td>
+<td>0.012224</td>
+<td>14.0</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>Ah</td>
+<td>30</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>181165</td>
+<td>333537</td>
+<td>6.5</td>
+<td>68</td>
+<td>199</td>
+<td>640</td>
+<td>7.800</td>
+<td>0.103029</td>
+<td>13.0</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>Ah</td>
+<td>150</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>181298</td>
+<td>333484</td>
+<td>2.6</td>
+<td>81</td>
+<td>116</td>
+<td>257</td>
+<td>7.655</td>
+<td>0.190094</td>
+<td>8.0</td>
+<td>1</td>
+<td>2</td>
+<td>0</td>
+<td>Ga</td>
+<td>270</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>181307</td>
+<td>333330</td>
+<td>2.8</td>
+<td>48</td>
+<td>117</td>
+<td>269</td>
+<td>7.480</td>
+<td>0.277090</td>
+<td>8.7</td>
+<td>1</td>
+<td>2</td>
+<td>0</td>
+<td>Ah</td>
+<td>380</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="a5ba4c80" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:19:40.898130Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:19:40.897884Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:19:41.491225Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:19:41.490219Z&quot;}}" data-execution_count="3">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">16</span>, <span class="fl">4.6</span>))</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>sc <span class="op">=</span> axes[<span class="dv">0</span>].scatter(</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">"x"</span>], df[<span class="st">"y"</span>], c<span class="op">=</span>zinc, cmap<span class="op">=</span><span class="st">"YlOrRd"</span>, s<span class="op">=</span><span class="dv">32</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    edgecolors<span class="op">=</span><span class="st">"k"</span>, linewidths<span class="op">=</span><span class="fl">0.3</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>plt.colorbar(sc, ax<span class="op">=</span>axes[<span class="dv">0</span>], label<span class="op">=</span><span class="st">"Zn (ppm)"</span>, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"Sampled zinc"</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"Easting (m)"</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"Northing (m)"</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].hist(zinc, bins<span class="op">=</span><span class="dv">25</span>, color<span class="op">=</span><span class="st">"steelblue"</span>, edgecolor<span class="op">=</span><span class="st">"white"</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].axvline(zinc.mean(), color<span class="op">=</span><span class="st">"crimson"</span>, ls<span class="op">=</span><span class="st">"--"</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>                label<span class="op">=</span><span class="ss">f"mean = </span><span class="sc">{</span>zinc<span class="sc">.</span>mean()<span class="sc">:.0f}</span><span class="ss">"</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].axvline(np.median(zinc), color<span class="op">=</span><span class="st">"darkorange"</span>, ls<span class="op">=</span><span class="st">":"</span>,</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>                label<span class="op">=</span><span class="ss">f"median = </span><span class="sc">{</span>np<span class="sc">.</span>median(zinc)<span class="sc">:.0f}</span><span class="ss">"</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Distribution of zinc"</span>)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"Zn (ppm)"</span>)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"Frequency"</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend()</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].scatter(grid[<span class="st">"x"</span>], grid[<span class="st">"y"</span>], s<span class="op">=</span><span class="dv">2</span>, c<span class="op">=</span><span class="st">"0.8"</span>, marker<span class="op">=</span><span class="st">"."</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].scatter(df[<span class="st">"x"</span>], df[<span class="st">"y"</span>], c<span class="op">=</span>zinc, cmap<span class="op">=</span><span class="st">"YlOrRd"</span>, s<span class="op">=</span><span class="dv">22</span>,</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>                edgecolors<span class="op">=</span><span class="st">"k"</span>, linewidths<span class="op">=</span><span class="fl">0.25</span>)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_title(<span class="st">"Samples on the floodplain grid"</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_xlabel(<span class="st">"Easting (m)"</span>)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_ylabel(<span class="st">"Northing (m)"</span>)</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="07_indicator_kriging_files/figure-html/cell-4-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="choose-cutoffs-and-build-indicators" class="level2">
+<h2 class="anchored" data-anchor-id="choose-cutoffs-and-build-indicators">8. Choose Cutoffs and Build Indicators</h2>
+<p>Nine quantiles (10%, 20%, …, 90%) give a ccdf that is dense enough for an E-type integral without wasting a cutoff on the degenerate 0% / 100% indicators. At each <span class="math inline">\(z_k\)</span> the global exceedance rate <span class="math inline">\(p_k\)</span> sets the indicator sill <span class="math inline">\(p_k(1-p_k)\)</span>.</p>
+<div id="68388261" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:19:41.493778Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:19:41.493565Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:19:42.107294Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:19:42.106504Z&quot;}}" data-execution_count="4">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>quantiles <span class="op">=</span> np.arange(<span class="fl">0.10</span>, <span class="fl">1.00</span>, <span class="fl">0.10</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>thresholds <span class="op">=</span> np.quantile(zinc, quantiles)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>p_exceed <span class="op">=</span> np.array([(zinc <span class="op">&gt;=</span> t).mean() <span class="cf">for</span> t <span class="kw">in</span> thresholds])</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>cutoff_tbl <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quantile"</span>: quantiles,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"threshold_ppm"</span>: thresholds.<span class="bu">round</span>(<span class="dv">1</span>),</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"p(Zn &gt;= z_k)"</span>: p_exceed.<span class="bu">round</span>(<span class="dv">3</span>),</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"indicator_sill p(1-p)"</span>: (p_exceed <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> p_exceed)).<span class="bu">round</span>(<span class="dv">4</span>),</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"n_exceed"</span>: [(zinc <span class="op">&gt;=</span> t).<span class="bu">sum</span>() <span class="cf">for</span> t <span class="kw">in</span> thresholds],</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>display(cutoff_tbl)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="fl">4.6</span>))</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>show_idx <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">4</span>, <span class="dv">8</span>]</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, i <span class="kw">in</span> <span class="bu">zip</span>(axes, show_idx):</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> thresholds[i]</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    ind <span class="op">=</span> (zinc <span class="op">&gt;=</span> t).astype(<span class="bu">float</span>)</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    sc <span class="op">=</span> ax.scatter(</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        df[<span class="st">"x"</span>], df[<span class="st">"y"</span>], c<span class="op">=</span>ind, cmap<span class="op">=</span><span class="st">"coolwarm"</span>, s<span class="op">=</span><span class="dv">36</span>,</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        edgecolors<span class="op">=</span><span class="st">"k"</span>, linewidths<span class="op">=</span><span class="fl">0.3</span>, vmin<span class="op">=</span><span class="dv">0</span>, vmax<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    plt.colorbar(sc, ax<span class="op">=</span>ax, label<span class="op">=</span><span class="st">"I(Zn &gt;= z)"</span>, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="ss">f"I(Zn &gt;= </span><span class="sc">{</span>t<span class="sc">:.0f}</span><span class="ss"> ppm)  —  </span><span class="sc">{</span><span class="bu">int</span>(quantiles[i]<span class="op">*</span><span class="dv">100</span>)<span class="sc">}</span><span class="ss">th %ile"</span>)</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"Easting (m)"</span>)</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>    ax.set_ylabel(<span class="st">"Northing (m)"</span>)</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>    ax.set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">quantile</th>
+<th data-quarto-table-cell-role="th">threshold_ppm</th>
+<th data-quarto-table-cell-role="th">p(Zn &gt;= z_k)</th>
+<th data-quarto-table-cell-role="th">indicator_sill p(1-p)</th>
+<th data-quarto-table-cell-role="th">n_exceed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>0.1</td>
+<td>152.8</td>
+<td>0.897</td>
+<td>0.0926</td>
+<td>139</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>0.2</td>
+<td>186.8</td>
+<td>0.800</td>
+<td>0.1600</td>
+<td>124</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>0.3</td>
+<td>207.2</td>
+<td>0.697</td>
+<td>0.2113</td>
+<td>108</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>0.4</td>
+<td>246.4</td>
+<td>0.600</td>
+<td>0.2400</td>
+<td>93</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>0.5</td>
+<td>326.0</td>
+<td>0.503</td>
+<td>0.2500</td>
+<td>78</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>0.6</td>
+<td>439.6</td>
+<td>0.400</td>
+<td>0.2400</td>
+<td>62</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>0.7</td>
+<td>589.8</td>
+<td>0.303</td>
+<td>0.2113</td>
+<td>47</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>0.8</td>
+<td>737.2</td>
+<td>0.200</td>
+<td>0.1600</td>
+<td>31</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">8</th>
+<td>0.9</td>
+<td>986.4</td>
+<td>0.103</td>
+<td>0.0926</td>
+<td>16</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="07_indicator_kriging_files/figure-html/cell-5-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="empirical-indicator-variograms" class="level2">
+<h2 class="anchored" data-anchor-id="empirical-indicator-variograms">9. Empirical Indicator Variograms</h2>
+<p><code>fit_indicator_variogram</code> returns the Matheron estimator at each cutoff. A spherical model is then least-squares fitted with the nugget / sill boxed to the binary range <span class="math inline">\([0, 0.3]\)</span> and the range boxed to a multiple of the median pairwise distance. The fitted <span class="math inline">\((c_0, c, a)\)</span> triples become <code>variogram_params</code> for kriging.</p>
+<div id="28bff7f4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:19:42.109744Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:19:42.109521Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:19:42.180450Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:19:42.179725Z&quot;}}" data-execution_count="5">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> spherical_variogram(h, nugget, sill, rng):</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Spherical variogram model γ(h) = nugget + sill * sph(h / range)."""</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> np.asarray(h, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    gamma <span class="op">=</span> np.full_like(h, nugget <span class="op">+</span> sill)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    mask <span class="op">=</span> h <span class="op">&lt;</span> rng</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    hr <span class="op">=</span> h[mask] <span class="op">/</span> rng</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    gamma[mask] <span class="op">=</span> nugget <span class="op">+</span> sill <span class="op">*</span> (<span class="fl">1.5</span> <span class="op">*</span> hr <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> hr <span class="op">**</span> <span class="dv">3</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> gamma</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.spatial.distance <span class="im">import</span> pdist</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>maxlag <span class="op">=</span> <span class="bu">float</span>(np.percentile(pdist(coords), <span class="dv">50</span>))</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>n_lags <span class="op">=</span> <span class="dv">12</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>variogram_params <span class="op">=</span> {}</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>empirical <span class="op">=</span> {}</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> t <span class="kw">in</span> thresholds:</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    lags, gamma_exp <span class="op">=</span> fit_indicator_variogram(</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>        coords, zinc, threshold<span class="op">=</span>t, maxlag<span class="op">=</span>maxlag, n_lags<span class="op">=</span>n_lags,</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    empirical[t] <span class="op">=</span> (lags, gamma_exp)</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    sill0 <span class="op">=</span> <span class="bu">float</span>(np.nanvar((zinc <span class="op">&gt;=</span> t).astype(<span class="bu">float</span>)))</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    x0 <span class="op">=</span> np.array([<span class="fl">0.01</span>, <span class="bu">max</span>(sill0, <span class="fl">0.02</span>), maxlag <span class="op">*</span> <span class="fl">0.5</span>])</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    bounds <span class="op">=</span> [(<span class="fl">0.0</span>, <span class="fl">0.3</span>), (<span class="fl">1e-4</span>, <span class="fl">0.3</span>), (<span class="fl">50.0</span>, maxlag <span class="op">*</span> <span class="fl">2.0</span>)]</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> objective(params, lags<span class="op">=</span>lags, gamma_exp<span class="op">=</span>gamma_exp):</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>        pred <span class="op">=</span> spherical_variogram(lags, <span class="op">*</span>params)</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>        mask <span class="op">=</span> np.isfinite(gamma_exp)</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> np.<span class="bu">any</span>(mask):</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="fl">1e6</span></span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> np.<span class="bu">sum</span>((pred[mask] <span class="op">-</span> gamma_exp[mask]) <span class="op">**</span> <span class="dv">2</span>)</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>    res <span class="op">=</span> minimize(objective, x0, bounds<span class="op">=</span>bounds, method<span class="op">=</span><span class="st">"L-BFGS-B"</span>)</span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>    variogram_params[t] <span class="op">=</span> <span class="bu">tuple</span>(res.x <span class="cf">if</span> res.success <span class="cf">else</span> x0)</span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>fit_tbl <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>    [</span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>        {</span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>            <span class="st">"threshold_ppm"</span>: <span class="bu">round</span>(t, <span class="dv">1</span>),</span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>            <span class="st">"nugget"</span>: params[<span class="dv">0</span>],</span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>            <span class="st">"sill"</span>: params[<span class="dv">1</span>],</span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>            <span class="st">"range_m"</span>: params[<span class="dv">2</span>],</span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a>            <span class="st">"total_sill"</span>: params[<span class="dv">0</span>] <span class="op">+</span> params[<span class="dv">1</span>],</span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> t, params <span class="kw">in</span> variogram_params.items()</span>
+<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-50"><a href="#cb7-50" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"maxlag (median pairwise distance): </span><span class="sc">{</span>maxlag<span class="sc">:.0f}</span><span class="ss"> m"</span>)</span>
+<span id="cb7-51"><a href="#cb7-51" aria-hidden="true" tabindex="-1"></a>display(fit_tbl.<span class="bu">round</span>(<span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>maxlag (median pairwise distance): 1373 m</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">threshold_ppm</th>
+<th data-quarto-table-cell-role="th">nugget</th>
+<th data-quarto-table-cell-role="th">sill</th>
+<th data-quarto-table-cell-role="th">range_m</th>
+<th data-quarto-table-cell-role="th">total_sill</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>152.8</td>
+<td>0.014</td>
+<td>0.151</td>
+<td>1652.011</td>
+<td>0.165</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>186.8</td>
+<td>0.023</td>
+<td>0.164</td>
+<td>686.333</td>
+<td>0.187</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>207.2</td>
+<td>0.087</td>
+<td>0.146</td>
+<td>686.333</td>
+<td>0.233</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>246.4</td>
+<td>0.056</td>
+<td>0.211</td>
+<td>686.333</td>
+<td>0.267</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>326.0</td>
+<td>0.082</td>
+<td>0.190</td>
+<td>686.333</td>
+<td>0.271</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>439.6</td>
+<td>0.087</td>
+<td>0.172</td>
+<td>686.333</td>
+<td>0.259</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>589.8</td>
+<td>0.110</td>
+<td>0.119</td>
+<td>686.333</td>
+<td>0.229</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>737.2</td>
+<td>0.057</td>
+<td>0.122</td>
+<td>686.333</td>
+<td>0.179</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">8</th>
+<td>986.4</td>
+<td>0.064</td>
+<td>0.030</td>
+<td>686.333</td>
+<td>0.095</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="0771bcd3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:19:42.186558Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:19:42.185897Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:19:43.602325Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:19:43.600970Z&quot;}}" data-execution_count="6">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">11</span>))</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>h_fine <span class="op">=</span> np.linspace(<span class="dv">0</span>, maxlag, <span class="dv">200</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, t <span class="kw">in</span> <span class="bu">zip</span>(axes.flat, thresholds):</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    lags, gamma_exp <span class="op">=</span> empirical[t]</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    nugget, sill, rng <span class="op">=</span> variogram_params[t]</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    ax.plot(lags, gamma_exp, <span class="st">"o"</span>, color<span class="op">=</span><span class="st">"tab:blue"</span>, label<span class="op">=</span><span class="st">"empirical"</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    ax.plot(h_fine, spherical_variogram(h_fine, nugget, sill, rng),</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>            <span class="st">"-"</span>, color<span class="op">=</span><span class="st">"tab:red"</span>, label<span class="op">=</span><span class="st">"spherical"</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    ax.axhline(nugget <span class="op">+</span> sill, color<span class="op">=</span><span class="st">"0.5"</span>, ls<span class="op">=</span><span class="st">":"</span>, lw<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="ss">f"z = </span><span class="sc">{</span>t<span class="sc">:.0f}</span><span class="ss"> ppm"</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"lag (m)"</span>)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    ax.set_ylabel(<span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">gamma_I</span><span class="kw">(</span><span class="vs">h</span><span class="kw">)</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    ax.set_xlim(<span class="dv">0</span>, maxlag)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    ax.set_ylim(bottom<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>axes.flat[<span class="dv">0</span>].legend(fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"Indicator variograms (Meuse zinc)"</span>, y<span class="op">=</span><span class="fl">1.01</span>, fontsize<span class="op">=</span><span class="dv">13</span>)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="07_indicator_kriging_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="cross-validation-brier-score" class="level2">
+<h2 class="anchored" data-anchor-id="cross-validation-brier-score">10. Cross-Validation (Brier Score)</h2>
+<p>The Brier score is the mean squared error of a probability forecast,</p>
+<p><span class="math display">\[
+\mathrm{BS}
+= \frac{1}{n}\sum_{i=1}^{n}
+\big(I_i - p_i\big)^2,
+\]</span></p>
+<p>so 0 is perfect and the no-skill baseline (always predict the global rate <span class="math inline">\(p_k\)</span>) equals <span class="math inline">\(p_k(1-p_k)\)</span> — the indicator variance. <code>IndicatorKrigingCV</code> refits IK on each of 5 shuffled folds and scores the held-out probabilities. A useful model lies <strong>below</strong> the dashed baseline at every cutoff.</p>
+<div id="a923acf1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:19:43.605296Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:19:43.605035Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:19:44.030335Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:19:44.029358Z&quot;}}" data-execution_count="7">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ik_cv_model <span class="op">=</span> IndicatorKriging(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span><span class="st">"spherical"</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    max_neighbors<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    search_radius<span class="op">=</span>maxlag <span class="op">*</span> <span class="fl">0.8</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    use_gpu<span class="op">=</span>USE_GPU,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>cv <span class="op">=</span> IndicatorKrigingCV(n_splits<span class="op">=</span><span class="dv">5</span>, random_state<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>cv_result <span class="op">=</span> cv.validate(ik_cv_model, coords, zinc, thresholds, variogram_params)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>brier_avg <span class="op">=</span> cv_result[<span class="st">"brier_scores"</span>]</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>baseline_brier <span class="op">=</span> {t: p <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> p) <span class="cf">for</span> t, p <span class="kw">in</span> <span class="bu">zip</span>(thresholds, p_exceed)}</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>brier_tbl <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"threshold_ppm"</span>: [<span class="bu">round</span>(t, <span class="dv">1</span>) <span class="cf">for</span> t <span class="kw">in</span> thresholds],</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"IK Brier"</span>: [brier_avg[t] <span class="cf">for</span> t <span class="kw">in</span> thresholds],</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"no-skill Brier"</span>: [baseline_brier[t] <span class="cf">for</span> t <span class="kw">in</span> thresholds],</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>brier_tbl[<span class="st">"skill"</span>] <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> brier_tbl[<span class="st">"IK Brier"</span>] <span class="op">/</span> brier_tbl[<span class="st">"no-skill Brier"</span>]</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>display(brier_tbl.<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Mean IK Brier :"</span>, <span class="ss">f"</span><span class="sc">{</span>brier_tbl[<span class="st">'IK Brier'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Mean baseline :"</span>, <span class="ss">f"</span><span class="sc">{</span>brier_tbl[<span class="st">'no-skill Brier'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">threshold_ppm</th>
+<th data-quarto-table-cell-role="th">IK Brier</th>
+<th data-quarto-table-cell-role="th">no-skill Brier</th>
+<th data-quarto-table-cell-role="th">skill</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>152.8</td>
+<td>0.0374</td>
+<td>0.0926</td>
+<td>0.5965</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>186.8</td>
+<td>0.1113</td>
+<td>0.1600</td>
+<td>0.3041</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>207.2</td>
+<td>0.1384</td>
+<td>0.2113</td>
+<td>0.3451</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>246.4</td>
+<td>0.1223</td>
+<td>0.2400</td>
+<td>0.4902</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>326.0</td>
+<td>0.1174</td>
+<td>0.2500</td>
+<td>0.5306</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>439.6</td>
+<td>0.1228</td>
+<td>0.2400</td>
+<td>0.4885</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>589.8</td>
+<td>0.1273</td>
+<td>0.2113</td>
+<td>0.3975</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>737.2</td>
+<td>0.1030</td>
+<td>0.1600</td>
+<td>0.3565</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">8</th>
+<td>986.4</td>
+<td>0.0907</td>
+<td>0.0926</td>
+<td>0.0199</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Mean IK Brier : 0.1078
+Mean baseline : 0.1842</code></pre>
+</div>
+</div>
+<div id="54372b16" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:19:44.032997Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:19:44.032717Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:19:44.239226Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:19:44.238331Z&quot;}}" data-execution_count="8">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.2</span>, <span class="dv">5</span>))</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>ax.plot(thresholds, [brier_avg[t] <span class="cf">for</span> t <span class="kw">in</span> thresholds],</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"tab:blue"</span>, label<span class="op">=</span><span class="st">"Indicator Kriging (5-fold CV)"</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>ax.plot(thresholds, [baseline_brier[t] <span class="cf">for</span> t <span class="kw">in</span> thresholds],</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>        <span class="st">"s--"</span>, color<span class="op">=</span><span class="st">"tab:red"</span>, label<span class="op">=</span><span class="st">"No-skill baseline  $p(1-p)$"</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Zinc threshold (ppm)"</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Brier score"</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Cross-validation: IK vs. no-skill baseline"</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="07_indicator_kriging_files/figure-html/cell-9-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="predict-exceedance-probabilities-on-the-grid" class="level2">
+<h2 class="anchored" data-anchor-id="predict-exceedance-probabilities-on-the-grid">11. Predict Exceedance Probabilities on the Grid</h2>
+<p>Fit <code>IndicatorKriging</code> on all 155 samples and predict <span class="math inline">\(P[\mathrm{Zn} \ge z_k]\)</span> at every floodplain grid node. The three maps below are the 10th, 50th, and 90th percentile cutoffs — low, typical, and high-grade zinc.</p>
+<div id="649c2259" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:19:44.242673Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:19:44.242451Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:19:51.447397Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:19:51.446556Z&quot;}}" data-execution_count="9">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>ik <span class="op">=</span> IndicatorKriging(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span><span class="st">"spherical"</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    max_neighbors<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    search_radius<span class="op">=</span>maxlag <span class="op">*</span> <span class="fl">0.8</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    use_gpu<span class="op">=</span>USE_GPU,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>ik.fit(coords, zinc)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>probabilities <span class="op">=</span> ik.predict(coords_grid, thresholds.tolist(), variogram_params)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> t <span class="kw">in</span> thresholds:</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> probabilities[t]</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>        <span class="ss">f"z = </span><span class="sc">{</span>t<span class="sc">:7.1f}</span><span class="ss"> ppm   "</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>        <span class="ss">f"P in [</span><span class="sc">{</span>np<span class="sc">.</span>nanmin(p)<span class="sc">:.3f}</span><span class="ss">, </span><span class="sc">{</span>np<span class="sc">.</span>nanmax(p)<span class="sc">:.3f}</span><span class="ss">]   "</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>        <span class="ss">f"mean = </span><span class="sc">{</span>np<span class="sc">.</span>nanmean(p)<span class="sc">:.3f}</span><span class="ss">   "</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>        <span class="ss">f"nans = </span><span class="sc">{</span>np<span class="sc">.</span>isnan(p)<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>z =   152.8 ppm   P in [0.000, 1.000]   mean = 0.835   nans = 0
+z =   186.8 ppm   P in [0.000, 1.000]   mean = 0.691   nans = 0
+z =   207.2 ppm   P in [0.004, 1.000]   mean = 0.587   nans = 0
+z =   246.4 ppm   P in [0.000, 1.000]   mean = 0.469   nans = 0
+z =   326.0 ppm   P in [0.000, 1.000]   mean = 0.389   nans = 0
+z =   439.6 ppm   P in [0.000, 1.000]   mean = 0.301   nans = 0
+z =   589.8 ppm   P in [0.000, 0.953]   mean = 0.226   nans = 0
+z =   737.2 ppm   P in [0.000, 0.991]   mean = 0.150   nans = 0
+z =   986.4 ppm   P in [0.000, 0.558]   mean = 0.068   nans = 0</code></pre>
+</div>
+</div>
+<div id="09492783" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:19:51.450507Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:19:51.450267Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:19:52.229689Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:19:52.228627Z&quot;}}" data-execution_count="10">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>show <span class="op">=</span> [</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">0</span>, <span class="ss">f"P(Zn &gt;= </span><span class="sc">{</span>thresholds[<span class="dv">0</span>]<span class="sc">:.0f}</span><span class="ss"> ppm)  —  10th %ile"</span>),</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">4</span>, <span class="ss">f"P(Zn &gt;= </span><span class="sc">{</span>thresholds[<span class="dv">4</span>]<span class="sc">:.0f}</span><span class="ss"> ppm)  —  50th %ile"</span>),</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">8</span>, <span class="ss">f"P(Zn &gt;= </span><span class="sc">{</span>thresholds[<span class="dv">8</span>]<span class="sc">:.0f}</span><span class="ss"> ppm)  —  90th %ile"</span>),</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">16</span>, <span class="fl">5.2</span>))</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, (i, title) <span class="kw">in</span> <span class="bu">zip</span>(axes, show):</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> thresholds[i]</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    sc <span class="op">=</span> ax.scatter(</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>        grid[<span class="st">"x"</span>], grid[<span class="st">"y"</span>], c<span class="op">=</span>probabilities[t],</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>        cmap<span class="op">=</span><span class="st">"viridis"</span>, s<span class="op">=</span><span class="dv">8</span>, marker<span class="op">=</span><span class="st">"."</span>, vmin<span class="op">=</span><span class="dv">0</span>, vmax<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    ax.scatter(</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>        df[<span class="st">"x"</span>], df[<span class="st">"y"</span>], facecolors<span class="op">=</span><span class="st">"none"</span>, edgecolors<span class="op">=</span><span class="st">"w"</span>,</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>        s<span class="op">=</span><span class="dv">22</span>, linewidths<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    plt.colorbar(sc, ax<span class="op">=</span>ax, label<span class="op">=</span><span class="st">"probability"</span>, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    ax.set_title(title)</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"Easting (m)"</span>)</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>    ax.set_ylabel(<span class="st">"Northing (m)"</span>)</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>    ax.set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"Indicator kriging exceedance probabilities"</span>, y<span class="op">=</span><span class="fl">1.02</span>, fontsize<span class="op">=</span><span class="dv">13</span>)</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="07_indicator_kriging_files/figure-html/cell-11-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="e-type-estimate-of-zinc" class="level2">
+<h2 class="anchored" data-anchor-id="e-type-estimate-of-zinc">12. E-type Estimate of Zinc</h2>
+<p>Integrating the nine probability maps with <code>compute_etype_from_probabilities</code> (trapezoid rule, lower tail from 0 ppm, upper tail to the sample maximum) gives the E-type zinc map — the local conditional mean, without a Gaussian assumption.</p>
+<div id="ee759c0e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:19:52.235548Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:19:52.235316Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:19:52.772909Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:19:52.772100Z&quot;}}" data-execution_count="11">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>prob_arrays <span class="op">=</span> [probabilities[t] <span class="cf">for</span> t <span class="kw">in</span> thresholds]</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>etype <span class="op">=</span> compute_etype_from_probabilities(</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    thresholds, prob_arrays, z_min<span class="op">=</span><span class="fl">0.0</span>, z_max<span class="op">=</span><span class="bu">float</span>(zinc.<span class="bu">max</span>()),</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"E-type Zn (ppm):  min </span><span class="sc">{</span>np<span class="sc">.</span>nanmin(etype)<span class="sc">:.1f}</span><span class="ss">   "</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"mean </span><span class="sc">{</span>np<span class="sc">.</span>nanmean(etype)<span class="sc">:.1f}</span><span class="ss">   "</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"max </span><span class="sc">{</span>np<span class="sc">.</span>nanmax(etype)<span class="sc">:.1f}</span><span class="ss">"</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Sample zinc mean: </span><span class="sc">{</span>zinc<span class="sc">.</span>mean()<span class="sc">:.1f}</span><span class="ss"> ppm"</span>)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="fl">5.6</span>))</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>sc0 <span class="op">=</span> axes[<span class="dv">0</span>].scatter(</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>    grid[<span class="st">"x"</span>], grid[<span class="st">"y"</span>], c<span class="op">=</span>etype, cmap<span class="op">=</span><span class="st">"plasma"</span>, s<span class="op">=</span><span class="dv">8</span>, marker<span class="op">=</span><span class="st">"."</span>,</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].scatter(</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">"x"</span>], df[<span class="st">"y"</span>], c<span class="op">=</span>zinc, cmap<span class="op">=</span><span class="st">"plasma"</span>, s<span class="op">=</span><span class="dv">28</span>,</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>    edgecolors<span class="op">=</span><span class="st">"w"</span>, linewidths<span class="op">=</span><span class="fl">0.4</span>,</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>plt.colorbar(sc0, ax<span class="op">=</span>axes[<span class="dv">0</span>], label<span class="op">=</span><span class="st">"E-type Zn (ppm)"</span>, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"E-type zinc from indicator kriging"</span>)</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"Easting (m)"</span>)</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"Northing (m)"</span>)</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>sc1 <span class="op">=</span> axes[<span class="dv">1</span>].scatter(</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">"x"</span>], df[<span class="st">"y"</span>], c<span class="op">=</span>zinc, cmap<span class="op">=</span><span class="st">"plasma"</span>, s<span class="op">=</span><span class="dv">36</span>,</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>    edgecolors<span class="op">=</span><span class="st">"k"</span>, linewidths<span class="op">=</span><span class="fl">0.3</span>,</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>plt.colorbar(sc1, ax<span class="op">=</span>axes[<span class="dv">1</span>], label<span class="op">=</span><span class="st">"Zn (ppm)"</span>, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Observed zinc (samples)"</span>)</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"Easting (m)"</span>)</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"Northing (m)"</span>)</span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>E-type Zn (ppm):  min 76.6   mean 396.7   max 1135.4
+Sample zinc mean: 469.7 ppm</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="07_indicator_kriging_files/figure-html/cell-12-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="cpu-vs-gpu-ik-timing" class="level2">
+<h2 class="anchored" data-anchor-id="cpu-vs-gpu-ik-timing">13. CPU vs GPU IK Timing</h2>
+<p>The 155-sample Meuse survey is too small for a GPU comparison: the batched IK solve is a stack of tiny <span class="math inline">\((k+1)\times(k+1)\)</span> systems, and host→device copies dominate. Here we <strong>simulate a Meuse-like zinc field</strong> with Sequential Gaussian Simulation (<code>pygstat.sgsim</code>) so that <span class="math inline">\(n_{\mathrm{train}} &gt; 5{,}000\)</span>, then time <strong>k-nearest-neighbor</strong> indicator kriging (<code>search_radius=None</code>) on <strong>CPU</strong> (<code>use_gpu=False</code>) versus <strong>GPU</strong> (<code>use_gpu=True</code>).</p>
+<p>Simulation recipe (conditioned on the real 155 samples):</p>
+<ol type="1">
+<li>Draw <span class="math inline">\(n_{\mathrm{train}} = 8{,}000\)</span> random locations in the Meuse bounding box.</li>
+<li>Simulate <span class="math inline">\(\log(\mathrm{zinc})\)</span> with <code>sgsim</code> (exponential variogram, practical range 900 m, as in tutorial 18) and back-transform with <span class="math inline">\(\exp(\cdot)\)</span>.</li>
+<li>Draw a separate prediction set (no values needed — IK only needs coordinates).</li>
+</ol>
+<p>Unlike global ordinary kriging, IK’s GPU work scales with <strong><span class="math inline">\(n_{\mathrm{pred}}\)</span></strong> (one stacked solve of shape <code>(n_pred, k+1, k+1)</code> per cutoff), not <span class="math inline">\(n_{\mathrm{train}}^3\)</span>. Training size is therefore held at 8{,}000 and we vary <span class="math inline">\(n_{\mathrm{pred}}\)</span>. Variogram parameters are held fixed (binary spherical: nugget 0.02, partial sill 0.20, range 900 m) so fitting <span class="math inline">\(\gamma_I\)</span> is <strong>not</strong> in the times. Three quartile cutoffs of the simulated zinc are kriged.</p>
+<p>Each timing is the <strong>median</strong> of three <code>fit</code> + <code>predict</code> calls after a short GPU warmup so CUDA kernel compilation is not counted. If CuPy cannot run a kernel here, the GPU column is skipped.</p>
+<div id="cpu-gpu-ik-timing-code" class="cell" data-execution_count="22">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat <span class="im">import</span> sgsim</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>N_REPEATS <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>N_TRAIN <span class="op">=</span> <span class="dv">8000</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>PRED_SIZES <span class="op">=</span> [<span class="dv">500</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="dv">4000</span>, <span class="dv">8000</span>]</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>N_PRED_MAX <span class="op">=</span> <span class="bu">max</span>(PRED_SIZES)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>rng_sim <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>pad <span class="op">=</span> <span class="fl">50.0</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>xmin, xmax <span class="op">=</span> <span class="bu">float</span>(coords[:, <span class="dv">0</span>].<span class="bu">min</span>()) <span class="op">-</span> pad, <span class="bu">float</span>(coords[:, <span class="dv">0</span>].<span class="bu">max</span>()) <span class="op">+</span> pad</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>ymin, ymax <span class="op">=</span> <span class="bu">float</span>(coords[:, <span class="dv">1</span>].<span class="bu">min</span>()) <span class="op">-</span> pad, <span class="bu">float</span>(coords[:, <span class="dv">1</span>].<span class="bu">max</span>()) <span class="op">+</span> pad</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>xy_train_all <span class="op">=</span> rng_sim.uniform([xmin, ymin], [xmax, ymax], size<span class="op">=</span>(N_TRAIN, <span class="dv">2</span>))</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>xy_pred_all <span class="op">=</span> rng_sim.uniform([xmin, ymin], [xmax, ymax], size<span class="op">=</span>(N_PRED_MAX, <span class="dv">2</span>))</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>df_cond <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"x"</span>: coords[:, <span class="dv">0</span>],</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"y"</span>: coords[:, <span class="dv">1</span>],</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"log_zinc"</span>: np.log(zinc),</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>vario_sgs <span class="op">=</span> [<span class="dv">0</span>, <span class="fl">0.05</span>, <span class="fl">900.0</span>, <span class="fl">900.0</span>, <span class="bu">float</span>(np.var(np.log(zinc))), <span class="st">"exponential"</span>]</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Simulating </span><span class="sc">{</span>N_TRAIN<span class="sc">:,}</span><span class="ss"> Meuse-like zinc locations with sgsim"</span>)</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  conditioning : </span><span class="sc">{</span><span class="bu">len</span>(zinc)<span class="sc">}</span><span class="ss"> samples from data/meuse.csv"</span>)</span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  vario        : azimuth=0, nugget=0.05, range=900 m, exponential, log(zinc) space"</span>)</span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>t_sim0 <span class="op">=</span> time.perf_counter()</span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>sims <span class="op">=</span> sgsim(</span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>    xy_train_all, df_cond, <span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"log_zinc"</span>,</span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>    num_points<span class="op">=</span><span class="dv">12</span>, vario<span class="op">=</span>vario_sgs, radius<span class="op">=</span><span class="dv">2000</span>,</span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>    kriging_type<span class="op">=</span><span class="st">"ordinary"</span>, nsim<span class="op">=</span><span class="dv">1</span>, itrans<span class="op">=</span><span class="va">False</span>, seed<span class="op">=</span><span class="dv">42</span>, quiet<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a>z_train_all <span class="op">=</span> np.exp(np.asarray(sims[<span class="dv">0</span>], dtype<span class="op">=</span><span class="bu">float</span>))</span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  sgsim wall   : </span><span class="sc">{</span>time<span class="sc">.</span>perf_counter() <span class="op">-</span> t_sim0<span class="sc">:.1f}</span><span class="ss"> s  (not included in IK times)"</span>)</span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  simulated Zn : [</span><span class="sc">{</span>z_train_all<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.0f}</span><span class="ss">, </span><span class="sc">{</span>z_train_all<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.0f}</span><span class="ss">] ppm"</span></span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"  (Meuse observed [</span><span class="sc">{</span>zinc<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.0f}</span><span class="ss">, </span><span class="sc">{</span>zinc<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.0f}</span><span class="ss">])"</span>)</span>
+<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a>thresholds_sim <span class="op">=</span> [<span class="bu">float</span>(t) <span class="cf">for</span> t <span class="kw">in</span> np.quantile(z_train_all, [<span class="fl">0.25</span>, <span class="fl">0.50</span>, <span class="fl">0.75</span>])]</span>
+<span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a>variogram_params_sim <span class="op">=</span> {t: (<span class="fl">0.02</span>, <span class="fl">0.20</span>, <span class="fl">900.0</span>) <span class="cf">for</span> t <span class="kw">in</span> thresholds_sim}</span>
+<span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  cutoffs      : </span><span class="sc">{</span>[<span class="bu">round</span>(t, <span class="dv">1</span>) <span class="cf">for</span> t <span class="kw">in</span> thresholds_sim]<span class="sc">}</span><span class="ss"> ppm  (quartiles)"</span>)</span>
+<span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb18-43"><a href="#cb18-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-44"><a href="#cb18-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-45"><a href="#cb18-45" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _time_ik(xy_train, z_train, xy_pred, use_gpu, repeats<span class="op">=</span>N_REPEATS, warmup<span class="op">=</span><span class="va">True</span>):</span>
+<span id="cb18-46"><a href="#cb18-46" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Median wall time of IndicatorKriging.fit + predict (k-NN, search_radius=None)."""</span></span>
+<span id="cb18-47"><a href="#cb18-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> warmup:</span>
+<span id="cb18-48"><a href="#cb18-48" aria-hidden="true" tabindex="-1"></a>        k_tr <span class="op">=</span> <span class="bu">min</span>(<span class="dv">40</span>, <span class="bu">len</span>(xy_train))</span>
+<span id="cb18-49"><a href="#cb18-49" aria-hidden="true" tabindex="-1"></a>        k_pr <span class="op">=</span> <span class="bu">min</span>(<span class="dv">40</span>, <span class="bu">len</span>(xy_pred))</span>
+<span id="cb18-50"><a href="#cb18-50" aria-hidden="true" tabindex="-1"></a>        IndicatorKriging(</span>
+<span id="cb18-51"><a href="#cb18-51" aria-hidden="true" tabindex="-1"></a>            cov_model<span class="op">=</span><span class="st">"spherical"</span>, max_neighbors<span class="op">=</span><span class="dv">12</span>, search_radius<span class="op">=</span><span class="va">None</span>, use_gpu<span class="op">=</span>use_gpu,</span>
+<span id="cb18-52"><a href="#cb18-52" aria-hidden="true" tabindex="-1"></a>        ).fit(xy_train[:k_tr], z_train[:k_tr]).predict(</span>
+<span id="cb18-53"><a href="#cb18-53" aria-hidden="true" tabindex="-1"></a>            xy_pred[:k_pr], thresholds_sim, variogram_params_sim</span>
+<span id="cb18-54"><a href="#cb18-54" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb18-55"><a href="#cb18-55" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> use_gpu:</span>
+<span id="cb18-56"><a href="#cb18-56" aria-hidden="true" tabindex="-1"></a>            <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb18-57"><a href="#cb18-57" aria-hidden="true" tabindex="-1"></a>            cp.cuda.Device(<span class="dv">0</span>).synchronize()</span>
+<span id="cb18-58"><a href="#cb18-58" aria-hidden="true" tabindex="-1"></a>    times <span class="op">=</span> []</span>
+<span id="cb18-59"><a href="#cb18-59" aria-hidden="true" tabindex="-1"></a>    last <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb18-60"><a href="#cb18-60" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(repeats):</span>
+<span id="cb18-61"><a href="#cb18-61" aria-hidden="true" tabindex="-1"></a>        t0 <span class="op">=</span> time.perf_counter()</span>
+<span id="cb18-62"><a href="#cb18-62" aria-hidden="true" tabindex="-1"></a>        ik_m <span class="op">=</span> IndicatorKriging(</span>
+<span id="cb18-63"><a href="#cb18-63" aria-hidden="true" tabindex="-1"></a>            cov_model<span class="op">=</span><span class="st">"spherical"</span>, max_neighbors<span class="op">=</span><span class="dv">12</span>, search_radius<span class="op">=</span><span class="va">None</span>, use_gpu<span class="op">=</span>use_gpu,</span>
+<span id="cb18-64"><a href="#cb18-64" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb18-65"><a href="#cb18-65" aria-hidden="true" tabindex="-1"></a>        ik_m.fit(xy_train, z_train)</span>
+<span id="cb18-66"><a href="#cb18-66" aria-hidden="true" tabindex="-1"></a>        last <span class="op">=</span> ik_m.predict(xy_pred, thresholds_sim, variogram_params_sim)</span>
+<span id="cb18-67"><a href="#cb18-67" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> use_gpu:</span>
+<span id="cb18-68"><a href="#cb18-68" aria-hidden="true" tabindex="-1"></a>            <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb18-69"><a href="#cb18-69" aria-hidden="true" tabindex="-1"></a>            cp.cuda.Device(<span class="dv">0</span>).synchronize()</span>
+<span id="cb18-70"><a href="#cb18-70" aria-hidden="true" tabindex="-1"></a>        times.append(time.perf_counter() <span class="op">-</span> t0)</span>
+<span id="cb18-71"><a href="#cb18-71" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.median(times)), last</span>
+<span id="cb18-72"><a href="#cb18-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-73"><a href="#cb18-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-74"><a href="#cb18-74" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _probs_match(a, b):</span>
+<span id="cb18-75"><a href="#cb18-75" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">all</span>(</span>
+<span id="cb18-76"><a href="#cb18-76" aria-hidden="true" tabindex="-1"></a>        np.allclose(a[t], b[t], rtol<span class="op">=</span><span class="fl">1e-4</span>, atol<span class="op">=</span><span class="fl">1e-4</span>, equal_nan<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb18-77"><a href="#cb18-77" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> t <span class="kw">in</span> thresholds_sim</span>
+<span id="cb18-78"><a href="#cb18-78" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb18-79"><a href="#cb18-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-80"><a href="#cb18-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-81"><a href="#cb18-81" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"GPU usable : </span><span class="sc">{</span>USE_GPU<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-82"><a href="#cb18-82" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Repeats    : </span><span class="sc">{</span>N_REPEATS<span class="sc">}</span><span class="ss">  (median wall time of IK fit + predict, k-NN)"</span>)</span>
+<span id="cb18-83"><a href="#cb18-83" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"n_train    : </span><span class="sc">{</span>N_TRAIN<span class="sc">}</span><span class="ss">  (sgsim Meuse-like zinc)"</span>)</span>
+<span id="cb18-84"><a href="#cb18-84" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"n_pred     : </span><span class="sc">{</span>PRED_SIZES<span class="sc">}</span><span class="ss">  (random locations in the Meuse bbox)"</span>)</span>
+<span id="cb18-85"><a href="#cb18-85" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"thresholds : </span><span class="sc">{</span><span class="bu">len</span>(thresholds_sim)<span class="sc">}</span><span class="ss"> quartile cutoffs; max_neighbors=12"</span>)</span>
+<span id="cb18-86"><a href="#cb18-86" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb18-87"><a href="#cb18-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-88"><a href="#cb18-88" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb18-89"><a href="#cb18-89" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n_pred <span class="kw">in</span> PRED_SIZES:</span>
+<span id="cb18-90"><a href="#cb18-90" aria-hidden="true" tabindex="-1"></a>    xy_pr <span class="op">=</span> xy_pred_all[:n_pred]</span>
+<span id="cb18-91"><a href="#cb18-91" aria-hidden="true" tabindex="-1"></a>    cpu_t, pred_cpu <span class="op">=</span> _time_ik(xy_train_all, z_train_all, xy_pr, use_gpu<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb18-92"><a href="#cb18-92" aria-hidden="true" tabindex="-1"></a>    row <span class="op">=</span> {</span>
+<span id="cb18-93"><a href="#cb18-93" aria-hidden="true" tabindex="-1"></a>        <span class="st">"dataset"</span>: <span class="st">"Meuse (sgsim)"</span>,</span>
+<span id="cb18-94"><a href="#cb18-94" aria-hidden="true" tabindex="-1"></a>        <span class="st">"n_train"</span>: N_TRAIN,</span>
+<span id="cb18-95"><a href="#cb18-95" aria-hidden="true" tabindex="-1"></a>        <span class="st">"n_pred"</span>: n_pred,</span>
+<span id="cb18-96"><a href="#cb18-96" aria-hidden="true" tabindex="-1"></a>        <span class="st">"CPU (s)"</span>: cpu_t,</span>
+<span id="cb18-97"><a href="#cb18-97" aria-hidden="true" tabindex="-1"></a>        <span class="st">"GPU (s)"</span>: np.nan,</span>
+<span id="cb18-98"><a href="#cb18-98" aria-hidden="true" tabindex="-1"></a>        <span class="st">"speedup"</span>: np.nan,</span>
+<span id="cb18-99"><a href="#cb18-99" aria-hidden="true" tabindex="-1"></a>        <span class="st">"match"</span>: <span class="st">"—"</span>,</span>
+<span id="cb18-100"><a href="#cb18-100" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb18-101"><a href="#cb18-101" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> USE_GPU:</span>
+<span id="cb18-102"><a href="#cb18-102" aria-hidden="true" tabindex="-1"></a>        gpu_t, pred_gpu <span class="op">=</span> _time_ik(xy_train_all, z_train_all, xy_pr, use_gpu<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb18-103"><a href="#cb18-103" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"GPU (s)"</span>] <span class="op">=</span> gpu_t</span>
+<span id="cb18-104"><a href="#cb18-104" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"speedup"</span>] <span class="op">=</span> cpu_t <span class="op">/</span> gpu_t</span>
+<span id="cb18-105"><a href="#cb18-105" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"match"</span>] <span class="op">=</span> <span class="bu">bool</span>(_probs_match(pred_cpu, pred_gpu))</span>
+<span id="cb18-106"><a href="#cb18-106" aria-hidden="true" tabindex="-1"></a>        <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb18-107"><a href="#cb18-107" aria-hidden="true" tabindex="-1"></a>        cp.get_default_memory_pool().free_all_blocks()</span>
+<span id="cb18-108"><a href="#cb18-108" aria-hidden="true" tabindex="-1"></a>    rows.append(row)</span>
+<span id="cb18-109"><a href="#cb18-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-110"><a href="#cb18-110" aria-hidden="true" tabindex="-1"></a>df_bench <span class="op">=</span> pd.DataFrame(rows)</span>
+<span id="cb18-111"><a href="#cb18-111" aria-hidden="true" tabindex="-1"></a>df_show <span class="op">=</span> df_bench.copy()</span>
+<span id="cb18-112"><a href="#cb18-112" aria-hidden="true" tabindex="-1"></a>df_show[<span class="st">"CPU (ms)"</span>] <span class="op">=</span> (df_show[<span class="st">"CPU (s)"</span>] <span class="op">*</span> <span class="dv">1000</span>).<span class="bu">round</span>(<span class="dv">1</span>)</span>
+<span id="cb18-113"><a href="#cb18-113" aria-hidden="true" tabindex="-1"></a>df_show[<span class="st">"GPU (ms)"</span>] <span class="op">=</span> (df_show[<span class="st">"GPU (s)"</span>] <span class="op">*</span> <span class="dv">1000</span>).<span class="bu">round</span>(<span class="dv">1</span>)</span>
+<span id="cb18-114"><a href="#cb18-114" aria-hidden="true" tabindex="-1"></a>df_show[<span class="st">"speedup"</span>] <span class="op">=</span> df_show[<span class="st">"speedup"</span>].<span class="bu">map</span>(</span>
+<span id="cb18-115"><a href="#cb18-115" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> x: <span class="st">"—"</span> <span class="cf">if</span> pd.isna(x) <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span>x<span class="sc">:.2f}</span><span class="ss">×"</span></span>
+<span id="cb18-116"><a href="#cb18-116" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-117"><a href="#cb18-117" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_show[[<span class="st">"dataset"</span>, <span class="st">"n_train"</span>, <span class="st">"n_pred"</span>, <span class="st">"CPU (ms)"</span>, <span class="st">"GPU (ms)"</span>, <span class="st">"speedup"</span>, <span class="st">"match"</span>]].to_string(index<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb18-118"><a href="#cb18-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-119"><a href="#cb18-119" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="fl">4.2</span>))</span>
+<span id="cb18-120"><a href="#cb18-120" aria-hidden="true" tabindex="-1"></a>n_vals <span class="op">=</span> df_bench[<span class="st">"n_pred"</span>].to_numpy()</span>
+<span id="cb18-121"><a href="#cb18-121" aria-hidden="true" tabindex="-1"></a>cpu_ms <span class="op">=</span> df_bench[<span class="st">"CPU (s)"</span>].to_numpy() <span class="op">*</span> <span class="dv">1000</span></span>
+<span id="cb18-122"><a href="#cb18-122" aria-hidden="true" tabindex="-1"></a>gpu_ms <span class="op">=</span> df_bench[<span class="st">"GPU (s)"</span>].to_numpy() <span class="op">*</span> <span class="dv">1000</span></span>
+<span id="cb18-123"><a href="#cb18-123" aria-hidden="true" tabindex="-1"></a>labels <span class="op">=</span> [<span class="bu">str</span>(<span class="bu">int</span>(n)) <span class="cf">for</span> n <span class="kw">in</span> n_vals]</span>
+<span id="cb18-124"><a href="#cb18-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-125"><a href="#cb18-125" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.arange(<span class="bu">len</span>(n_vals))</span>
+<span id="cb18-126"><a href="#cb18-126" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> <span class="fl">0.36</span></span>
+<span id="cb18-127"><a href="#cb18-127" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].bar(x <span class="op">-</span> w <span class="op">/</span> <span class="dv">2</span>, cpu_ms, w, label<span class="op">=</span><span class="st">"CPU (NumPy)"</span>, color<span class="op">=</span><span class="st">"steelblue"</span>)</span>
+<span id="cb18-128"><a href="#cb18-128" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> USE_GPU <span class="kw">and</span> np.isfinite(gpu_ms).<span class="bu">all</span>():</span>
+<span id="cb18-129"><a href="#cb18-129" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">0</span>].bar(x <span class="op">+</span> w <span class="op">/</span> <span class="dv">2</span>, gpu_ms, w, label<span class="op">=</span><span class="st">"GPU (CuPy)"</span>, color<span class="op">=</span><span class="st">"darkorange"</span>)</span>
+<span id="cb18-130"><a href="#cb18-130" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xticks(x)</span>
+<span id="cb18-131"><a href="#cb18-131" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xticklabels(labels, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb18-132"><a href="#cb18-132" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"Number of prediction points $n_{</span><span class="ch">\\</span><span class="st">mathrm</span><span class="sc">{pred}</span><span class="st">}$"</span>)</span>
+<span id="cb18-133"><a href="#cb18-133" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"Median time (ms)"</span>)</span>
+<span id="cb18-134"><a href="#cb18-134" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"IndicatorKriging.predict (k-NN) — CPU vs GPU"</span>)</span>
+<span id="cb18-135"><a href="#cb18-135" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend()</span>
+<span id="cb18-136"><a href="#cb18-136" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_yscale(<span class="st">"log"</span>)</span>
+<span id="cb18-137"><a href="#cb18-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-138"><a href="#cb18-138" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> USE_GPU:</span>
+<span id="cb18-139"><a href="#cb18-139" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].plot(n_vals, df_bench[<span class="st">"speedup"</span>], <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"darkgreen"</span>, lw<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb18-140"><a href="#cb18-140" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].axhline(<span class="fl">1.0</span>, color<span class="op">=</span><span class="st">"grey"</span>, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb18-141"><a href="#cb18-141" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_xlabel(<span class="st">"Number of prediction points $n_{</span><span class="ch">\\</span><span class="st">mathrm</span><span class="sc">{pred}</span><span class="st">}$"</span>)</span>
+<span id="cb18-142"><a href="#cb18-142" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_ylabel(<span class="st">"Speedup (CPU time / GPU time)"</span>)</span>
+<span id="cb18-143"><a href="#cb18-143" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_title(<span class="st">"GPU speedup vs prediction size"</span>)</span>
+<span id="cb18-144"><a href="#cb18-144" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb18-145"><a href="#cb18-145" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb18-146"><a href="#cb18-146" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].text(</span>
+<span id="cb18-147"><a href="#cb18-147" aria-hidden="true" tabindex="-1"></a>        <span class="fl">0.5</span>, <span class="fl">0.5</span>,</span>
+<span id="cb18-148"><a href="#cb18-148" aria-hidden="true" tabindex="-1"></a>        <span class="st">"GPU not usable in this environment</span><span class="ch">\\</span><span class="st">nCPU-only timings shown"</span>,</span>
+<span id="cb18-149"><a href="#cb18-149" aria-hidden="true" tabindex="-1"></a>        ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>, transform<span class="op">=</span>axes[<span class="dv">1</span>].transAxes,</span>
+<span id="cb18-150"><a href="#cb18-150" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb18-151"><a href="#cb18-151" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_axis_off()</span>
+<span id="cb18-152"><a href="#cb18-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-153"><a href="#cb18-153" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb18-154"><a href="#cb18-154" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simulating 8,000 Meuse-like zinc locations with sgsim
+  conditioning : 155 samples from data/meuse.csv
+  vario        : azimuth=0, nugget=0.05, range=900 m, exponential, log(zinc) space
+  sgsim wall   : 58.4 s  (not included in IK times)
+  simulated Zn : [25, 8046] ppm  (Meuse observed [113, 1839])
+  cutoffs      : [224.0, 424.1, 888.2] ppm  (quartiles)
+
+GPU usable : True
+Repeats    : 3  (median wall time of IK fit + predict, k-NN)
+n_train    : 8000  (sgsim Meuse-like zinc)
+n_pred     : [500, 1000, 2000, 4000, 8000]  (random locations in the Meuse bbox)
+thresholds : 3 quartile cutoffs; max_neighbors=12
+
+      dataset  n_train  n_pred  CPU (ms)  GPU (ms) speedup  match
+Meuse (sgsim)     8000     500      20.7      14.1   1.46×   True
+Meuse (sgsim)     8000    1000      38.1      17.0   2.24×   True
+Meuse (sgsim)     8000    2000      84.7      23.5   3.61×   True
+Meuse (sgsim)     8000    4000     179.1      36.4   4.92×   True
+Meuse (sgsim)     8000    8000     351.7      62.8   5.60×   True
+</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="07_indicator_kriging_files/figure-html/cell-13-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Exceedance probabilities from the two backends should <strong>match</strong> (<code>match = True</code>). The GPU speedup comes from the batched <span class="math inline">\((n_{\mathrm{pred}}, k+1, k+1)\)</span> OK solve at each cutoff, not from SGS (simulation is CPU sequential and is excluded from the times). Small <span class="math inline">\(n_{\mathrm{pred}}\)</span> can show little GPU gain because kernel-launch overhead dominates; as the prediction set grows the stacked solve keeps the GPU several times faster. Use <code>use_gpu=USE_GPU</code> with <code>search_radius=None</code> so the same cells run on a laptop CPU or a CUDA workstation without edits.</p>
+<hr>
+</section>
+<section id="summary-and-conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="summary-and-conclusions">14. Summary and Conclusions</h2>
+<ul>
+<li><strong>Indicator kriging</strong> estimates <span class="math inline">\(P[Z \ge z_k]\)</span> by ordinary kriging of the 0/1 exceedance indicators. It is the right interpolator when the grade is skewed, when a regulatory cutoff matters more than the mean, or when a Gaussian OK probability map would be misleading.</li>
+<li><strong><code>pygstat.IndicatorKriging</code></strong> implements that OK system in 2-D with a local search neighbourhood and per-threshold spherical / exponential covariance — the ordinary-kriging branch of GSLIB <code>ik3d</code>.</li>
+<li>On <strong>Meuse zinc</strong>, nine quantile cutoffs (10%–90%) produced well-behaved indicator variograms. Extreme cutoffs were avoided because the indicator variance <span class="math inline">\(p(1-p)\)</span> collapses and the empirical <span class="math inline">\(\gamma_I\)</span> becomes noisy.</li>
+<li><strong>5-fold Brier scores</strong> sat below the no-skill baseline <span class="math inline">\(p(1-p)\)</span> at every cutoff, so the spatial model is adding skill, not just reproducing the histogram.</li>
+<li>The <strong>probability maps</strong> concentrate high <span class="math inline">\(P(\mathrm{Zn} \ge z_{90})\)</span> along the river, matching the sample pattern, while the 10th-percentile map is high almost everywhere (most of the floodplain exceeds the low cutoff).</li>
+<li>The <strong>E-type map</strong> (<code>compute_etype_from_probabilities</code>) is a distribution-free mean-grade surface. It is smoother than any single sequential-indicator realization (<code>sisim</code>) and is the IK analogue of an ordinary-kriging grade map.</li>
+<li><strong>CPU / GPU.</strong> k-NN indicator kriging (<code>search_radius=None</code>, <code>use_gpu=USE_GPU</code>) was timed on an <strong>sgsim</strong> Meuse-like zinc field with 8{,}000 training locations. The GPU batched <code>(n_pred, k+1, k+1)</code> solve is the accelerated step; SGS itself is sequential and was not timed.</li>
+</ul>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Object</th>
+<th>Role in this notebook</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>fit_indicator_variogram</code></td>
+<td>Empirical <span class="math inline">\(\gamma_I(h; z_k)\)</span></td>
+</tr>
+<tr class="even">
+<td><code>IndicatorKriging</code></td>
+<td>Ordinary IK probabilities <span class="math inline">\(P[Z \ge z_k]\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>IndicatorKrigingCV</code></td>
+<td>5-fold Brier-score validation</td>
+</tr>
+<tr class="even">
+<td><code>compute_etype_from_probabilities</code></td>
+<td><span class="math inline">\(Z_E = \int P[Z \ge z]\,dz\)</span></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="resources" class="level2">
+<h2 class="anchored" data-anchor-id="resources">15. Resources</h2>
+<section id="textbooks" class="level3">
+<h3 class="anchored" data-anchor-id="textbooks">Textbooks</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Reference</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Deutsch, C.V. &amp; Journel, A.G. (1998). <em>GSLIB: Geostatistical Software Library and User’s Guide</em> (2nd ed.). Oxford University Press.</td>
+<td>Reference for <code>ik3d</code>, order-relation corrections, and E-type estimates</td>
+</tr>
+<tr class="even">
+<td>Goovaerts, P. (1997). <em>Geostatistics for Natural Resources Evaluation</em>. Oxford University Press.</td>
+<td>Indicator coding, per-threshold variograms, E-type vs.&nbsp;simulation</td>
+</tr>
+<tr class="odd">
+<td>Chilès, J.-P. &amp; Delfiner, P. (2012). <em>Geostatistics: Modeling Spatial Uncertainty</em> (2nd ed.). Wiley.</td>
+<td>Indicator formalism and conditional distributions</td>
+</tr>
+<tr class="even">
+<td>Isaaks, E.H. &amp; Srivastava, R.M. (1989). <em>An Introduction to Applied Geostatistics</em>. Oxford.</td>
+<td>Worked indicator examples</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="key-papers" class="level3">
+<h3 class="anchored" data-anchor-id="key-papers">Key papers</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Paper</th>
+<th>Contribution</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Journel, A.G. (1983). Nonparametric estimation of spatial distributions. <em>Mathematical Geology</em> 15, 445–468.</td>
+<td>Indicator approach to local ccdfs</td>
+</tr>
+<tr class="even">
+<td>Brier, G.W. (1950). Verification of forecasts expressed in terms of probability. <em>Monthly Weather Review</em> 78, 1–3.</td>
+<td>Brier score for probability forecasts</td>
+</tr>
+<tr class="odd">
+<td>Journel, A.G. &amp; Huijbregts, C.J. (1978). <em>Mining Geostatistics</em>. Academic Press.</td>
+<td>Ordinary kriging system reused at each cutoff</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="in-this-library" class="level3">
+<h3 class="anchored" data-anchor-id="in-this-library">In this library</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Object</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>pygstat.IndicatorKriging</code></td>
+<td>Ordinary indicator kriging (exceedance coding <span class="math inline">\(I(Z \ge z_k)\)</span>; <code>use_gpu</code> for k-NN)</td>
+</tr>
+<tr class="even">
+<td><code>pygstat.fit_indicator_variogram</code></td>
+<td>Empirical indicator semivariogram</td>
+</tr>
+<tr class="odd">
+<td><code>pygstat.IndicatorKrigingCV</code></td>
+<td>K-fold Brier-score cross-validation</td>
+</tr>
+<tr class="even">
+<td><code>pygstat.compute_etype_from_probabilities</code></td>
+<td>E-type (conditional mean) from IK probabilities</td>
+</tr>
+<tr class="odd">
+<td><code>pygstat.sgsim</code></td>
+<td>Sequential Gaussian simulation used in §13 to build <span class="math inline">\(n=8{,}000\)</span> Meuse-like zinc</td>
+</tr>
+<tr class="even">
+<td><code>pygstat.sisim</code></td>
+<td>Sequential indicator simulation (GSLIB <code>sisim.for</code> port)</td>
+</tr>
+<tr class="odd">
+<td><code>gslib90sc/ik3d.for</code></td>
+<td>Original Fortran indicator-kriging driver</td>
+</tr>
+</tbody>
+</table>
+
+
+</section>
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/zia207\.github\.io\/pygstat\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../Tutorial/06_05_regression_kriging_gnn.html" class="pagination-link" aria-label="Graph Neural Nets">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Graph Neural Nets</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../Tutorial/10_disjunctive_kriging.html" class="pagination-link" aria-label="Disjunctive Kriging">
+        <span class="nav-page-text">Disjunctive Kriging</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© CC-By Zia Ahmed, Upatta Analytics, 2026</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>This page is built with <a href="https://quarto.org/">Quarto</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

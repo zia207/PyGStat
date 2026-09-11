@@ -1,0 +1,2591 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>11. Empirical Bayesian Kriging – PyGStat</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../Tutorial/09_soft_kriging.html" rel="next">
+<link href="../Tutorial/10_disjunctive_kriging.html" rel="prev">
+<link href="../Image/pygstat_logo_light.svg" rel="icon" type="image/svg+xml">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f1aadacce99040138bbb613f9330654f.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-bf6de5ccb156a65fc439966d4053cafd.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-c3ddef8e9936373b1ee063945a43a984.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-bf6de5ccb156a65fc439966d4053cafd.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../Image/pygstat_logo_light.svg" alt="" class="navbar-logo light-content">
+    <img src="../Image/pygstat_logo_light.svg" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">PyGStat</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../index.html" aria-current="page"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-getting-started" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Getting Started</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-getting-started">    
+        <li>
+    <a class="dropdown-item" href="../Tutorial/00_getting_started.html">
+ <span class="dropdown-text">Getting Started</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../install.html">
+ <span class="dropdown-text">PyGStat Installation</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-tutorial" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Tutorial</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-tutorial">    
+        <li class="dropdown-header">Core Interpolation</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/01_variogram_modeling.html">
+ <span class="dropdown-text">Variogram Modeling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/02_simple_kriging.html">
+ <span class="dropdown-text">Simple Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/03_ordinary_kriging.html">
+ <span class="dropdown-text">Ordinary Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/04_universal_kriging.html">
+ <span class="dropdown-text">Universal Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/05_cokriging.html">
+ <span class="dropdown-text">Cokriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/08_kriging_3d.html">
+ <span class="dropdown-text">3-D Kriging (KT3D)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Regression Kriging</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_01_regression_kriging_scikit_learn.html">
+ <span class="dropdown-text">scikit-learn</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_02_regression_kriging_H20.html">
+ <span class="dropdown-text">H2O AutoML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_03_regression_kriging_pytorch.html">
+ <span class="dropdown-text">PyTorch MLP</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_04_regression_krigingDNN_TF.html">
+ <span class="dropdown-text">TensorFlow / Keras</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_05_regression_kriging_gnn.html">
+ <span class="dropdown-text">Graph Neural Nets</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Indicators, Structure, and Space–Time</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/07_indicator_kriging.html">
+ <span class="dropdown-text">Indicator Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/10_disjunctive_kriging.html">
+ <span class="dropdown-text">Disjunctive Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/11_empirical_bayesian_kriging.html">
+ <span class="dropdown-text">Empirical Bayesian Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/09_soft_kriging.html">
+ <span class="dropdown-text">Soft Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/12_factorial_kriging.html">
+ <span class="dropdown-text">Factorial Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/13_krigingST.html">
+ <span class="dropdown-text">Spatio-Temporal OK</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/14_kriging_CNNLSTM.html">
+ <span class="dropdown-text">ConvLSTM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/15_kriging_STGNN.html">
+ <span class="dropdown-text">STGNN (TGCN / DCRNN)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/16_kriging_STGTN.html">
+ <span class="dropdown-text">STGTN (STTN / GMAN)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Poisson Kriging</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_01_poisson_Kriging_ata_atp.html">
+ <span class="dropdown-text">Area-to-Area / Area-to-Point</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_02_poisson_cokriging.html">
+ <span class="dropdown-text">Poisson Cokriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_03_poisson_kriging_ST.html">
+ <span class="dropdown-text">Spatio-Temporal Poisson</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Simulation</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/18_sgsim.html">
+ <span class="dropdown-text">SGSIM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/19_sisim.html">
+ <span class="dropdown-text">SISIM</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://sites.google.com/view/r-data-sci-env/home"> <i class="bi bi-house" role="img" aria-label="Upatta Analytics">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://pypi.org/project/pygstat/"> <i class="bi bi-box" role="img" aria-label="PyPI">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/zia207/pygstat"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/zia-ahmed207"> <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="mailto:zia207@gmail.com"> <i class="bi bi-envelope" role="img" aria-label="Email">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../Tutorial/07_indicator_kriging.html"><strong>Indicators, Structure, and Space–Time</strong></a></li><li class="breadcrumb-item"><a href="../Tutorial/11_empirical_bayesian_kriging.html">Empirical Bayesian Kriging</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../Tutorial/07_indicator_kriging.html"><strong>Indicators, Structure, and Space–Time</strong></a></li><li class="breadcrumb-item"><a href="../Tutorial/11_empirical_bayesian_kriging.html">Empirical Bayesian Kriging</a></li></ol></nav>
+      <h1 class="title">11. Empirical Bayesian Kriging</h1>
+                      </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-center sidebar-header">
+      <a href="../index.html" class="sidebar-logo-link">
+      <img src="../Image/pygstat_logo_light.svg" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="../Image/pygstat_logo_light.svg" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Package Overview</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Core Interpolation</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/01_variogram_modeling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Variogram Modeling</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/02_simple_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Simple Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/03_ordinary_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Ordinary Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/04_universal_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Universal Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/05_cokriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cokriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/08_kriging_3d.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">3-D Kriging (KT3D)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Regression Kriging</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_01_regression_kriging_scikit_learn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">scikit-learn</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_02_regression_kriging_H20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">H2O AutoML</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_03_regression_kriging_pytorch.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PyTorch MLP</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_04_regression_krigingDNN_TF.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TensorFlow / Keras</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_05_regression_kriging_gnn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Graph Neural Nets</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Indicators, Structure, and Space–Time</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/07_indicator_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Indicator Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/10_disjunctive_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Disjunctive Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/11_empirical_bayesian_kriging.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Empirical Bayesian Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/09_soft_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Soft Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/12_factorial_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Factorial Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/13_krigingST.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spatio-Temporal OK</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/14_kriging_CNNLSTM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ConvLSTM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/15_kriging_STGNN.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">STGNN (TGCN / DCRNN)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/16_kriging_STGTN.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">STGTN (STTN / GMAN)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Poisson Kriging</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_01_poisson_Kriging_ata_atp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Area-to-Area / Area-to-Point</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_02_poisson_cokriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Poisson Cokriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_03_poisson_kriging_ST.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spatio-Temporal Poisson</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Simulation</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/18_sgsim.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">SGSIM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/19_sisim.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">SISIM</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On This Page</h2>
+   
+  <ul>
+  <li><a href="#table-of-contents" id="toc-table-of-contents" class="nav-link active" data-scroll-target="#table-of-contents">Table of Contents</a></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview">1. Overview</a>
+  <ul>
+  <li><a href="#the-problem-it-fixes" id="toc-the-problem-it-fixes" class="nav-link" data-scroll-target="#the-problem-it-fixes">The problem it fixes</a></li>
+  <li><a href="#the-bayesian-target" id="toc-the-bayesian-target" class="nav-link" data-scroll-target="#the-bayesian-target">The Bayesian target</a></li>
+  <li><a href="#the-algorithm" id="toc-the-algorithm" class="nav-link" data-scroll-target="#the-algorithm">The algorithm</a></li>
+  <li><a href="#practical-extras-as-implemented-in-arcgis-geostatistical-analyst-the-reference-implementation" id="toc-practical-extras-as-implemented-in-arcgis-geostatistical-analyst-the-reference-implementation" class="nav-link" data-scroll-target="#practical-extras-as-implemented-in-arcgis-geostatistical-analyst-the-reference-implementation">Practical extras (as implemented in ArcGIS Geostatistical Analyst, the reference implementation)</a></li>
+  <li><a href="#how-it-compares-to-whats-already-in-pygstat" id="toc-how-it-compares-to-whats-already-in-pygstat" class="nav-link" data-scroll-target="#how-it-compares-to-whats-already-in-pygstat">How it compares to what’s already in <code>pygstat</code></a></li>
+  </ul></li>
+  <li><a href="#how-pygstat-implements-ebk" id="toc-how-pygstat-implements-ebk" class="nav-link" data-scroll-target="#how-pygstat-implements-ebk">2. How pygstat Implements EBK</a></li>
+  <li><a href="#python-setup" id="toc-python-setup" class="nav-link" data-scroll-target="#python-setup">3. Python Setup</a></li>
+  <li><a href="#load-and-explore-the-jura-cadmium-data" id="toc-load-and-explore-the-jura-cadmium-data" class="nav-link" data-scroll-target="#load-and-explore-the-jura-cadmium-data">4. Load and Explore the Jura Cadmium Data</a></li>
+  <li><a href="#stratified-split-and-log-transform" id="toc-stratified-split-and-log-transform" class="nav-link" data-scroll-target="#stratified-split-and-log-transform">5. Stratified Split and Log Transform</a></li>
+  <li><a href="#fit-empirical-bayesian-kriging" id="toc-fit-empirical-bayesian-kriging" class="nav-link" data-scroll-target="#fit-empirical-bayesian-kriging">6. Fit Empirical Bayesian Kriging</a></li>
+  <li><a href="#the-semivariogram-ensemble" id="toc-the-semivariogram-ensemble" class="nav-link" data-scroll-target="#the-semivariogram-ensemble">7. The Semivariogram Ensemble</a></li>
+  <li><a href="#validate-ebk-vs-ordinary-kriging" id="toc-validate-ebk-vs-ordinary-kriging" class="nav-link" data-scroll-target="#validate-ebk-vs-ordinary-kriging">8. Validate EBK vs Ordinary Kriging</a></li>
+  <li><a href="#predict-cd-on-the-jura-grid" id="toc-predict-cd-on-the-jura-grid" class="nav-link" data-scroll-target="#predict-cd-on-the-jura-grid">9. Predict Cd on the Jura Grid</a></li>
+  <li><a href="#probability-maps-of-exceedance" id="toc-probability-maps-of-exceedance" class="nav-link" data-scroll-target="#probability-maps-of-exceedance">10. Probability Maps of Exceedance</a></li>
+  <li><a href="#summary-and-conclusions" id="toc-summary-and-conclusions" class="nav-link" data-scroll-target="#summary-and-conclusions">11. Summary and Conclusions</a>
+  <ul>
+  <li><a href="#practical-takeaways" id="toc-practical-takeaways" class="nav-link" data-scroll-target="#practical-takeaways">Practical takeaways</a></li>
+  <li><a href="#next-steps" id="toc-next-steps" class="nav-link" data-scroll-target="#next-steps">Next steps</a></li>
+  </ul></li>
+  <li><a href="#resources" id="toc-resources" class="nav-link" data-scroll-target="#resources">12. Resources</a>
+  <ul>
+  <li><a href="#textbooks" id="toc-textbooks" class="nav-link" data-scroll-target="#textbooks">Textbooks</a></li>
+  <li><a href="#key-papers" id="toc-key-papers" class="nav-link" data-scroll-target="#key-papers">Key papers</a></li>
+  <li><a href="#in-this-library" id="toc-in-this-library" class="nav-link" data-scroll-target="#in-this-library">In this library</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+
+<p><strong>Dataset:</strong> Jura geochemical survey (<code>data/jura_data.csv</code>, 359 samples) + prediction grid (<code>data/jura_grid.csv</code>)</p>
+<p><strong>Target:</strong> Cadmium (<code>Cd</code>, mg/kg), modelled on the log scale</p>
+<p><strong>Library:</strong> <code>pygstat.ebk</code> — Empirical Bayesian Kriging (Krivoruchko, 2012)</p>
+<hr>
+<section id="table-of-contents" class="level2">
+<h2 class="anchored" data-anchor-id="table-of-contents">Table of Contents</h2>
+<ol type="1">
+<li><a href="#1-overview">Overview</a></li>
+<li><a href="#2-how-pygstat-implements-ebk">How pygstat Implements EBK</a></li>
+<li><a href="#3-python-setup">Python Setup</a></li>
+<li><a href="#4-load-and-explore-the-jura-cadmium-data">Load and Explore the Jura Cadmium Data</a></li>
+<li><a href="#5-stratified-split-and-log-transform">Stratified Split and Log Transform</a></li>
+<li><a href="#6-fit-empirical-bayesian-kriging">Fit Empirical Bayesian Kriging</a></li>
+<li><a href="#7-the-semivariogram-ensemble">The Semivariogram Ensemble</a></li>
+<li><a href="#8-validate-ebk-vs-ordinary-kriging">Validate EBK vs Ordinary Kriging</a></li>
+<li><a href="#9-predict-cd-on-the-jura-grid">Predict Cd on the Jura Grid</a></li>
+<li><a href="#10-probability-maps-of-exceedance">Probability Maps of Exceedance</a></li>
+<li><a href="#11-summary-and-conclusions">Summary and Conclusions</a></li>
+<li><a href="#12-resources">Resources</a></li>
+</ol>
+<hr>
+</section>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">1. Overview</h2>
+<section id="the-problem-it-fixes" class="level3">
+<h3 class="anchored" data-anchor-id="the-problem-it-fixes">The problem it fixes</h3>
+<p>Ordinary/simple/universal kriging all follow the same two-step recipe:</p>
+<ol type="1">
+<li>Estimate the semivariogram parameters <span class="math inline">\(\theta = (\mathrm{nugget},\,\mathrm{sill},\,\mathrm{range},\,\ldots)\)</span> once from the data — e.g.&nbsp;by weighted least squares or REML — getting a single point estimate <span class="math inline">\(\hat\theta\)</span>.</li>
+<li><strong>Treat <span class="math inline">\(\hat\theta\)</span> as if it were the true, known <span class="math inline">\(\theta\)</span></strong> and krige with it.</li>
+</ol>
+<p>Step 2 is the weak link. <span class="math inline">\(\hat\theta\)</span> is itself an estimate with its own sampling error — especially with a modest sample size or a variogram whose range/nugget is hard to pin down — but classical kriging’s reported prediction variance only accounts for spatial interpolation error <em>given</em> <span class="math inline">\(\theta = \hat\theta\)</span>. It silently ignores the uncertainty in <span class="math inline">\(\hat\theta\)</span> itself, so kriging standard errors are systematically <strong>too small</strong>, and probability/quantile maps built from them are overconfident.</p>
+<p>Empirical Bayesian Kriging (Krivoruchko, 2012) fixes this by not committing to a single <span class="math inline">\(\hat\theta\)</span> — it builds an empirical distribution over plausible semivariograms and averages predictions over that distribution.</p>
+</section>
+<section id="the-bayesian-target" class="level3">
+<h3 class="anchored" data-anchor-id="the-bayesian-target">The Bayesian target</h3>
+<p>Conceptually, what you actually want is the posterior predictive distribution</p>
+<p><span class="math display">\[
+p\big(Z(x_0)\mid Z\big)
+= \int p\big(Z(x_0)\mid Z,\theta\big)\, p(\theta\mid Z)\, d\theta,
+\]</span></p>
+<p>i.e.&nbsp;krige for every possible <span class="math inline">\(\theta\)</span>, weighted by how consistent each <span class="math inline">\(\theta\)</span> is with the observed data. A fully Bayesian treatment (Handcock &amp; Stein, 1993; Diggle &amp; Ribeiro) specifies a prior <span class="math inline">\(\pi(\theta)\)</span> and samples <span class="math inline">\(p(\theta\mid Z) \propto L(Z\mid\theta)\,\pi(\theta)\)</span> via MCMC — expensive and requires prior elicitation.</p>
+<p>EBK is <strong>“empirical”</strong> Bayesian because it sidesteps MCMC and a user-specified prior: it builds an approximation to <span class="math inline">\(p(\theta\mid Z)\)</span> directly from the data via a simulate-and-refit loop, the same spirit as empirical Bayes methods in statistics (estimate the “prior”/hyperparameter distribution from the data itself rather than specifying it a priori).</p>
+</section>
+<section id="the-algorithm" class="level3">
+<h3 class="anchored" data-anchor-id="the-algorithm">The algorithm</h3>
+<p>For <span class="math inline">\(k = 1, \ldots, K\)</span> (<span class="math inline">\(K \approx 100\)</span> by default):</p>
+<ol type="1">
+<li><strong>Fit once.</strong> Estimate a semivariogram <span class="math inline">\(\hat\theta_0\)</span> from the actual data <span class="math inline">\(Z\)</span> (REML is standard here, since it’s less biased than method-of-moments for this purpose).</li>
+<li><strong>Simulate.</strong> Using <span class="math inline">\(\hat\theta_0\)</span> and the fitted mean, generate a synthetic Gaussian random field realization <span class="math inline">\(Z^*_k\)</span> at the <em>same</em> observation locations — this is what a dataset consistent with <span class="math inline">\(\hat\theta_0\)</span> would look like.</li>
+<li><strong>Refit.</strong> Re-estimate a new semivariogram <span class="math inline">\(\theta_k\)</span> from <span class="math inline">\(Z^*_k\)</span>. Because <span class="math inline">\(Z^*_k\)</span> was simulated from <span class="math inline">\(\hat\theta_0\)</span>, the scatter of <span class="math inline">\(\theta_k\)</span> across many <span class="math inline">\(k\)</span> approximates the <em>sampling distribution</em> of the semivariogram-fitting procedure around the truth — i.e.&nbsp;an empirical stand-in for <span class="math inline">\(p(\theta\mid Z)\)</span>.</li>
+<li><strong>Weight.</strong> Krige <span class="math inline">\(Z^*_k\)</span> at its own input locations using <span class="math inline">\(\theta_k\)</span> and compare the kriged values to the actual simulated <span class="math inline">\(Z^*_k\)</span> — this consistency check yields a weight <span class="math inline">\(w_k\)</span> for how well that semivariogram explains its own data (poorly-behaved refits get downweighted).</li>
+</ol>
+<p>This produces an ensemble <span class="math inline">\(\{(\theta_1, w_1), \ldots, (\theta_K, w_K)\}\)</span> — <span class="math inline">\(K\)</span> semivariograms with weights, standing in for the posterior over <span class="math inline">\(\theta\)</span>.</p>
+<p><strong>Prediction.</strong> At a new location <span class="math inline">\(x_0\)</span>, krige the <em>real</em> data <span class="math inline">\(Z\)</span> once per ensemble member:</p>
+<p><span class="math display">\[
+\hat Z_k(x_0),\; \sigma^2_k(x_0)
+= \mathrm{SimpleKriging/OrdinaryKriging}(\theta_k).\mathrm{predict}(x_0)
+\qquad k=1,\ldots,K.
+\]</span></p>
+<p>Then combine:</p>
+<p><span class="math display">\[
+\hat Z_{\mathrm{EBK}}(x_0) = \sum_k w_k\, \hat Z_k(x_0)
+\]</span></p>
+<p><span class="math display">\[
+\begin{aligned}
+\mathrm{Var}[Z(x_0)]
+&amp;= \sum_k w_k\, \sigma^2_k(x_0)
+\quad\text{(average within-model kriging variance)} \\
+&amp;\quad + \sum_k w_k\, \big(\hat Z_k(x_0) - \hat Z_{\mathrm{EBK}}(x_0)\big)^2
+\quad\text{(between-model variance, from $\theta$-uncertainty).}
+\end{aligned}
+\]</span></p>
+<p>That variance decomposition is exactly the law of total variance / Rubin’s multiple-imputation combining rule: <em>within-model</em> variance (ordinary kriging error, given <span class="math inline">\(\theta\)</span>) plus <em>between-model</em> variance (disagreement across plausible <span class="math inline">\(\theta\)</span>’s). Classical kriging only ever reports the first term — EBK’s headline benefit is the second term, which is precisely the part that was previously ignored.</p>
+<p>Because you actually have <span class="math inline">\(K\)</span> full predictive Gaussians <span class="math inline">\(N\big(\hat Z_k(x_0),\,\sigma^2_k(x_0)\big)\)</span> rather than one, you get a genuine <strong>mixture-of-Gaussians predictive distribution</strong> at every location, not just a mean and a variance — so exceedance-probability and quantile maps built from it are better calibrated than classical kriging’s, especially in the small-sample/weak-range regime.</p>
+</section>
+<section id="practical-extras-as-implemented-in-arcgis-geostatistical-analyst-the-reference-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="practical-extras-as-implemented-in-arcgis-geostatistical-analyst-the-reference-implementation">Practical extras (as implemented in ArcGIS Geostatistical Analyst, the reference implementation)</h3>
+<ul>
+<li><strong>Local, not global, semivariograms.</strong> The study area is split into many overlapping subsets (a moving-window scheme); the whole simulate-refit-weight procedure above runs <em>per subset</em>, so the semivariogram can vary smoothly across space — a lightweight way of handling mild non-stationarity without a full space-varying covariance model.</li>
+<li><strong>Automatic transformation.</strong> Data can be transformed (Box-Cox or a normal-score-style transform) before the semivariogram/simulation loop, since the underlying Gaussian-process machinery assumes approximate normality — much like the Gaussian anamorphosis step in disjunctive kriging, but used here just to stabilize the variogram-fitting step rather than to build a nonlinear estimator.</li>
+<li><strong>Cost.</strong> You pay for <span class="math inline">\(K\)</span> semivariogram fits (and <span class="math inline">\(K\)</span> krigings per prediction point) instead of one — meaningfully more expensive than OK/SK, but each piece is embarrassingly parallel across <span class="math inline">\(k\)</span>.</li>
+</ul>
+</section>
+<section id="how-it-compares-to-whats-already-in-pygstat" class="level3">
+<h3 class="anchored" data-anchor-id="how-it-compares-to-whats-already-in-pygstat">How it compares to what’s already in <code>pygstat</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Classical OK/SK/UK</th>
+<th>EBK</th>
+<th>Disjunctive Kriging</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Semivariogram</td>
+<td>one point estimate, treated as truth</td>
+<td>ensemble of refits, uncertainty propagated</td>
+<td>one point estimate (on the Gaussian-transformed data)</td>
+</tr>
+<tr class="even">
+<td>Linear/nonlinear</td>
+<td>linear in the data</td>
+<td>linear in the data (still a kriging predictor per ensemble member)</td>
+<td>nonlinear (sum of Hermite functions)</td>
+</tr>
+<tr class="odd">
+<td>What it improves</td>
+<td>—</td>
+<td><strong>honest prediction variance / calibrated probability maps</strong> under variogram-parameter uncertainty</td>
+<td><strong>point estimate itself</strong>, for skewed data, via a richer estimator class</td>
+</tr>
+<tr class="even">
+<td>Handles non-stationarity</td>
+<td>no (needs UK drift terms)</td>
+<td>yes, via local overlapping subsets</td>
+<td>no</td>
+</tr>
+</tbody>
+</table>
+<p>The two aren’t competitors — EBK’s uncertainty-quantification idea and DK’s nonlinear-estimator idea are addressing different weaknesses of plain kriging, and in principle could even be combined (empirical-Bayes-average over the <span class="math inline">\(Y\)</span>-variogram used inside <code>DisjunctiveKriging</code>).</p>
+<p>This tutorial applies <code>pygstat.EmpiricalBayesianKriging</code> to <strong>cadmium</strong> in the Swiss Jura. Cd is right-skewed, so we work on <span class="math inline">\(\log(\mathrm{Cd})\)</span> (the same Gaussian-process convention as <code>tests/test_ebk.py</code> on Meuse zinc). The central check is the one in that test suite: <strong>point estimates agree closely with ordinary kriging, but EBK’s total standard error is larger</strong> because it also captures <span class="math inline">\(\theta\)</span>-uncertainty.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>What we do</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Data</td>
+<td>Load <code>jura_data.csv</code> (359 samples) and <code>jura_grid.csv</code> (~6 000 nodes)</td>
+</tr>
+<tr class="even">
+<td>Split</td>
+<td>Stratified 70% / 30% train–test split by <strong>Landuse</strong> (<code>random_state=42</code>)</td>
+</tr>
+<tr class="odd">
+<td>Transform</td>
+<td>Model <span class="math inline">\(\log(\mathrm{Cd})\)</span> so the simulate-and-refit loop is on an approximately Gaussian field</td>
+</tr>
+<tr class="even">
+<td>EBK</td>
+<td>Fit <code>EmpiricalBayesianKriging</code> (spherical, <span class="math inline">\(K=40\)</span> ordinary-kriging members)</td>
+</tr>
+<tr class="odd">
+<td>Ensemble</td>
+<td>Inspect <span class="math inline">\(\theta_k\)</span> scatter, LOO weights, and the within/between variance split</td>
+</tr>
+<tr class="even">
+<td>Validation</td>
+<td>Held-out RMSE vs OK; confirm <span class="math inline">\(\mathrm{SE}_{\mathrm{EBK}} &gt; \mathrm{SE}_{\mathrm{OK}}\)</span></td>
+</tr>
+<tr class="odd">
+<td>Mapping</td>
+<td><span class="math inline">\(\hat Z_{\mathrm{EBK}}\)</span>, total SE, and <span class="math inline">\(P(\mathrm{Cd} &gt; z_c)\)</span> on the Jura grid</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+</section>
+<section id="how-pygstat-implements-ebk" class="level2">
+<h2 class="anchored" data-anchor-id="how-pygstat-implements-ebk">2. How pygstat Implements EBK</h2>
+<p><code>pygstat.EmpiricalBayesianKriging</code> is the global (single-window) version of the algorithm above. Each ensemble member is an unmodified <code>OrdinaryKriging</code> or <code>SimpleKriging</code> — including GPU dispatch at <code>predict()</code> time.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>Object</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Base fit</td>
+<td><code>base_variogram_</code></td>
+<td><span class="math inline">\(\hat\theta_0\)</span> from the real data; drives simulation only</td>
+</tr>
+<tr class="even">
+<td>Simulate</td>
+<td><code>_simulate_unconditional</code></td>
+<td>Cholesky draw of <span class="math inline">\(Z^*_k\)</span> at the training locations</td>
+</tr>
+<tr class="odd">
+<td>Refit</td>
+<td><code>variograms_[k]</code></td>
+<td><span class="math inline">\(\theta_k\)</span> fitted to <span class="math inline">\(Z^*_k\)</span></td>
+</tr>
+<tr class="even">
+<td>Weight</td>
+<td><code>loo_cv</code> → <code>weights_</code></td>
+<td>Inverse-LOO-MSE precision weights, <span class="math inline">\(\sum w_k=1\)</span></td>
+</tr>
+<tr class="odd">
+<td>Predict</td>
+<td><code>krige_models_[k]</code></td>
+<td>Each <span class="math inline">\(\theta_k\)</span> kriges the <em>real</em> data</td>
+</tr>
+<tr class="even">
+<td>Combine</td>
+<td><code>predict()</code></td>
+<td>Weighted mean + within + between variance</td>
+</tr>
+<tr class="odd">
+<td>Exceedance</td>
+<td><code>predict_proba()</code></td>
+<td>Mixture of <span class="math inline">\(K\)</span> Gaussians, not a single Gaussian</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Weights.</strong> An in-sample residual is useless: OK/SK interpolate their own training data exactly, regardless of <span class="math inline">\(\theta\)</span>. <code>pygstat</code> therefore weights each <span class="math inline">\(\theta_k\)</span> by how well it <strong>leave-one-out</strong> predicts its own simulated realization <span class="math inline">\(Z^*_k\)</span> — inverse LOO-MSE, normalized to sum to 1. Poorly-behaved refits get downweighted, as in the Overview.</p>
+<p><strong>What is not in this class (yet).</strong> ArcGIS Geostatistical Analyst also splits the domain into overlapping local subsets and can auto-transform the data. <code>EmpiricalBayesianKriging</code> currently fits <strong>one global ensemble</strong>. We supply the transform ourselves (<span class="math inline">\(\log \mathrm{Cd}\)</span>) and use a single window over the Jura survey. Local windows would be the natural extension for mild non-stationarity.</p>
+<p><strong>Variogram fitter.</strong> The library’s <code>Variogram.fit()</code> is weighted least squares on the empirical semivariogram, not REML. The simulate-and-refit idea does not depend on <em>which</em> fitter produced <span class="math inline">\(\hat\theta_0\)</span>; it approximates that fitter’s sampling distribution.</p>
+<p><strong>Cost.</strong> <code>n_realizations</code> defaults to 100 (ESRI’s default). Fit cost scales as <span class="math inline">\(O(K\, n_{\mathrm{train}})\)</span> because of the LOO weights. This notebook uses <span class="math inline">\(K=40\)</span> so the cells stay interactive; raise it toward 100 for a production map.</p>
+<hr>
+</section>
+<section id="python-setup" class="level2">
+<h2 class="anchored" data-anchor-id="python-setup">3. Python Setup</h2>
+<div id="setup-code" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:35:58.679808Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:35:58.679560Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:36:06.373786Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:36:06.372381Z&quot;}}" data-execution_count="1">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>matplotlib inline</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys, os, warnings</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>sys.path.insert(<span class="dv">0</span>, os.path.abspath(<span class="st">"../src"</span>))</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.stats <span class="im">import</span> skew, norm</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> StratifiedShuffleSplit</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> mean_squared_error, mean_absolute_error, r2_score</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pygstat</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat <span class="im">import</span> Variogram, OrdinaryKriging, EmpiricalBayesianKriging</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"figure.dpi"</span>] <span class="op">=</span> <span class="dv">100</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"axes.grid"</span>] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"grid.alpha"</span>] <span class="op">=</span> <span class="fl">0.3</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"pygstat version:"</span>, pygstat.__version__)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"NumPy          :"</span>, np.__version__)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"pandas         :"</span>, pd.__version__)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>pygstat version: 0.1.0
+NumPy          : 2.4.6
+pandas         : 3.0.3</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="load-and-explore-the-jura-cadmium-data" class="level2">
+<h2 class="anchored" data-anchor-id="load-and-explore-the-jura-cadmium-data">4. Load and Explore the Jura Cadmium Data</h2>
+<p>The <strong>Jura dataset</strong> (Goovaerts, 1997) contains 359 soil samples of heavy metals in the Swiss Jura. We model <strong>Cd</strong> at the sample locations and predict it on the dense lattice in <code>jura_grid.csv</code> (~6 000 nodes).</p>
+<p>Cadmium is right-skewed. The Gaussian simulate-and-refit loop assumes approximate normality, so after the exploratory plots we work with <span class="math inline">\(\log(\mathrm{Cd})\)</span> — the same convention <code>tests/test_ebk.py</code> uses for Meuse zinc.</p>
+<div id="load-code" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:36:06.377383Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:36:06.376429Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:36:06.411271Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:36:06.410083Z&quot;}}" data-execution_count="2">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="st">"../data/jura_data.csv"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> pd.read_csv(<span class="st">"../data/jura_grid.csv"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Samples:"</span>, df.shape, <span class="st">"  Grid:"</span>, grid.shape)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Sample columns:"</span>, <span class="bu">list</span>(df.columns))</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Grid columns:  "</span>, <span class="bu">list</span>(grid.columns))</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>df.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Samples: (359, 12)   Grid: (5957, 5)
+Sample columns: ['Unnamed: 0', 'Xloc', 'Yloc', 'Landuse', 'Rock', 'Cd', 'Co', 'Cr', 'Cu', 'Ni', 'Pb', 'Zn']
+Grid columns:   ['Unnamed: 0', 'Xloc', 'Yloc', 'Landuse', 'Rock']</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="2">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Unnamed: 0</th>
+<th data-quarto-table-cell-role="th">Xloc</th>
+<th data-quarto-table-cell-role="th">Yloc</th>
+<th data-quarto-table-cell-role="th">Landuse</th>
+<th data-quarto-table-cell-role="th">Rock</th>
+<th data-quarto-table-cell-role="th">Cd</th>
+<th data-quarto-table-cell-role="th">Co</th>
+<th data-quarto-table-cell-role="th">Cr</th>
+<th data-quarto-table-cell-role="th">Cu</th>
+<th data-quarto-table-cell-role="th">Ni</th>
+<th data-quarto-table-cell-role="th">Pb</th>
+<th data-quarto-table-cell-role="th">Zn</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>1</td>
+<td>2.386</td>
+<td>3.077</td>
+<td>3</td>
+<td>3</td>
+<td>1.740</td>
+<td>9.32</td>
+<td>38.32</td>
+<td>25.72</td>
+<td>21.32</td>
+<td>77.36</td>
+<td>92.56</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>2</td>
+<td>2.544</td>
+<td>1.972</td>
+<td>2</td>
+<td>2</td>
+<td>1.335</td>
+<td>10.00</td>
+<td>40.20</td>
+<td>24.76</td>
+<td>29.72</td>
+<td>77.88</td>
+<td>73.56</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>3</td>
+<td>2.807</td>
+<td>3.347</td>
+<td>2</td>
+<td>3</td>
+<td>1.610</td>
+<td>10.60</td>
+<td>47.00</td>
+<td>8.88</td>
+<td>21.40</td>
+<td>30.80</td>
+<td>64.80</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>4</td>
+<td>4.308</td>
+<td>1.933</td>
+<td>3</td>
+<td>2</td>
+<td>2.150</td>
+<td>11.92</td>
+<td>43.52</td>
+<td>22.70</td>
+<td>29.72</td>
+<td>56.40</td>
+<td>90.00</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>5</td>
+<td>4.383</td>
+<td>1.081</td>
+<td>3</td>
+<td>5</td>
+<td>1.565</td>
+<td>16.32</td>
+<td>38.52</td>
+<td>34.32</td>
+<td>26.20</td>
+<td>66.40</td>
+<td>88.40</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="summary-code" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:36:06.414149Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:36:06.413915Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:36:06.429767Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:36:06.428622Z&quot;}}" data-execution_count="3">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>target <span class="op">=</span> <span class="st">"Cd"</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>x_col, y_col <span class="op">=</span> <span class="st">"Xloc"</span>, <span class="st">"Yloc"</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>strata_col <span class="op">=</span> <span class="st">"Landuse"</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>coords <span class="op">=</span> df[[x_col, y_col]].values</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> df[target].values.astype(<span class="bu">float</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>grid_coords <span class="op">=</span> grid[[x_col, y_col]].values</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="sc">{</span>target<span class="sc">}</span><span class="ss"> (mg/kg) summary:"</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df[target].describe().<span class="bu">round</span>(<span class="dv">3</span>))</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Skewness (raw Cd)     : </span><span class="sc">{</span>skew(z)<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Skewness (log Cd)     : </span><span class="sc">{</span>skew(np.log(z))<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Landuse counts:</span><span class="ch">\n</span><span class="sc">{</span>df[strata_col]<span class="sc">.</span>value_counts()<span class="sc">.</span>sort_index()<span class="sc">.</span>to_string()<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Cd (mg/kg) summary:
+count    359.000
+mean       1.288
+std        0.859
+min        0.135
+25%        0.653
+50%        1.100
+75%        1.680
+max        5.129
+Name: Cd, dtype: float64
+Skewness (raw Cd)     : 1.472
+Skewness (log Cd)     : -0.248
+
+Landuse counts:
+Landuse
+1     51
+2     82
+3    218
+4      8</code></pre>
+</div>
+</div>
+<div id="eda-plot" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:36:06.432404Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:36:06.432087Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:36:07.276708Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:36:07.275453Z&quot;}}" data-execution_count="4">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">16</span>, <span class="fl">4.5</span>))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>sc <span class="op">=</span> axes[<span class="dv">0</span>].scatter(</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    df[x_col], df[y_col], c<span class="op">=</span>z, cmap<span class="op">=</span><span class="st">"YlOrRd"</span>, s<span class="op">=</span><span class="dv">28</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    edgecolors<span class="op">=</span><span class="st">"k"</span>, linewidths<span class="op">=</span><span class="fl">0.25</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>plt.colorbar(sc, ax<span class="op">=</span>axes[<span class="dv">0</span>], label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>target<span class="sc">}</span><span class="ss"> (mg/kg)"</span>, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="ss">f"Sampled </span><span class="sc">{</span>target<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"Easting (km)"</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"Northing (km)"</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].hist(z, bins<span class="op">=</span><span class="dv">30</span>, color<span class="op">=</span><span class="st">"steelblue"</span>, edgecolor<span class="op">=</span><span class="st">"white"</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].axvline(z.mean(), color<span class="op">=</span><span class="st">"crimson"</span>, ls<span class="op">=</span><span class="st">"--"</span>, label<span class="op">=</span><span class="ss">f"mean = </span><span class="sc">{</span>z<span class="sc">.</span>mean()<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].axvline(np.median(z), color<span class="op">=</span><span class="st">"darkorange"</span>, ls<span class="op">=</span><span class="st">":"</span>, label<span class="op">=</span><span class="ss">f"median = </span><span class="sc">{</span>np<span class="sc">.</span>median(z)<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="ss">f"Distribution of </span><span class="sc">{</span>target<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="ss">f"</span><span class="sc">{</span>target<span class="sc">}</span><span class="ss"> (mg/kg)"</span>)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"Frequency"</span>)</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend()</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].hist(np.log(z), bins<span class="op">=</span><span class="dv">30</span>, color<span class="op">=</span><span class="st">"seagreen"</span>, edgecolor<span class="op">=</span><span class="st">"white"</span>)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_title(<span class="vs">r"Distribution of </span><span class="dv">$</span><span class="er">\</span><span class="vs">log</span><span class="dv">$</span><span class="kw">(</span><span class="vs">Cd</span><span class="kw">)</span><span class="vs">"</span>)</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_xlabel(<span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">log</span><span class="dv">$</span><span class="vs"> Cd"</span>)</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_ylabel(<span class="st">"Frequency"</span>)</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"Grid extent: X [</span><span class="sc">{</span>grid[x_col]<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.2f}</span><span class="ss">, </span><span class="sc">{</span>grid[x_col]<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2f}</span><span class="ss">], "</span></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"Y [</span><span class="sc">{</span>grid[y_col]<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.2f}</span><span class="ss">, </span><span class="sc">{</span>grid[y_col]<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2f}</span><span class="ss">] km  (</span><span class="sc">{</span><span class="bu">len</span>(grid)<span class="sc">}</span><span class="ss"> nodes)"</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="11_empirical_bayesian_kriging_files/figure-html/cell-5-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Grid extent: X [0.30, 5.10], Y [0.10, 5.90] km  (5957 nodes)</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="stratified-split-and-log-transform" class="level2">
+<h2 class="anchored" data-anchor-id="stratified-split-and-log-transform">5. Stratified Split and Log Transform</h2>
+<p>A purely random split can leave land-use class <code>4</code> (only 8 samples) under-represented in the test set. <strong>Stratified random sampling</strong> by <code>Landuse</code> keeps the class mix in both sets (<code>random_state=42</code>, same convention as Tutorials 02–05).</p>
+<p>All subsequent fitting — the base variogram, the <span class="math inline">\(K\)</span> refits, ordinary kriging, and EBK — uses <strong>training</strong> <span class="math inline">\(\log(\mathrm{Cd})\)</span> only.</p>
+<div id="split-code" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:36:07.279241Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:36:07.278995Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:36:07.327620Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:36:07.326389Z&quot;}}" data-execution_count="5">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sss <span class="op">=</span> StratifiedShuffleSplit(n_splits<span class="op">=</span><span class="dv">1</span>, test_size<span class="op">=</span><span class="fl">0.30</span>, random_state<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>train_idx, test_idx <span class="op">=</span> <span class="bu">next</span>(sss.split(df, df[strata_col]))</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>df_train <span class="op">=</span> df.iloc[train_idx].reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>df_test <span class="op">=</span> df.iloc[test_idx].reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>coords_train <span class="op">=</span> df_train[[x_col, y_col]].values</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>coords_test <span class="op">=</span> df_test[[x_col, y_col]].values</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>z_train <span class="op">=</span> np.log(df_train[target].values.astype(<span class="bu">float</span>))</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>z_test <span class="op">=</span> np.log(df_test[target].values.astype(<span class="bu">float</span>))</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>cd_train <span class="op">=</span> df_train[target].values.astype(<span class="bu">float</span>)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>cd_test <span class="op">=</span> df_test[target].values.astype(<span class="bu">float</span>)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Train: </span><span class="sc">{</span><span class="bu">len</span>(df_train)<span class="sc">}</span><span class="ss">    Test: </span><span class="sc">{</span><span class="bu">len</span>(df_test)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"log(Cd) train mean/std : </span><span class="sc">{</span>z_train<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>z_train<span class="sc">.</span>std()<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Train Landuse counts:"</span>)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_train[strata_col].value_counts().sort_index().to_string())</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Test  Landuse counts:"</span>)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_test[strata_col].value_counts().sort_index().to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Train: 251    Test: 108
+log(Cd) train mean/std : 0.060 / 0.656
+Train Landuse counts:
+Landuse
+1     36
+2     57
+3    152
+4      6
+Test  Landuse counts:
+Landuse
+1    15
+2    25
+3    66
+4     2</code></pre>
+</div>
+</div>
+<div id="split-plot" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:36:07.330222Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:36:07.329970Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:36:07.528985Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:36:07.527838Z&quot;}}" data-execution_count="6">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">5.5</span>))</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>ax.scatter(</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    df_train[x_col], df_train[y_col], c<span class="op">=</span><span class="st">"steelblue"</span>, s<span class="op">=</span><span class="dv">32</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    edgecolors<span class="op">=</span><span class="st">"k"</span>, linewidths<span class="op">=</span><span class="fl">0.3</span>, label<span class="op">=</span><span class="ss">f"Train (n=</span><span class="sc">{</span><span class="bu">len</span>(df_train)<span class="sc">}</span><span class="ss">)"</span>, zorder<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>ax.scatter(</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    df_test[x_col], df_test[y_col], c<span class="op">=</span><span class="st">"darkorange"</span>, s<span class="op">=</span><span class="dv">32</span>, marker<span class="op">=</span><span class="st">"s"</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    edgecolors<span class="op">=</span><span class="st">"k"</span>, linewidths<span class="op">=</span><span class="fl">0.3</span>, label<span class="op">=</span><span class="ss">f"Test (n=</span><span class="sc">{</span><span class="bu">len</span>(df_test)<span class="sc">}</span><span class="ss">)"</span>, zorder<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>ax.set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Easting (km)"</span>)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Northing (km)"</span>)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Stratified train / test split (Landuse)"</span>)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>ax.legend(loc<span class="op">=</span><span class="st">"lower right"</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="11_empirical_bayesian_kriging_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="fit-empirical-bayesian-kriging" class="level2">
+<h2 class="anchored" data-anchor-id="fit-empirical-bayesian-kriging">6. Fit Empirical Bayesian Kriging</h2>
+<p><code>EmpiricalBayesianKriging.fit</code> runs the simulate-refit-weight loop on the training locations, then fits one <code>OrdinaryKriging</code> per <span class="math inline">\(\theta_k\)</span> on the <strong>real</strong> <span class="math inline">\(\log(\mathrm{Cd})\)</span>.</p>
+<p>We use <span class="math inline">\(K=40\)</span> spherical members (<code>random_state=42</code>) — enough to see real spread in <span class="math inline">\(\theta\)</span>, small enough that the notebook stays interactive. The library default is <code>n_realizations=100</code>.</p>
+<div id="fit-code" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:36:07.531633Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:36:07.531312Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:37:05.391396Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:37:05.388181Z&quot;}}" data-execution_count="7">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>K <span class="op">=</span> <span class="dv">40</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>ebk <span class="op">=</span> EmpiricalBayesianKriging(</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    model<span class="op">=</span><span class="st">"spherical"</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    kriging_type<span class="op">=</span><span class="st">"ordinary"</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    n_realizations<span class="op">=</span>K,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    use_gpu<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    random_state<span class="op">=</span><span class="dv">42</span>,</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    variogram_kwargs<span class="op">=</span>{<span class="st">"n_lags"</span>: <span class="dv">15</span>, <span class="st">"estimator"</span>: <span class="st">"matheron"</span>},</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>ebk.fit(coords_train, z_train)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>vg0 <span class="op">=</span> ebk.base_variogram_</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Empirical Bayesian Kriging fitted"</span>)</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  n_realizations         : </span><span class="sc">{</span>ebk<span class="sc">.</span>n_realizations<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  kriging_type           : </span><span class="sc">{</span>ebk<span class="sc">.</span>kriging_type<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  base model             : </span><span class="sc">{</span>vg0<span class="sc">.</span>model<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  base params [C0, C, a] : </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">round</span>(vg0.fitted_params, <span class="dv">4</span>)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  weights sum            : </span><span class="sc">{</span>ebk<span class="sc">.</span>weights_<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.6f}</span><span class="ss">"</span>)</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  weights min / max      : </span><span class="sc">{</span>ebk<span class="sc">.</span>weights_<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.4f}</span><span class="ss"> / </span><span class="sc">{</span>ebk<span class="sc">.</span>weights_<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  LOO RMSE min / mean / max : "</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>ebk<span class="sc">.</span>loo_rmse_<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>ebk<span class="sc">.</span>loo_rmse_<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>ebk<span class="sc">.</span>loo_rmse_<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  n krige models         : </span><span class="sc">{</span><span class="bu">len</span>(ebk.krige_models_)<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Empirical Bayesian Kriging fitted
+  n_realizations         : 40
+  kriging_type           : ordinary
+  base model             : spherical
+  base params [C0, C, a] : [0.2447 0.2102 1.3341]
+  weights sum            : 1.000000
+  weights min / max      : 0.0187 / 0.0304
+  LOO RMSE min / mean / max : 0.508 / 0.562 / 0.647
+  n krige models         : 40</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="the-semivariogram-ensemble" class="level2">
+<h2 class="anchored" data-anchor-id="the-semivariogram-ensemble">7. The Semivariogram Ensemble</h2>
+<p>If the refits collapsed onto <span class="math inline">\(\hat\theta_0\)</span>, there would be nothing for EBK to average over. <code>tests/test_ebk.py</code> requires the ensemble of ranges to have <strong>nonzero spread</strong>. Below: every <span class="math inline">\(\gamma_k(h)\)</span> overlaid on the base fit, the marginals of <span class="math inline">\((\mathrm{nugget},\,\mathrm{sill},\,\mathrm{range})\)</span>, and the LOO-MSE weights.</p>
+<div id="ens-plot1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:37:05.395196Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:37:05.394939Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:37:05.915555Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:37:05.914240Z&quot;}}" data-execution_count="8">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>params <span class="op">=</span> np.array([vg.fitted_params <span class="cf">for</span> vg <span class="kw">in</span> ebk.variograms_])  <span class="co"># (K, 3)</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>nugget, sill, rng_p <span class="op">=</span> params[:, <span class="dv">0</span>], params[:, <span class="dv">1</span>], params[:, <span class="dv">2</span>]</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Ensemble parameter scatter (log-Cd spherical model)"</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  nugget  mean±sd : </span><span class="sc">{</span>nugget<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> ± </span><span class="sc">{</span>nugget<span class="sc">.</span>std()<span class="sc">:.3f}</span><span class="ss">   (base </span><span class="sc">{</span>vg0<span class="sc">.</span>fitted_params[<span class="dv">0</span>]<span class="sc">:.3f}</span><span class="ss">)"</span>)</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  sill    mean±sd : </span><span class="sc">{</span>sill<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> ± </span><span class="sc">{</span>sill<span class="sc">.</span>std()<span class="sc">:.3f}</span><span class="ss">   (base </span><span class="sc">{</span>vg0<span class="sc">.</span>fitted_params[<span class="dv">1</span>]<span class="sc">:.3f}</span><span class="ss">)"</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  range   mean±sd : </span><span class="sc">{</span>rng_p<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> ± </span><span class="sc">{</span>rng_p<span class="sc">.</span>std()<span class="sc">:.3f}</span><span class="ss">   (base </span><span class="sc">{</span>vg0<span class="sc">.</span>fitted_params[<span class="dv">2</span>]<span class="sc">:.3f}</span><span class="ss">)"</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> rng_p.std() <span class="op">&gt;</span> <span class="dv">0</span>, <span class="st">"ensemble ranges should not collapse"</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>h_fine <span class="op">=</span> np.linspace(<span class="dv">0</span>, vg0.maxlag, <span class="dv">250</span>)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="fl">4.8</span>))</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> vg, w <span class="kw">in</span> <span class="bu">zip</span>(ebk.variograms_, ebk.weights_):</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">0</span>].plot(h_fine, vg(h_fine), color<span class="op">=</span><span class="st">"steelblue"</span>, alpha<span class="op">=</span><span class="fl">0.25</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(h_fine, vg0(h_fine), color<span class="op">=</span><span class="st">"crimson"</span>, lw<span class="op">=</span><span class="fl">2.4</span>, label<span class="op">=</span><span class="vs">r"base </span><span class="dv">$</span><span class="er">\</span><span class="vs">hat</span><span class="ch">\t</span><span class="vs">heta_0</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(vg0.lags, vg0.experimental, <span class="st">"o"</span>, color<span class="op">=</span><span class="st">"k"</span>, zorder<span class="op">=</span><span class="dv">5</span>, label<span class="op">=</span><span class="st">"empirical (real data)"</span>)</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"Lag $h$ (km)"</span>)</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">gamma</span><span class="kw">(</span><span class="vs">h</span><span class="kw">)</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="vs">r"Ensemble of refit semivariograms </span><span class="dv">$</span><span class="ch">\t</span><span class="vs">heta_k</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend()</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].scatter(ebk.loo_rmse_, ebk.weights_, c<span class="op">=</span><span class="st">"steelblue"</span>, edgecolors<span class="op">=</span><span class="st">"k"</span>, linewidths<span class="op">=</span><span class="fl">0.3</span>, s<span class="op">=</span><span class="dv">36</span>)</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"Leave-one-out RMSE (on $Z^*_k$)"</span>)</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="vs">r"Weight </span><span class="dv">$</span><span class="vs">w_k</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Inverse-LOO-MSE weights"</span>)</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Ensemble parameter scatter (log-Cd spherical model)
+  nugget  mean±sd : 0.245 ± 0.036   (base 0.245)
+  sill    mean±sd : 0.237 ± 0.101   (base 0.210)
+  range   mean±sd : 1.581 ± 0.975   (base 1.334)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="11_empirical_bayesian_kriging_files/figure-html/cell-9-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="ens-plot2" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:37:05.918944Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:37:05.918690Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:37:06.554726Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:37:06.553519Z&quot;}}" data-execution_count="9">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">14</span>, <span class="fl">4.0</span>))</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, vals, name, base <span class="kw">in</span> <span class="bu">zip</span>(</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    axes,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    [nugget, sill, rng_p],</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"nugget $C_0$"</span>, <span class="st">"partial sill $C$"</span>, <span class="st">"range $a$ (km)"</span>],</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    vg0.fitted_params,</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    ax.hist(vals, bins<span class="op">=</span><span class="dv">12</span>, color<span class="op">=</span><span class="st">"steelblue"</span>, edgecolor<span class="op">=</span><span class="st">"white"</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    ax.axvline(base, color<span class="op">=</span><span class="st">"crimson"</span>, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">2</span>, label<span class="op">=</span><span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">hat</span><span class="ch">\t</span><span class="vs">heta_0</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    ax.set_title(name)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    ax.legend(fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>plt.suptitle(<span class="vs">r"Sampling distribution of </span><span class="dv">$</span><span class="ch">\t</span><span class="vs">heta_k</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">empirical stand-in for </span><span class="dv">$</span><span class="vs">p</span><span class="kw">(</span><span class="ch">\t</span><span class="vs">heta</span><span class="dv">\m</span><span class="vs">id Z</span><span class="kw">)</span><span class="dv">$</span><span class="kw">)</span><span class="vs">"</span>, y<span class="op">=</span><span class="fl">1.03</span>)</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="11_empirical_bayesian_kriging_files/figure-html/cell-10-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="validate-ebk-vs-ordinary-kriging" class="level2">
+<h2 class="anchored" data-anchor-id="validate-ebk-vs-ordinary-kriging">8. Validate EBK vs Ordinary Kriging</h2>
+<p>Predict <span class="math inline">\(\log(\mathrm{Cd})\)</span> at the held-out 30%. Two claims from <code>tests/test_ebk.py</code>:</p>
+<ol type="1">
+<li><strong>Point estimates agree</strong> with a single ordinary-kriging fit (correlation <span class="math inline">\(\gtrsim 0.99\)</span> on a dense grid in that test). EBK is not trying to beat OK on the mean.</li>
+<li><strong>EBK’s total SE exceeds OK’s SE</strong> almost everywhere: that extra margin <em>is</em> the between-model term plain kriging ignores.</li>
+</ol>
+<p>We also decompose the EBK variance on the test set into within-model and between-model pieces, so the second term is visible as a number, not only as a larger SE.</p>
+<div id="val-code" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:37:06.557309Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:37:06.557065Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:37:07.280302Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:37:07.279722Z&quot;}}" data-execution_count="10">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>vg_ok <span class="op">=</span> Variogram(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    coords_train, z_train, model<span class="op">=</span><span class="st">"spherical"</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    estimator<span class="op">=</span><span class="st">"matheron"</span>, n_lags<span class="op">=</span><span class="dv">15</span>, use_gpu<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>vg_ok.fit()</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>ok <span class="op">=</span> OrdinaryKriging(vg_ok, use_gpu<span class="op">=</span><span class="va">False</span>).fit(coords_train, z_train)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>z_hat_ebk, se_ebk_test <span class="op">=</span> ebk.predict(coords_test, return_variance<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>z_hat_ok, se_ok_test <span class="op">=</span> ok.predict(coords_test, return_variance<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Within / between decomposition (same combining rule as predict)</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>preds_k, var_k <span class="op">=</span> ebk._predict_ensemble(coords_test, return_variance<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> ebk.weights_[:, <span class="va">None</span>]</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>within <span class="op">=</span> (w <span class="op">*</span> var_k).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>between <span class="op">=</span> (w <span class="op">*</span> (preds_k <span class="op">-</span> z_hat_ebk) <span class="op">**</span> <span class="dv">2</span>).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> metrics(obs, pred, name):</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>    rmse <span class="op">=</span> <span class="bu">float</span>(np.sqrt(mean_squared_error(obs, pred)))</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>    mae <span class="op">=</span> <span class="bu">float</span>(mean_absolute_error(obs, pred))</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>    r2 <span class="op">=</span> <span class="bu">float</span>(r2_score(obs, pred))</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>    me <span class="op">=</span> <span class="bu">float</span>(np.mean(pred <span class="op">-</span> obs))</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">:22s}</span><span class="ss">  RMSE=</span><span class="sc">{</span>rmse<span class="sc">:.3f}</span><span class="ss">  MAE=</span><span class="sc">{</span>mae<span class="sc">:.3f}</span><span class="ss">  R2=</span><span class="sc">{</span>r2<span class="sc">:.3f}</span><span class="ss">  ME=</span><span class="sc">{</span>me<span class="sc">:+.3f}</span><span class="ss">"</span>)</span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> rmse, mae, r2, me</span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Held-out test set (log Cd)"</span>)</span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a>metrics(z_test, z_hat_ebk, <span class="st">"Empirical Bayesian"</span>)</span>
+<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a>metrics(z_test, z_hat_ok, <span class="st">"Ordinary Kriging"</span>)</span>
+<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"corr(EBK, OK) on test     : </span><span class="sc">{</span>np<span class="sc">.</span>corrcoef(z_hat_ebk, z_hat_ok)[<span class="dv">0</span>, <span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"EBK SE  min/mean/max      : </span><span class="sc">{</span>se_ebk_test<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>se_ebk_test<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>se_ebk_test<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"OK  SE  min/mean/max      : </span><span class="sc">{</span>se_ok_test<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>se_ok_test<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>se_ok_test<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb17-33"><a href="#cb17-33" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"fraction SE_EBK &gt;= SE_OK : </span><span class="sc">{</span>(se_ebk_test <span class="op">&gt;=</span> se_ok_test)<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb17-34"><a href="#cb17-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"within-model var  (mean)  : </span><span class="sc">{</span>within<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"between-model var (mean)  : </span><span class="sc">{</span>between<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"between / total           : </span><span class="sc">{</span>between<span class="sc">.</span>mean() <span class="op">/</span> (within.mean() <span class="op">+</span> between.mean())<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Held-out test set (log Cd)
+Empirical Bayesian      RMSE=0.559  MAE=0.453  R2=0.381  ME=+0.015
+Ordinary Kriging        RMSE=0.559  MAE=0.449  R2=0.383  ME=+0.011
+corr(EBK, OK) on test     : 0.9982
+EBK SE  min/mean/max      : 0.529 / 0.562 / 0.623
+OK  SE  min/mean/max      : 0.530 / 0.559 / 0.621
+fraction SE_EBK &gt;= SE_OK : 0.769
+within-model var  (mean)  : 0.3132
+between-model var (mean)  : 0.0032
+between / total           : 0.010</code></pre>
+</div>
+</div>
+<div id="val-plot" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:37:07.284627Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:37:07.284331Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:37:07.910319Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:37:07.908977Z&quot;}}" data-execution_count="11">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="fl">4.6</span>))</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>lo <span class="op">=</span> <span class="bu">min</span>(z_test.<span class="bu">min</span>(), z_hat_ebk.<span class="bu">min</span>(), z_hat_ok.<span class="bu">min</span>())</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>hi <span class="op">=</span> <span class="bu">max</span>(z_test.<span class="bu">max</span>(), z_hat_ebk.<span class="bu">max</span>(), z_hat_ok.<span class="bu">max</span>())</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].scatter(z_test, z_hat_ebk, c<span class="op">=</span><span class="st">"steelblue"</span>, edgecolors<span class="op">=</span><span class="st">"k"</span>, linewidths<span class="op">=</span><span class="fl">0.3</span>, s<span class="op">=</span><span class="dv">28</span>)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot([lo, hi], [lo, hi], <span class="st">"k--"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="vs">r"Observed </span><span class="dv">$</span><span class="er">\</span><span class="vs">log</span><span class="dv">$</span><span class="vs"> Cd"</span>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="vs">r"EBK predicted </span><span class="dv">$</span><span class="er">\</span><span class="vs">log</span><span class="dv">$</span><span class="vs"> Cd"</span>)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"EBK vs. observed (test)"</span>)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_aspect(<span class="st">"equal"</span>, adjustable<span class="op">=</span><span class="st">"box"</span>)</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].scatter(z_hat_ok, z_hat_ebk, c<span class="op">=</span><span class="st">"darkorange"</span>, edgecolors<span class="op">=</span><span class="st">"k"</span>, linewidths<span class="op">=</span><span class="fl">0.3</span>, s<span class="op">=</span><span class="dv">28</span>)</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].plot([lo, hi], [lo, hi], <span class="st">"k--"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="vs">r"OK predicted </span><span class="dv">$</span><span class="er">\</span><span class="vs">log</span><span class="dv">$</span><span class="vs"> Cd"</span>)</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="vs">r"EBK predicted </span><span class="dv">$</span><span class="er">\</span><span class="vs">log</span><span class="dv">$</span><span class="vs"> Cd"</span>)</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"EBK vs. OK (test)"</span>)</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_aspect(<span class="st">"equal"</span>, adjustable<span class="op">=</span><span class="st">"box"</span>)</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].scatter(se_ok_test, se_ebk_test, c<span class="op">=</span><span class="st">"seagreen"</span>, edgecolors<span class="op">=</span><span class="st">"k"</span>, linewidths<span class="op">=</span><span class="fl">0.3</span>, s<span class="op">=</span><span class="dv">28</span>)</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> <span class="bu">max</span>(se_ok_test.<span class="bu">max</span>(), se_ebk_test.<span class="bu">max</span>())</span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].plot([<span class="dv">0</span>, m], [<span class="dv">0</span>, m], <span class="st">"k--"</span>, lw<span class="op">=</span><span class="dv">1</span>, label<span class="op">=</span><span class="st">"equal SE"</span>)</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_xlabel(<span class="st">"OK standard error"</span>)</span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_ylabel(<span class="st">"EBK total standard error"</span>)</span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_title(<span class="vs">r"SE</span><span class="dv">$</span><span class="vs">_{EBK}</span><span class="dv">$</span><span class="vs"> vs SE</span><span class="dv">$</span><span class="vs">_{OK}</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">test</span><span class="kw">)</span><span class="vs">"</span>)</span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].legend(fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="11_empirical_bayesian_kriging_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="predict-cd-on-the-jura-grid" class="level2">
+<h2 class="anchored" data-anchor-id="predict-cd-on-the-jura-grid">9. Predict Cd on the Jura Grid</h2>
+<p>Apply the fitted EBK and OK models to every node in <code>jura_grid.csv</code>. Maps are shown in <span class="math inline">\(\log(\mathrm{Cd})\)</span> (the modelling scale) and as <span class="math inline">\(\exp(\hat Z)\)</span> for a Cd-unit reading. <span class="math inline">\(\exp(\hat Z)\)</span> is a median-type back-transform of the log-Gaussian predictor, not an unbiased mean of Cd.</p>
+<div id="grid-code" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:37:07.913507Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:37:07.913276Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:37:13.151403Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:37:13.149080Z&quot;}}" data-execution_count="12">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>preds_g, var_g <span class="op">=</span> ebk._predict_ensemble(grid_coords, return_variance<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> ebk.weights_[:, <span class="va">None</span>]</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>pred_ebk <span class="op">=</span> (w <span class="op">*</span> preds_g).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>within_g <span class="op">=</span> (w <span class="op">*</span> var_g).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>between_g <span class="op">=</span> (w <span class="op">*</span> (preds_g <span class="op">-</span> pred_ebk) <span class="op">**</span> <span class="dv">2</span>).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>se_ebk <span class="op">=</span> np.sqrt(np.clip(within_g <span class="op">+</span> between_g, <span class="dv">0</span>, <span class="va">None</span>))</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>pred_ok, se_ok <span class="op">=</span> ok.predict(grid_coords, return_variance<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>grid_out <span class="op">=</span> grid.copy()</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>grid_out[<span class="st">"logCd_ebk"</span>] <span class="op">=</span> pred_ebk</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>grid_out[<span class="st">"logCd_ebk_se"</span>] <span class="op">=</span> se_ebk</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>grid_out[<span class="st">"logCd_ok"</span>] <span class="op">=</span> pred_ok</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>grid_out[<span class="st">"logCd_ok_se"</span>] <span class="op">=</span> se_ok</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>grid_out[<span class="st">"Cd_ebk"</span>] <span class="op">=</span> np.exp(pred_ebk)</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>grid_out[<span class="st">"Cd_ok"</span>] <span class="op">=</span> np.exp(pred_ok)</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Grid predictions: n = </span><span class="sc">{</span><span class="bu">len</span>(pred_ebk)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"  EBK log-Cd  min/mean/max : </span><span class="sc">{</span>pred_ebk<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>pred_ebk<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>pred_ebk<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">"</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"  EBK SE      min/mean/max : </span><span class="sc">{</span>se_ebk<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>se_ebk<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>se_ebk<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">"</span></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"  OK  SE      min/mean/max : </span><span class="sc">{</span>se_ok<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>se_ok<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>se_ok<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">"</span></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  corr(EBK, OK) on grid    : </span><span class="sc">{</span>np<span class="sc">.</span>corrcoef(pred_ebk, pred_ok)[<span class="dv">0</span>, <span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  fraction SE_EBK &gt;= SE_OK: </span><span class="sc">{</span>(se_ebk <span class="op">&gt;=</span> se_ok)<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  mean within / between   : </span><span class="sc">{</span>within_g<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss"> / </span><span class="sc">{</span>between_g<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> np.isfinite(pred_ebk).<span class="bu">all</span>() <span class="kw">and</span> np.isfinite(se_ebk).<span class="bu">all</span>()</span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> np.<span class="bu">all</span>(se_ebk <span class="op">&gt;=</span> <span class="dv">0</span>)</span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>grid_out[[x_col, y_col, <span class="st">"logCd_ebk"</span>, <span class="st">"logCd_ebk_se"</span>, <span class="st">"Cd_ebk"</span>]].head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Grid predictions: n = 5957
+  EBK log-Cd  min/mean/max : -0.955 / 0.088 / 0.627
+  EBK SE      min/mean/max : 0.527 / 0.571 / 0.679
+  OK  SE      min/mean/max : 0.529 / 0.569 / 0.675
+  corr(EBK, OK) on grid    : 0.9976
+  fraction SE_EBK &gt;= SE_OK: 0.868
+  mean within / between   : 0.3241 / 0.0030</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="12">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Xloc</th>
+<th data-quarto-table-cell-role="th">Yloc</th>
+<th data-quarto-table-cell-role="th">logCd_ebk</th>
+<th data-quarto-table-cell-role="th">logCd_ebk_se</th>
+<th data-quarto-table-cell-role="th">Cd_ebk</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>0.30</td>
+<td>1.70</td>
+<td>-0.137567</td>
+<td>0.647850</td>
+<td>0.871476</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>0.35</td>
+<td>1.70</td>
+<td>-0.148991</td>
+<td>0.640317</td>
+<td>0.861577</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>0.35</td>
+<td>1.75</td>
+<td>-0.127347</td>
+<td>0.638360</td>
+<td>0.880428</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>0.40</td>
+<td>1.70</td>
+<td>-0.159987</td>
+<td>0.632041</td>
+<td>0.852155</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>0.40</td>
+<td>1.75</td>
+<td>-0.134929</td>
+<td>0.629932</td>
+<td>0.873778</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="grid-plot" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:37:13.158577Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:37:13.158285Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:37:15.367083Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:37:15.366095Z&quot;}}" data-execution_count="13">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">16</span>, <span class="dv">10</span>))</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>sc0 <span class="op">=</span> axes[<span class="dv">0</span>, <span class="dv">0</span>].scatter(</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    grid_out[x_col], grid_out[y_col], c<span class="op">=</span>grid_out[<span class="st">"logCd_ebk"</span>],</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    cmap<span class="op">=</span><span class="st">"YlOrRd"</span>, s<span class="op">=</span><span class="dv">8</span>, marker<span class="op">=</span><span class="st">"."</span>,</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">0</span>].scatter(</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    df_train[x_col], df_train[y_col], facecolors<span class="op">=</span><span class="st">"none"</span>, edgecolors<span class="op">=</span><span class="st">"k"</span>,</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">14</span>, linewidths<span class="op">=</span><span class="fl">0.35</span>, label<span class="op">=</span><span class="st">"train"</span>,</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>plt.colorbar(sc0, ax<span class="op">=</span>axes[<span class="dv">0</span>, <span class="dv">0</span>], label<span class="op">=</span><span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">log</span><span class="dv">$</span><span class="vs"> Cd"</span>, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">0</span>].set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">0</span>].set_title(<span class="st">"EBK prediction"</span>)</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">0</span>].set_xlabel(<span class="st">"Easting (km)"</span>)</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">0</span>].set_ylabel(<span class="st">"Northing (km)"</span>)</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">0</span>].legend(loc<span class="op">=</span><span class="st">"lower right"</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>sc1 <span class="op">=</span> axes[<span class="dv">0</span>, <span class="dv">1</span>].scatter(</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>    grid_out[x_col], grid_out[y_col], c<span class="op">=</span>grid_out[<span class="st">"logCd_ebk_se"</span>],</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>    cmap<span class="op">=</span><span class="st">"magma"</span>, s<span class="op">=</span><span class="dv">8</span>, marker<span class="op">=</span><span class="st">"."</span>,</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>plt.colorbar(sc1, ax<span class="op">=</span>axes[<span class="dv">0</span>, <span class="dv">1</span>], label<span class="op">=</span><span class="st">"EBK total SE"</span>, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">1</span>].set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">1</span>].set_title(<span class="st">"EBK total standard error"</span>)</span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">1</span>].set_xlabel(<span class="st">"Easting (km)"</span>)</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">1</span>].set_ylabel(<span class="st">"Northing (km)"</span>)</span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>sc2 <span class="op">=</span> axes[<span class="dv">0</span>, <span class="dv">2</span>].scatter(</span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>    grid_out[x_col], grid_out[y_col], c<span class="op">=</span>grid_out[<span class="st">"logCd_ok_se"</span>],</span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>    cmap<span class="op">=</span><span class="st">"magma"</span>, s<span class="op">=</span><span class="dv">8</span>, marker<span class="op">=</span><span class="st">"."</span>,</span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>    vmin<span class="op">=</span>grid_out[<span class="st">"logCd_ebk_se"</span>].<span class="bu">min</span>(), vmax<span class="op">=</span>grid_out[<span class="st">"logCd_ebk_se"</span>].<span class="bu">max</span>(),</span>
+<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>plt.colorbar(sc2, ax<span class="op">=</span>axes[<span class="dv">0</span>, <span class="dv">2</span>], label<span class="op">=</span><span class="st">"OK SE"</span>, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
+<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">2</span>].set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">2</span>].set_title(<span class="st">"OK standard error (same colour scale)"</span>)</span>
+<span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">2</span>].set_xlabel(<span class="st">"Easting (km)"</span>)</span>
+<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">2</span>].set_ylabel(<span class="st">"Northing (km)"</span>)</span>
+<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a>sc3 <span class="op">=</span> axes[<span class="dv">1</span>, <span class="dv">0</span>].scatter(</span>
+<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a>    grid_out[x_col], grid_out[y_col], c<span class="op">=</span>np.sqrt(within_g),</span>
+<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a>    cmap<span class="op">=</span><span class="st">"magma"</span>, s<span class="op">=</span><span class="dv">8</span>, marker<span class="op">=</span><span class="st">"."</span>,</span>
+<span id="cb22-42"><a href="#cb22-42" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a>plt.colorbar(sc3, ax<span class="op">=</span>axes[<span class="dv">1</span>, <span class="dv">0</span>], label<span class="op">=</span><span class="vs">r"</span><span class="dv">$\s</span><span class="vs">qrt{</span><span class="dv">\m</span><span class="vs">athrm{within}}</span><span class="dv">$</span><span class="vs">"</span>, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
+<span id="cb22-44"><a href="#cb22-44" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">0</span>].set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb22-45"><a href="#cb22-45" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">0</span>].set_title(<span class="st">"Within-model SE (given $</span><span class="ch">\t</span><span class="st">heta_k$)"</span>)</span>
+<span id="cb22-46"><a href="#cb22-46" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">0</span>].set_xlabel(<span class="st">"Easting (km)"</span>)</span>
+<span id="cb22-47"><a href="#cb22-47" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">0</span>].set_ylabel(<span class="st">"Northing (km)"</span>)</span>
+<span id="cb22-48"><a href="#cb22-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-49"><a href="#cb22-49" aria-hidden="true" tabindex="-1"></a>sc4 <span class="op">=</span> axes[<span class="dv">1</span>, <span class="dv">1</span>].scatter(</span>
+<span id="cb22-50"><a href="#cb22-50" aria-hidden="true" tabindex="-1"></a>    grid_out[x_col], grid_out[y_col], c<span class="op">=</span>np.sqrt(between_g),</span>
+<span id="cb22-51"><a href="#cb22-51" aria-hidden="true" tabindex="-1"></a>    cmap<span class="op">=</span><span class="st">"viridis"</span>, s<span class="op">=</span><span class="dv">8</span>, marker<span class="op">=</span><span class="st">"."</span>,</span>
+<span id="cb22-52"><a href="#cb22-52" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-53"><a href="#cb22-53" aria-hidden="true" tabindex="-1"></a>plt.colorbar(sc4, ax<span class="op">=</span>axes[<span class="dv">1</span>, <span class="dv">1</span>], label<span class="op">=</span><span class="vs">r"</span><span class="dv">$\s</span><span class="vs">qrt{</span><span class="dv">\m</span><span class="vs">athrm{between}}</span><span class="dv">$</span><span class="vs">"</span>, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
+<span id="cb22-54"><a href="#cb22-54" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">1</span>].set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb22-55"><a href="#cb22-55" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">1</span>].set_title(<span class="vs">r"Between-model SE </span><span class="kw">(</span><span class="dv">$</span><span class="ch">\t</span><span class="vs">heta</span><span class="dv">$</span><span class="vs"> uncertainty</span><span class="kw">)</span><span class="vs">"</span>)</span>
+<span id="cb22-56"><a href="#cb22-56" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">1</span>].set_xlabel(<span class="st">"Easting (km)"</span>)</span>
+<span id="cb22-57"><a href="#cb22-57" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">1</span>].set_ylabel(<span class="st">"Northing (km)"</span>)</span>
+<span id="cb22-58"><a href="#cb22-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-59"><a href="#cb22-59" aria-hidden="true" tabindex="-1"></a>sc5 <span class="op">=</span> axes[<span class="dv">1</span>, <span class="dv">2</span>].scatter(</span>
+<span id="cb22-60"><a href="#cb22-60" aria-hidden="true" tabindex="-1"></a>    grid_out[x_col], grid_out[y_col], c<span class="op">=</span>grid_out[<span class="st">"Cd_ebk"</span>],</span>
+<span id="cb22-61"><a href="#cb22-61" aria-hidden="true" tabindex="-1"></a>    cmap<span class="op">=</span><span class="st">"YlOrRd"</span>, s<span class="op">=</span><span class="dv">8</span>, marker<span class="op">=</span><span class="st">"."</span>,</span>
+<span id="cb22-62"><a href="#cb22-62" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-63"><a href="#cb22-63" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">2</span>].scatter(</span>
+<span id="cb22-64"><a href="#cb22-64" aria-hidden="true" tabindex="-1"></a>    df_train[x_col], df_train[y_col], facecolors<span class="op">=</span><span class="st">"none"</span>, edgecolors<span class="op">=</span><span class="st">"k"</span>,</span>
+<span id="cb22-65"><a href="#cb22-65" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">14</span>, linewidths<span class="op">=</span><span class="fl">0.35</span>,</span>
+<span id="cb22-66"><a href="#cb22-66" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-67"><a href="#cb22-67" aria-hidden="true" tabindex="-1"></a>plt.colorbar(sc5, ax<span class="op">=</span>axes[<span class="dv">1</span>, <span class="dv">2</span>], label<span class="op">=</span><span class="st">"Cd (mg/kg)"</span>, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
+<span id="cb22-68"><a href="#cb22-68" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">2</span>].set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb22-69"><a href="#cb22-69" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">2</span>].set_title(<span class="vs">r"Back-transform </span><span class="dv">$</span><span class="er">\</span><span class="vs">exp</span><span class="kw">(</span><span class="er">\</span><span class="vs">hat Z_{EBK}</span><span class="kw">)</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb22-70"><a href="#cb22-70" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">2</span>].set_xlabel(<span class="st">"Easting (km)"</span>)</span>
+<span id="cb22-71"><a href="#cb22-71" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">2</span>].set_ylabel(<span class="st">"Northing (km)"</span>)</span>
+<span id="cb22-72"><a href="#cb22-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-73"><a href="#cb22-73" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb22-74"><a href="#cb22-74" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="11_empirical_bayesian_kriging_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="probability-maps-of-exceedance" class="level2">
+<h2 class="anchored" data-anchor-id="probability-maps-of-exceedance">10. Probability Maps of Exceedance</h2>
+<p><code>predict_proba</code> mixes the <span class="math inline">\(K\)</span> Gaussians <span class="math inline">\(N(\hat Z_k,\sigma_k^2)\)</span> with weights <span class="math inline">\(w_k\)</span>. That is <strong>not</strong> the same as plugging <span class="math inline">\((\hat Z_{\mathrm{EBK}},\sigma_{\mathrm{EBK}})\)</span> into a single <span class="math inline">\(\Phi\)</span> — the mixture keeps the extra spread from <span class="math inline">\(\theta\)</span>-uncertainty instead of smoothing it into one Gaussian.</p>
+<p>Because the model is on <span class="math inline">\(\log(\mathrm{Cd})\)</span>, <span class="math inline">\(P(\mathrm{Cd} &gt; z_c) = P(\log\mathrm{Cd} &gt; \log z_c)\)</span>. We map <span class="math inline">\(z_c \in \{0.50, 1.00, 1.50, 2.00\}\)</span> mg/kg. Mean exceedance probability across the grid must decrease as the cutoff rises (<code>test_predict_proba_decreases_with_cutoff_on_average</code>).</p>
+<div id="proba-code" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:37:15.385543Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:37:15.385155Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:37:20.612522Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:37:20.611738Z&quot;}}" data-execution_count="14">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>cutoffs_cd <span class="op">=</span> [<span class="fl">0.50</span>, <span class="fl">1.00</span>, <span class="fl">1.50</span>, <span class="fl">2.00</span>]  <span class="co"># mg/kg</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>cutoffs_log <span class="op">=</span> [<span class="bu">float</span>(np.log(zc)) <span class="cf">for</span> zc <span class="kw">in</span> cutoffs_cd]</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>probs <span class="op">=</span> ebk.predict_proba(grid_coords, cutoffs_log)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>prob_cols <span class="op">=</span> []</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> zc, zc_log <span class="kw">in</span> <span class="bu">zip</span>(cutoffs_cd, cutoffs_log):</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    col <span class="op">=</span> <span class="ss">f"P_Cd_gt_</span><span class="sc">{</span>zc<span class="sc">:.2f}</span><span class="ss">"</span>.replace(<span class="st">"."</span>, <span class="st">"p"</span>)</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    grid_out[col] <span class="op">=</span> probs[zc_log]</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>    prob_cols.append(col)</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> probs[zc_log]</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> p.shape <span class="op">==</span> (<span class="bu">len</span>(grid_coords),)</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> np.<span class="bu">all</span>((p <span class="op">&gt;=</span> <span class="dv">0</span>) <span class="op">&amp;</span> (p <span class="op">&lt;=</span> <span class="dv">1</span>))</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>        <span class="ss">f"P(Cd &gt; </span><span class="sc">{</span>zc<span class="sc">:4.2f}</span><span class="ss">)  mean=</span><span class="sc">{</span>p<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">  min=</span><span class="sc">{</span>p<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.3f}</span><span class="ss">  max=</span><span class="sc">{</span>p<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">"</span></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Monotone in the mean?"</span>,</span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>      <span class="bu">all</span>(probs[cutoffs_log[i]].mean() <span class="op">&gt;</span> probs[cutoffs_log[i <span class="op">+</span> <span class="dv">1</span>]].mean()</span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>          <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(cutoffs_log) <span class="op">-</span> <span class="dv">1</span>)))</span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>emp <span class="op">=</span> {zc: <span class="bu">float</span>(np.mean(cd_train <span class="op">&gt;</span> zc)) <span class="cf">for</span> zc <span class="kw">in</span> cutoffs_cd}</span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Empirical P(Cd &gt; zc) on training samples:"</span>)</span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> zc, p <span class="kw">in</span> emp.items():</span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>zc<span class="sc">:4.2f}</span><span class="ss"> mg/kg : </span><span class="sc">{</span>p<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>P(Cd &gt; 0.50)  mean=0.887  min=0.315  max=0.990
+P(Cd &gt; 1.00)  mean=0.563  min=0.043  max=0.870
+P(Cd &gt; 1.50)  mean=0.314  min=0.008  max=0.656
+P(Cd &gt; 2.00)  mean=0.171  min=0.002  max=0.454
+
+Monotone in the mean? True
+Empirical P(Cd &gt; zc) on training samples:
+  0.50 mg/kg : 0.873
+  1.00 mg/kg : 0.546
+  1.50 mg/kg : 0.351
+  2.00 mg/kg : 0.155</code></pre>
+</div>
+</div>
+<div id="proba-plot" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:37:20.615029Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:37:20.614828Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:37:22.426147Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:37:22.424948Z&quot;}}" data-execution_count="15">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="dv">9</span>))</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, zc, col <span class="kw">in</span> <span class="bu">zip</span>(axes, cutoffs_cd, prob_cols):</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    sc <span class="op">=</span> ax.scatter(</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>        grid_out[x_col], grid_out[y_col], c<span class="op">=</span>grid_out[col],</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>        cmap<span class="op">=</span><span class="st">"RdYlGn_r"</span>, s<span class="op">=</span><span class="dv">6</span>, marker<span class="op">=</span><span class="st">"."</span>, vmin<span class="op">=</span><span class="dv">0</span>, vmax<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    plt.colorbar(sc, ax<span class="op">=</span>ax, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>, label<span class="op">=</span><span class="st">"Probability"</span>)</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    ax.set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="ss">f"$P$(Cd &gt; </span><span class="sc">{</span>zc<span class="sc">:g}</span><span class="ss"> mg/kg)"</span>)</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"Easting (km)"</span>)</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    ax.set_ylabel(<span class="st">"Northing (km)"</span>)</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>sc <span class="op">=</span> axes[<span class="dv">4</span>].scatter(</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>    grid_out[x_col], grid_out[y_col], c<span class="op">=</span>grid_out[<span class="st">"Cd_ebk"</span>],</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>    cmap<span class="op">=</span><span class="st">"YlOrRd"</span>, s<span class="op">=</span><span class="dv">6</span>, marker<span class="op">=</span><span class="st">"."</span>,</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>plt.colorbar(sc, ax<span class="op">=</span>axes[<span class="dv">4</span>], fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>, label<span class="op">=</span><span class="st">"Cd (mg/kg)"</span>)</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">4</span>].set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">4</span>].set_title(<span class="vs">r"EBK </span><span class="dv">$</span><span class="er">\</span><span class="vs">exp</span><span class="kw">(</span><span class="er">\</span><span class="vs">hat Z</span><span class="kw">)</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">4</span>].set_xlabel(<span class="st">"Easting (km)"</span>)</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">4</span>].set_ylabel(<span class="st">"Northing (km)"</span>)</span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">5</span>].hist(grid_out[<span class="st">"Cd_ebk"</span>], bins<span class="op">=</span><span class="dv">40</span>, color<span class="op">=</span><span class="st">"steelblue"</span>, edgecolor<span class="op">=</span><span class="st">"white"</span>, density<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> zc <span class="kw">in</span> cutoffs_cd:</span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">5</span>].axvline(zc, color<span class="op">=</span><span class="st">"crimson"</span>, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>, alpha<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">5</span>].set_title(<span class="st">"Back-transformed Cd vs cutoffs"</span>)</span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">5</span>].set_xlabel(<span class="st">"EBK Cd (mg/kg)"</span>)</span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">5</span>].set_ylabel(<span class="st">"Density"</span>)</span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a>plt.suptitle(<span class="st">"Empirical Bayesian kriging — mixture-of-Gaussians exceedance maps"</span>, fontsize<span class="op">=</span><span class="dv">13</span>, y<span class="op">=</span><span class="fl">1.01</span>)</span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb25-34"><a href="#cb25-34" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="11_empirical_bayesian_kriging_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="brier-code" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T19:37:22.434902Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T19:37:22.434532Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T19:37:22.734607Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T19:37:22.733819Z&quot;}}" data-execution_count="16">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Test-set Brier scores of the EBK mixture vs a single-Gaussian OK probability</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>probs_test <span class="op">=</span> ebk.predict_proba(coords_test, cutoffs_log)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>se_ok_safe <span class="op">=</span> np.clip(se_ok_test, <span class="fl">1e-8</span>, <span class="va">None</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> zc, zc_log <span class="kw">in</span> <span class="bu">zip</span>(cutoffs_cd, cutoffs_log):</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    ind <span class="op">=</span> (cd_test <span class="op">&gt;</span> zc).astype(<span class="bu">float</span>)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    p_ebk <span class="op">=</span> probs_test[zc_log]</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    p_ok <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> norm.cdf((zc_log <span class="op">-</span> z_hat_ok) <span class="op">/</span> se_ok_safe)</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    brier_ebk <span class="op">=</span> <span class="bu">float</span>(np.mean((p_ebk <span class="op">-</span> ind) <span class="op">**</span> <span class="dv">2</span>))</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>    brier_ok <span class="op">=</span> <span class="bu">float</span>(np.mean((p_ok <span class="op">-</span> ind) <span class="op">**</span> <span class="dv">2</span>))</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>    base <span class="op">=</span> <span class="bu">float</span>(ind.mean())</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>    brier_base <span class="op">=</span> <span class="bu">float</span>(base <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> base))</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>    rows.append({</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>        <span class="st">"cutoff"</span>: zc,</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Brier_EBK"</span>: brier_ebk,</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Brier_OK"</span>: brier_ok,</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Brier_noskill"</span>: brier_base,</span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>        <span class="st">"skill_EBK"</span>: <span class="fl">1.0</span> <span class="op">-</span> brier_ebk <span class="op">/</span> brier_base <span class="cf">if</span> brier_base <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>        <span class="st">"mean_p_EBK"</span>: <span class="bu">float</span>(p_ebk.mean()),</span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">"empirical"</span>: <span class="bu">float</span>(ind.mean()),</span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>brier_tbl <span class="op">=</span> pd.DataFrame(rows).<span class="bu">round</span>(<span class="dv">3</span>)</span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Test-set Brier scores (lower is better; skill &gt; 0 beats the marginal frequency)"</span>)</span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>brier_tbl</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Test-set Brier scores (lower is better; skill &gt; 0 beats the marginal frequency)</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="16">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">cutoff</th>
+<th data-quarto-table-cell-role="th">Brier_EBK</th>
+<th data-quarto-table-cell-role="th">Brier_OK</th>
+<th data-quarto-table-cell-role="th">Brier_noskill</th>
+<th data-quarto-table-cell-role="th">skill_EBK</th>
+<th data-quarto-table-cell-role="th">mean_p_EBK</th>
+<th data-quarto-table-cell-role="th">empirical</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>0.5</td>
+<td>0.084</td>
+<td>0.081</td>
+<td>0.145</td>
+<td>0.421</td>
+<td>0.852</td>
+<td>0.824</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>1.0</td>
+<td>0.203</td>
+<td>0.203</td>
+<td>0.250</td>
+<td>0.187</td>
+<td>0.517</td>
+<td>0.509</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>1.5</td>
+<td>0.189</td>
+<td>0.190</td>
+<td>0.216</td>
+<td>0.125</td>
+<td>0.282</td>
+<td>0.315</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>2.0</td>
+<td>0.098</td>
+<td>0.100</td>
+<td>0.106</td>
+<td>0.070</td>
+<td>0.152</td>
+<td>0.120</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="summary-and-conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="summary-and-conclusions">11. Summary and Conclusions</h2>
+<ul>
+<li><strong>Empirical Bayesian kriging</strong> does not commit to a single semivariogram <span class="math inline">\(\hat\theta\)</span>. It builds an empirical distribution over plausible <span class="math inline">\(\theta\)</span> by simulating Gaussian realizations from a base fit, refitting, and weighting, then kriges the real data with every member of that ensemble.</li>
+<li><strong><code>pygstat.EmpiricalBayesianKriging</code></strong> implements the global (single-window) form of that recipe. Each member is ordinary (or simple) kriging; <code>predict()</code> combines them with the law-of-total-variance / Rubin rule; <code>predict_proba</code> mixes the <span class="math inline">\(K\)</span> predictive Gaussians rather than collapsing them to one.</li>
+<li>On <strong>Jura cadmium</strong> (<span class="math inline">\(\log\)</span> scale, <span class="math inline">\(K=40\)</span>), the ensemble of spherical models showed real spread in nugget, sill, and range. Inverse-LOO-MSE weights downweighted the worst refits.</li>
+<li><strong>Held-out point estimates</strong> tracked ordinary kriging closely. <strong>EBK standard errors were larger than OK’s</strong> on the test set and on the grid — that extra width is the between-model term, the <span class="math inline">\(\theta\)</span>-uncertainty plain kriging ignores.</li>
+<li><strong>Exceedance maps</strong> <span class="math inline">\(P(\mathrm{Cd}&gt;z_c)\)</span> come from the mixture. Mean probability decreased with the cutoff, and test-set Brier scores beat the no-skill baseline.</li>
+</ul>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Object</th>
+<th>Role in this notebook</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>base_variogram_</code></td>
+<td><span class="math inline">\(\hat\theta_0\)</span>; simulation only</td>
+</tr>
+<tr class="even">
+<td><code>variograms_</code></td>
+<td>Refit ensemble <span class="math inline">\(\{\theta_k\}\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>weights_</code></td>
+<td>Inverse-LOO-MSE precision weights</td>
+</tr>
+<tr class="even">
+<td><code>predict</code></td>
+<td><span class="math inline">\(\hat Z_{\mathrm{EBK}}\)</span> and total SE</td>
+</tr>
+<tr class="odd">
+<td><code>predict_proba</code></td>
+<td>Mixture-of-Gaussians <span class="math inline">\(P(Z&gt;z_c)\)</span></td>
+</tr>
+</tbody>
+</table>
+<section id="practical-takeaways" class="level3">
+<h3 class="anchored" data-anchor-id="practical-takeaways">Practical takeaways</h3>
+<ul>
+<li>Use EBK when you care about <strong>honest prediction variance</strong> or <strong>calibrated probabilities</strong>, especially with a modest sample or an ill-determined range/nugget.</li>
+<li>EBK is still a <strong>linear</strong> interpolator of the (transformed) data. For a richer <em>point estimate</em> of a skewed grade, use disjunctive kriging (Tutorial 10) — the two ideas address different OK failures and can in principle be combined.</li>
+<li>Transform skewed variables before the simulate-and-refit loop. This class does not auto-transform, and it does not yet run local moving windows.</li>
+<li><span class="math inline">\(K=100\)</span> is the library/ArcGIS default. Smaller <span class="math inline">\(K\)</span> is fine for exploration; check that the ensemble of ranges has not collapsed.</li>
+</ul>
+</section>
+<section id="next-steps" class="level3">
+<h3 class="anchored" data-anchor-id="next-steps">Next steps</h3>
+<ul>
+<li>Compare these <span class="math inline">\(P(\mathrm{Cd}&gt;1)\)</span> maps with Tutorial 07 (indicator kriging) and Tutorial 10 (disjunctive kriging) on the same survey</li>
+<li>Sequential Gaussian simulation (Tutorial 18) draws <em>realizations of the field</em> given one <span class="math inline">\(\theta\)</span>; EBK averages <em>kriging predictors</em> over an ensemble of <span class="math inline">\(\theta\)</span></li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="resources" class="level2">
+<h2 class="anchored" data-anchor-id="resources">12. Resources</h2>
+<section id="textbooks" class="level3">
+<h3 class="anchored" data-anchor-id="textbooks">Textbooks</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Reference</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Diggle, P.J. &amp; Ribeiro, P.J. (2007). <em>Model-based Geostatistics</em>. Springer.</td>
+<td>Fully Bayesian geostatistics; the MCMC target EBK approximates</td>
+</tr>
+<tr class="even">
+<td>Chilès, J.-P. &amp; Delfiner, P. (2012). <em>Geostatistics: Modeling Spatial Uncertainty</em> (2nd ed.). Wiley.</td>
+<td>Variogram-parameter uncertainty; model averaging</td>
+</tr>
+<tr class="odd">
+<td>Goovaerts, P. (1997). <em>Geostatistics for Natural Resources Evaluation</em>. Oxford University Press.</td>
+<td>Jura Cd case study</td>
+</tr>
+<tr class="even">
+<td>Banerjee, S., Carlin, B.P. &amp; Gelfand, A.E. (2014). <em>Hierarchical Modeling and Analysis for Spatial Data</em> (2nd ed.). CRC.</td>
+<td>Hierarchical (fully Bayesian) spatial models</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="key-papers" class="level3">
+<h3 class="anchored" data-anchor-id="key-papers">Key papers</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Paper</th>
+<th>Contribution</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Krivoruchko, K. (2012). Empirical Bayesian Kriging. <em>ArcUser</em> Fall 2012, 6–10.</td>
+<td>EBK as implemented in ArcGIS Geostatistical Analyst</td>
+</tr>
+<tr class="even">
+<td>Krivoruchko, K. &amp; Gribov, A. (2019). Evaluation of empirical Bayesian kriging. <em>Spatial Statistics</em> 32, 100368.</td>
+<td>Formal evaluation of EBK vs classical kriging</td>
+</tr>
+<tr class="odd">
+<td>Handcock, M.S. &amp; Stein, M.L. (1993). A Bayesian analysis of kriging. <em>Technometrics</em> 35, 403–410.</td>
+<td>Fully Bayesian kriging with a prior on <span class="math inline">\(\theta\)</span></td>
+</tr>
+<tr class="even">
+<td>Rubin, D.B. (1987). <em>Multiple Imputation for Nonresponse in Surveys</em>. Wiley.</td>
+<td>Within + between combining rule reused by EBK</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="in-this-library" class="level3">
+<h3 class="anchored" data-anchor-id="in-this-library">In this library</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Object</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>pygstat.EmpiricalBayesianKriging</code></td>
+<td>Simulate-refit-weight ensemble; <code>predict</code> / <code>predict_proba</code></td>
+</tr>
+<tr class="even">
+<td><code>pygstat.OrdinaryKriging</code> / <code>SimpleKriging</code></td>
+<td>Per-member kriging engine</td>
+</tr>
+<tr class="odd">
+<td><code>pygstat.Variogram</code></td>
+<td>Base fit and every refit</td>
+</tr>
+<tr class="even">
+<td><code>pygstat.loo_cv</code></td>
+<td>Leave-one-out weights</td>
+</tr>
+<tr class="odd">
+<td><code>tests/test_ebk.py</code></td>
+<td>Synthetic API, Meuse SE-inflation claim, GPU smoke tests</td>
+</tr>
+</tbody>
+</table>
+
+
+</section>
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/zia207\.github\.io\/pygstat\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../Tutorial/10_disjunctive_kriging.html" class="pagination-link" aria-label="Disjunctive Kriging">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Disjunctive Kriging</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../Tutorial/09_soft_kriging.html" class="pagination-link" aria-label="Soft Kriging">
+        <span class="nav-page-text">Soft Kriging</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© CC-By Zia Ahmed, Upatta Analytics, 2026</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>This page is built with <a href="https://quarto.org/">Quarto</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

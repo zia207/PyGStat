@@ -1,0 +1,6 @@
+include LICENSE.md
+include README.md
+include pyproject.toml
+include tests/conftest.py
+recursive-include tests test_*.py
+recursive-include src/pygstat *.py

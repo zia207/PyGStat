@@ -1,0 +1,2397 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>17.1 Poisson Kriging of Areal Disease Data – PyGStat</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../Tutorial/17_02_poisson_cokriging.html" rel="next">
+<link href="../Tutorial/16_kriging_STGTN.html" rel="prev">
+<link href="../Image/pygstat_logo_light.svg" rel="icon" type="image/svg+xml">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f1aadacce99040138bbb613f9330654f.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-bf6de5ccb156a65fc439966d4053cafd.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-c3ddef8e9936373b1ee063945a43a984.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-bf6de5ccb156a65fc439966d4053cafd.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../Image/pygstat_logo_light.svg" alt="" class="navbar-logo light-content">
+    <img src="../Image/pygstat_logo_light.svg" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">PyGStat</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../index.html" aria-current="page"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-getting-started" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Getting Started</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-getting-started">    
+        <li>
+    <a class="dropdown-item" href="../Tutorial/00_getting_started.html">
+ <span class="dropdown-text">Getting Started</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../install.html">
+ <span class="dropdown-text">PyGStat Installation</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-tutorial" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Tutorial</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-tutorial">    
+        <li class="dropdown-header">Core Interpolation</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/01_variogram_modeling.html">
+ <span class="dropdown-text">Variogram Modeling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/02_simple_kriging.html">
+ <span class="dropdown-text">Simple Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/03_ordinary_kriging.html">
+ <span class="dropdown-text">Ordinary Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/04_universal_kriging.html">
+ <span class="dropdown-text">Universal Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/05_cokriging.html">
+ <span class="dropdown-text">Cokriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/08_kriging_3d.html">
+ <span class="dropdown-text">3-D Kriging (KT3D)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Regression Kriging</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_01_regression_kriging_scikit_learn.html">
+ <span class="dropdown-text">scikit-learn</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_02_regression_kriging_H20.html">
+ <span class="dropdown-text">H2O AutoML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_03_regression_kriging_pytorch.html">
+ <span class="dropdown-text">PyTorch MLP</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_04_regression_krigingDNN_TF.html">
+ <span class="dropdown-text">TensorFlow / Keras</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_05_regression_kriging_gnn.html">
+ <span class="dropdown-text">Graph Neural Nets</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Indicators, Structure, and Space–Time</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/07_indicator_kriging.html">
+ <span class="dropdown-text">Indicator Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/10_disjunctive_kriging.html">
+ <span class="dropdown-text">Disjunctive Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/11_empirical_bayesian_kriging.html">
+ <span class="dropdown-text">Empirical Bayesian Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/09_soft_kriging.html">
+ <span class="dropdown-text">Soft Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/12_factorial_kriging.html">
+ <span class="dropdown-text">Factorial Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/13_krigingST.html">
+ <span class="dropdown-text">Spatio-Temporal OK</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/14_kriging_CNNLSTM.html">
+ <span class="dropdown-text">ConvLSTM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/15_kriging_STGNN.html">
+ <span class="dropdown-text">STGNN (TGCN / DCRNN)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/16_kriging_STGTN.html">
+ <span class="dropdown-text">STGTN (STTN / GMAN)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Poisson Kriging</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_01_poisson_Kriging_ata_atp.html">
+ <span class="dropdown-text">Area-to-Area / Area-to-Point</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_02_poisson_cokriging.html">
+ <span class="dropdown-text">Poisson Cokriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_03_poisson_kriging_ST.html">
+ <span class="dropdown-text">Spatio-Temporal Poisson</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Simulation</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/18_sgsim.html">
+ <span class="dropdown-text">SGSIM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/19_sisim.html">
+ <span class="dropdown-text">SISIM</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://sites.google.com/view/r-data-sci-env/home"> <i class="bi bi-house" role="img" aria-label="Upatta Analytics">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://pypi.org/project/pygstat/"> <i class="bi bi-box" role="img" aria-label="PyPI">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/zia207/pygstat"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/zia-ahmed207"> <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="mailto:zia207@gmail.com"> <i class="bi bi-envelope" role="img" aria-label="Email">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../Tutorial/17_01_poisson_Kriging_ata_atp.html"><strong>Poisson Kriging</strong></a></li><li class="breadcrumb-item"><a href="../Tutorial/17_01_poisson_Kriging_ata_atp.html">Area-to-Area / Area-to-Point</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../Tutorial/17_01_poisson_Kriging_ata_atp.html"><strong>Poisson Kriging</strong></a></li><li class="breadcrumb-item"><a href="../Tutorial/17_01_poisson_Kriging_ata_atp.html">Area-to-Area / Area-to-Point</a></li></ol></nav>
+      <h1 class="title">17.1 Poisson Kriging of Areal Disease Data</h1>
+                      </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-center sidebar-header">
+      <a href="../index.html" class="sidebar-logo-link">
+      <img src="../Image/pygstat_logo_light.svg" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="../Image/pygstat_logo_light.svg" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Package Overview</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Core Interpolation</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/01_variogram_modeling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Variogram Modeling</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/02_simple_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Simple Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/03_ordinary_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Ordinary Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/04_universal_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Universal Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/05_cokriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cokriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/08_kriging_3d.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">3-D Kriging (KT3D)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Regression Kriging</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_01_regression_kriging_scikit_learn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">scikit-learn</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_02_regression_kriging_H20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">H2O AutoML</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_03_regression_kriging_pytorch.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PyTorch MLP</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_04_regression_krigingDNN_TF.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TensorFlow / Keras</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_05_regression_kriging_gnn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Graph Neural Nets</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Indicators, Structure, and Space–Time</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/07_indicator_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Indicator Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/10_disjunctive_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Disjunctive Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/11_empirical_bayesian_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Empirical Bayesian Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/09_soft_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Soft Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/12_factorial_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Factorial Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/13_krigingST.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spatio-Temporal OK</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/14_kriging_CNNLSTM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ConvLSTM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/15_kriging_STGNN.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">STGNN (TGCN / DCRNN)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/16_kriging_STGTN.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">STGTN (STTN / GMAN)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Poisson Kriging</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_01_poisson_Kriging_ata_atp.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Area-to-Area / Area-to-Point</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_02_poisson_cokriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Poisson Cokriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_03_poisson_kriging_ST.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spatio-Temporal Poisson</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Simulation</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/18_sgsim.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">SGSIM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/19_sisim.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">SISIM</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On This Page</h2>
+   
+  <ul>
+  <li><a href="#table-of-contents" id="toc-table-of-contents" class="nav-link active" data-scroll-target="#table-of-contents">Table of Contents</a></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview">1. Overview</a></li>
+  <li><a href="#theory---poisson-risk-and-the-small-number-problem" id="toc-theory---poisson-risk-and-the-small-number-problem" class="nav-link" data-scroll-target="#theory---poisson-risk-and-the-small-number-problem">2. Theory - Poisson Risk and the Small-Number Problem</a></li>
+  <li><a href="#theory---centroid-ata-and-atp-estimators" id="toc-theory---centroid-ata-and-atp-estimators" class="nav-link" data-scroll-target="#theory---centroid-ata-and-atp-estimators">3. Theory - Centroid, ATA, and ATP Estimators</a></li>
+  <li><a href="#theory---population-weighted-variogram-and-deconvolution" id="toc-theory---population-weighted-variogram-and-deconvolution" class="nav-link" data-scroll-target="#theory---population-weighted-variogram-and-deconvolution">4. Theory - Population-Weighted Variogram and Deconvolution</a></li>
+  <li><a href="#python-setup" id="toc-python-setup" class="nav-link" data-scroll-target="#python-setup">5. Python Setup</a>
+  <ul>
+  <li><a href="#cpu-and-gpu" id="toc-cpu-and-gpu" class="nav-link" data-scroll-target="#cpu-and-gpu">5.1 CPU and GPU</a></li>
+  </ul></li>
+  <li><a href="#load-data-and-point-support" id="toc-load-data-and-point-support" class="nav-link" data-scroll-target="#load-data-and-point-support">6. Load Data and Point Support</a></li>
+  <li><a href="#exploratory-maps" id="toc-exploratory-maps" class="nav-link" data-scroll-target="#exploratory-maps">7. Exploratory Maps</a></li>
+  <li><a href="#semivariogram-model" id="toc-semivariogram-model" class="nav-link" data-scroll-target="#semivariogram-model">8. Semivariogram Model</a></li>
+  <li><a href="#population-weighted-distance-and-risk-semivariogram" id="toc-population-weighted-distance-and-risk-semivariogram" class="nav-link" data-scroll-target="#population-weighted-distance-and-risk-semivariogram">9. Population-Weighted Distance and Risk Semivariogram</a></li>
+  <li><a href="#deconvolution-to-point-support" id="toc-deconvolution-to-point-support" class="nav-link" data-scroll-target="#deconvolution-to-point-support">10. Deconvolution to Point Support</a></li>
+  <li><a href="#run-the-three-estimators" id="toc-run-the-three-estimators" class="nav-link" data-scroll-target="#run-the-three-estimators">11. Run the Three Estimators</a></li>
+  <li><a href="#area-to-point-surface" id="toc-area-to-point-surface" class="nav-link" data-scroll-target="#area-to-point-surface">12. Area-to-Point Surface</a></li>
+  <li><a href="#coherence-constraint" id="toc-coherence-constraint" class="nav-link" data-scroll-target="#coherence-constraint">13. Coherence Constraint</a></li>
+  <li><a href="#kriging-variance-comparison" id="toc-kriging-variance-comparison" class="nav-link" data-scroll-target="#kriging-variance-comparison">14. Kriging-Variance Comparison</a></li>
+  <li><a href="#cpu-vs-gpu-poisson-kriging-timing" id="toc-cpu-vs-gpu-poisson-kriging-timing" class="nav-link" data-scroll-target="#cpu-vs-gpu-poisson-kriging-timing">15. CPU vs GPU Poisson Kriging Timing</a></li>
+  <li><a href="#summary-and-conclusions" id="toc-summary-and-conclusions" class="nav-link" data-scroll-target="#summary-and-conclusions">16. Summary and Conclusions</a></li>
+  <li><a href="#resources" id="toc-resources" class="nav-link" data-scroll-target="#resources">17. Resources</a>
+  <ul>
+  <li><a href="#textbooks" id="toc-textbooks" class="nav-link" data-scroll-target="#textbooks">Textbooks</a></li>
+  <li><a href="#key-papers" id="toc-key-papers" class="nav-link" data-scroll-target="#key-papers">Key papers</a></li>
+  <li><a href="#in-this-library" id="toc-in-this-library" class="nav-link" data-scroll-target="#in-this-library">In this library</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+
+<p><strong>Dataset:</strong> Northeastern-US breast-cancer mortality — county polygons (<code>data/cancer_areas.shp</code>, 217 counties) + census population points (<code>data/cancer_data.gpkg</code>, 5,419 points) <strong>Target:</strong> Age-adjusted breast-cancer mortality rate (<code>rate</code>, per 100,000) <strong>Library:</strong> <code>pygstat.poisson_kriging</code> — centroid-based, area-to-area (ATA), and area-to-point (ATP) Poisson kriging (Goovaerts, 2006)</p>
+<hr>
+<section id="table-of-contents" class="level2">
+<h2 class="anchored" data-anchor-id="table-of-contents">Table of Contents</h2>
+<ol type="1">
+<li><a href="#1-overview">Overview</a></li>
+<li><a href="#2-theory--poisson-risk-and-the-small-number-problem">Theory - Poisson Risk and the Small-Number Problem</a></li>
+<li><a href="#3-theory--centroid-ata-and-atp-estimators">Theory - Centroid, ATA, and ATP Estimators</a></li>
+<li><a href="#4-theory--population-weighted-variogram-and-deconvolution">Theory - Population-Weighted Variogram and Deconvolution</a></li>
+<li><a href="#5-python-setup">Python Setup</a></li>
+<li><a href="#6-load-data-and-point-support">Load Data and Point Support</a></li>
+<li><a href="#7-exploratory-maps">Exploratory Maps</a></li>
+<li><a href="#8-semivariogram-model">Semivariogram Model</a></li>
+<li><a href="#9-population-weighted-distance-and-risk-semivariogram">Population-Weighted Distance and Risk Semivariogram</a></li>
+<li><a href="#10-deconvolution-to-point-support">Deconvolution to Point Support</a></li>
+<li><a href="#11-run-the-three-estimators">Run the Three Estimators</a></li>
+<li><a href="#12-area-to-point-surface">Area-to-Point Surface</a></li>
+<li><a href="#13-coherence-constraint">Coherence Constraint</a></li>
+<li><a href="#14-kriging-variance-comparison">Kriging-Variance Comparison</a></li>
+<li><a href="#15-cpu-vs-gpu-poisson-kriging-timing">CPU vs GPU Poisson Kriging Timing</a></li>
+<li><a href="#16-summary-and-conclusions">Summary and Conclusions</a></li>
+<li><a href="#17-resources">Resources</a></li>
+</ol>
+<hr>
+</section>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">1. Overview</h2>
+<p><strong>Poisson kriging</strong> interpolates an areal <em>rate</em> <span class="math inline">\(z(v)=d(v)/n(v)\)</span> while respecting that <span class="math inline">\(d\)</span> is a Poisson count over a population at risk <span class="math inline">\(n\)</span>. A county with a few thousand residents produces a far noisier rate than one with a million, even if their true underlying risk <span class="math inline">\(R\)</span> is the same (the <em>small-number problem</em>). Ordinary kriging of the raw rate ignores this and lets small, noisy counties distort the map.</p>
+<p>Goovaerts (2006) gives three Poisson-kriging estimators that fold <span class="math inline">\(\mathrm{Var}(z)\propto 1/n\)</span> into the kriging diagonal:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Estimator</th>
+<th>Support</th>
+<th>What it produces</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Centroid PK</strong></td>
+<td>point <span class="math inline">\(\to\)</span> point</td>
+<td>risk at county centroids</td>
+</tr>
+<tr class="even">
+<td><strong>Area-to-area (ATA)</strong></td>
+<td>area <span class="math inline">\(\to\)</span> area</td>
+<td>risk for each county polygon</td>
+</tr>
+<tr class="odd">
+<td><strong>Area-to-point (ATP)</strong></td>
+<td>area <span class="math inline">\(\to\)</span> point</td>
+<td>a continuous isopleth surface</td>
+</tr>
+</tbody>
+</table>
+<p><code>pygstat.poisson_kriging</code> implements all three. This notebook supplies the surrounding <em>variogram inference</em> (population-weighted risk semivariogram and deconvolution to point support), loads the Northeastern-US breast-cancer mortality data, runs the three estimators, and checks the ATP <strong>coherence constraint</strong>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>What we do</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Data</td>
+<td>217 county polygons + 5,419 census points; build <code>PointSupport</code> per county</td>
+</tr>
+<tr class="even">
+<td>Variogram</td>
+<td>Population-weighted risk <span class="math inline">\(\gamma_R(h)\)</span> (Monestiez/Goovaerts Eq. 5)</td>
+</tr>
+<tr class="odd">
+<td>Deconvolution</td>
+<td>Invert regularisation to a point-support model (Eq. 18)</td>
+</tr>
+<tr class="even">
+<td>Mapping</td>
+<td>Leave-one-out centroid and ATA maps; ATP on a 12 km grid</td>
+</tr>
+<tr class="odd">
+<td>Check</td>
+<td>Population-weighted ATP average equals ATA (Eq. 15, machine precision)</td>
+</tr>
+<tr class="even">
+<td>CPU / GPU</td>
+<td>Time k-NN <code>PoissonKriging.predict</code> on CPU vs GPU using <strong>USA diabetes</strong> counties (<code>usa_diabetes_data.csv</code> + <code>US_COUNTY.shp</code>, <span class="math inline">\(n=3{,}107\)</span>)</td>
+</tr>
+</tbody>
+</table>
+<p>By the end you will have leave-one-out centroid and ATA maps, an ATP isopleth that satisfies the coherence constraint, and a CPU vs GPU timing of the batched k-NN centroid solve on the national diabetes county set.</p>
+<hr>
+</section>
+<section id="theory---poisson-risk-and-the-small-number-problem" class="level2">
+<h2 class="anchored" data-anchor-id="theory---poisson-risk-and-the-small-number-problem">2. Theory - Poisson Risk and the Small-Number Problem</h2>
+<p>Let <span class="math inline">\(v_\alpha\)</span> be a county with population <span class="math inline">\(n(v_\alpha)\)</span> and observed count <span class="math inline">\(d(v_\alpha)\)</span>. The latent <strong>risk</strong> <span class="math inline">\(R\)</span> is the intensity of a Poisson count,</p>
+<p><span class="math display">\[
+d(v_\alpha)\sim\mathrm{Poisson}\big(n(v_\alpha)\,R(v_\alpha)\big),
+\qquad
+z(v_\alpha)=B\,\frac{d(v_\alpha)}{n(v_\alpha)},
+\]</span></p>
+<p>where <span class="math inline">\(B\)</span> is a rate base (here <span class="math inline">\(10^5\)</span>, rates per 100,000). Because <span class="math inline">\(\mathrm{Var}(d)=\mathbb{E}[d]\)</span>, the rate is heteroscedastic:</p>
+<p><span class="math display">\[
+\mathrm{Var}\big(z(v_\alpha)\big)\;\approx\;
+B\,\frac{m^\ast}{n(v_\alpha)},
+\qquad
+m^\ast=\frac{\sum_\alpha d(v_\alpha)}{\sum_\alpha n(v_\alpha)}.
+\]</span></p>
+<p>The Poisson-kriging system is ordinary kriging of <span class="math inline">\(z\)</span> for <span class="math inline">\(R\)</span>, with that population-dependent variance added to the diagonal so small-population areas are automatically down-weighted. <code>rate_base</code> (<span class="math inline">\(B\)</span>) is <strong>auto-detected</strong> from the rate magnitude; without it the penalty is <span class="math inline">\(\sim 10^5\times\)</span> too small and ATA/ATP become unstable.</p>
+<hr>
+</section>
+<section id="theory---centroid-ata-and-atp-estimators" class="level2">
+<h2 class="anchored" data-anchor-id="theory---centroid-ata-and-atp-estimators">3. Theory - Centroid, ATA, and ATP Estimators</h2>
+<p>All three estimators are linear, <span class="math inline">\(\hat R=\sum_i\lambda_i z_i\)</span>, with a population penalty on the kriging diagonal and the unbiasedness constraint <span class="math inline">\(\sum_i\lambda_i=1\)</span>.</p>
+<p><strong>Centroid (Goovaerts 2006, Eq. 3).</strong> Areas are collapsed to population-weighted centroids <span class="math inline">\(\mathbf{u}_i\)</span>. The system is</p>
+<p><span class="math display">\[
+\sum_j\lambda_j\Big[C_R(\mathbf{u}_i-\mathbf{u}_j)
++\delta_{ij}\tfrac{m^\ast}{n(\mathbf{u}_i)}\Big]+\mu
+=C_R(\mathbf{u}_i-\mathbf{u}_\alpha).
+\]</span></p>
+<p>This is <code>PoissonKriging.predict_id</code>. It is fast, but it ignores the size and shape of each county.</p>
+<p><strong>Area-to-area (Eq. 7).</strong> Point covariances are replaced by <em>block</em> covariances averaged over each county’s census points,</p>
+<p><span class="math display">\[
+\bar C_R(v_i,v_j)
+=\frac{\sum_{s,s'} n_s n_{s'} C(\mathbf{u}_s-\mathbf{u}_{s'})}
+{\sum_{s,s'} n_s n_{s'}}.
+\]</span></p>
+<p>This is <code>AreaPoissonKriging.predict_area</code>. Change of support usually shrinks the kriging variance relative to the centroid estimator.</p>
+<p><strong>Area-to-point (Eq. 13–14).</strong> Same left-hand side as ATA; the right-hand side uses area-to-point covariances <span class="math inline">\(\bar C_R(v_i,\mathbf{u}_s)\)</span>. Solving at every grid node produces a continuous isopleth (<code>AreaPoissonKriging.predict_points</code>).</p>
+<p><strong>Coherence (Eq. 15).</strong> The population-weighted average of ATP estimates inside a county must recover the ATA estimate for that county:</p>
+<p><span class="math display">\[
+\sum_s \frac{n(\mathbf{u}_s)}{\sum_{s'}n(\mathbf{u}_{s'})}
+\hat R(\mathbf{u}_s)=\hat R(v_\alpha).
+\]</span></p>
+<hr>
+</section>
+<section id="theory---population-weighted-variogram-and-deconvolution" class="level2">
+<h2 class="anchored" data-anchor-id="theory---population-weighted-variogram-and-deconvolution">4. Theory - Population-Weighted Variogram and Deconvolution</h2>
+<p>The kriging engine consumes a <strong>point-support</strong> covariance <span class="math inline">\(C_R(h)\)</span>. Observed rates are areal, so two inference steps are needed.</p>
+<p><strong>Population-weighted risk semivariogram (Monestiez / Goovaerts Eq. 5).</strong> Unreliable pairs are down-weighted and the Poisson noise variance is removed:</p>
+<p><span class="math display">\[
+\hat\gamma_R(h)=\frac{1}{2\sum_\alpha w_\alpha}
+\sum_\alpha w_\alpha\Big[(z_\alpha-z_{\alpha+h})^2-m^\ast\Big],
+\quad
+w_\alpha=\frac{n_\alpha n_{\alpha+h}}{n_\alpha+n_{\alpha+h}}.
+\]</span></p>
+<p>Distances between counties use the <strong>population-weighted distance</strong> (Eq. 1) between their census-point clouds, not the Euclidean distance between centroids.</p>
+<p><strong>Deconvolution (Eq. 18).</strong> ATA/ATP need the point-support model. Regularisation relates areal and point semivariograms by</p>
+<p><span class="math display">\[
+\gamma_v(h)=\bar\gamma(v,v_h)-\bar\gamma_h(v,v).
+\]</span></p>
+<p>We invert this iteratively, reusing the module’s block-semivariance helpers (<code>_weighted_semivariance</code>, <code>_within_support_semivariance</code>) so the regularisation is consistent with the kriging engine. The result is a point-support model with a <strong>higher sill</strong> than the areal one — the extra variance that change of support had averaged away.</p>
+<hr>
+</section>
+<section id="python-setup" class="level2">
+<h2 class="anchored" data-anchor-id="python-setup">5. Python Setup</h2>
+<section id="cpu-and-gpu" class="level3">
+<h3 class="anchored" data-anchor-id="cpu-and-gpu">5.1 CPU and GPU</h3>
+<p><code>PoissonKriging.predict</code> solves a <strong>local</strong> Poisson-kriging system at every prediction point. In k-nearest-neighbor mode every point has the same neighbor count <span class="math inline">\(k\)</span>, so pygstat stacks the systems into one <code>(n_{\mathrm{pred}}, k+1, k+1)</code> batched <code>xp.linalg.solve</code> — NumPy on CPU, CuPy on GPU. Pass <code>use_gpu='auto'|True|False</code>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 51%">
+<col style="width: 48%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument / method</th>
+<th>What it controls</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>use_gpu</code></td>
+<td>Batched k-NN centroid Poisson-kriging solve (NumPy or CuPy).</td>
+</tr>
+<tr class="even">
+<td><code>predict_id</code></td>
+<td>Leave-one-out of a single area; stays on <strong>CPU</strong>.</td>
+</tr>
+<tr class="odd">
+<td><code>AreaPoissonKriging</code></td>
+<td>ATA / ATP block covariances; stays on <strong>CPU</strong>.</td>
+</tr>
+</tbody>
+</table>
+<p><code>use_gpu</code> is:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 38%">
+<col style="width: 61%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Value</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>'auto'</code> (default)</td>
+<td>GPU when CuPy can run a kernel on this card. Falls back to CPU otherwise.</td>
+</tr>
+<tr class="even">
+<td><code>True</code></td>
+<td>Force GPU. Warns and falls back to CPU if CuPy is missing or cannot run a kernel.</td>
+</tr>
+<tr class="odd">
+<td><code>False</code></td>
+<td>Always CPU (NumPy/SciPy).</td>
+</tr>
+</tbody>
+</table>
+<p>This notebook probes the GPU once with <code>cupy_gpu_usable()</code> and stores the result in <code>USE_GPU</code>. The Northeastern-US cancer maps in §11–14 use <code>predict_id</code> / ATA / ATP (CPU). <strong>§15</strong> times the k-NN GPU path on <strong>USA county diabetes</strong> (<span class="math inline">\(n = 3{,}107\)</span>).</p>
+<p>Install CuPy with <code>pip install pygstat[gpu]</code> (CUDA 11) or <code>pip install cupy-cuda12x</code> for CUDA 12.</p>
+<div id="eb054afe" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:26:05.641232Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:26:05.640402Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:26:13.257968Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:26:13.256684Z&quot;}}" data-execution_count="1">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>matplotlib inline</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys, os, warnings</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>sys.path.insert(<span class="dv">0</span>, os.path.abspath(<span class="st">"../src"</span>))</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> geopandas <span class="im">as</span> gpd</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.colors <span class="im">import</span> Normalize</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> shapely.geometry <span class="im">import</span> Point</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.spatial.distance <span class="im">import</span> cdist</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.optimize <span class="im">import</span> least_squares</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Poisson kriging engine ---</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pygstat</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat <span class="im">import</span> poisson_kriging <span class="im">as</span> pk</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat.poisson_kriging <span class="im">import</span> (</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    PoissonKriging,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    AreaPoissonKriging,</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    PointSupport,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    _weighted_semivariance <span class="im">as</span> wgamma,</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    _within_support_semivariance <span class="im">as</span> within_gamma,</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    _detect_rate_base,</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({<span class="st">"figure.dpi"</span>:<span class="dv">110</span>, <span class="st">"font.size"</span>:<span class="dv">10</span>,</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"axes.spines.top"</span>:<span class="va">False</span>, <span class="st">"axes.spines.right"</span>:<span class="va">False</span>})</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>np.set_printoptions(suppress<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"geopandas"</span>, gpd.__version__)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"pygstat version:"</span>, pygstat.__version__)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat <span class="im">import</span> Variogram</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat.utils.backend <span class="im">import</span> CUPY_AVAILABLE, cupy_gpu_usable</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Poisson k-NN batched solve: CPU / GPU dispatch (CuPy) ──────────────────────</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="co"># cupy_gpu_usable() runs a real kernel (not just `import cupy`). Older cards can</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="co"># import CuPy and still fail at compile time; those stay on CPU.</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>USE_GPU <span class="op">=</span> cupy_gpu_usable()</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> USE_GPU:</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"CuPy            : </span><span class="sc">{</span>cp<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>        name <span class="op">=</span> cp.cuda.runtime.getDeviceProperties(<span class="dv">0</span>)[<span class="st">"name"</span>]</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(name, <span class="bu">bytes</span>):</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>            name <span class="op">=</span> name.decode()</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"GPU (CuPy)      : </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span>:</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"GPU (CuPy)      : available"</span>)</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Backend         : GPU (CuPy) — PoissonKriging k-NN batched solve on GPU"</span>)</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> CUPY_AVAILABLE:</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>        <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"CuPy            : </span><span class="sc">{</span>cp<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss"> (installed, but cannot run a kernel on this GPU/CUDA setup)"</span>)</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"CuPy            : not installed  (pip install pygstat[gpu]  or  cupy-cuda12x)"</span>)</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Backend         : CPU (NumPy)"</span>)</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"use_gpu         : </span><span class="sc">{</span>USE_GPU<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>geopandas 1.1.4
+pygstat version: 0.1.0
+CuPy            : 14.2.0
+GPU (CuPy)      : NVIDIA GeForce RTX 2080 Ti
+Backend         : GPU (CuPy) — PoissonKriging k-NN batched solve on GPU
+use_gpu         : True</code></pre>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="load-data-and-point-support" class="level2">
+<h2 class="anchored" data-anchor-id="load-data-and-point-support">6. Load Data and Point Support</h2>
+<p>217 county polygons (<code>FIPS</code>, age-adjusted <code>rate</code> per 100,000) and 5,419 census population points (<code>POP10</code>). A rate from a small population is noisy, so each county needs its <strong>point support</strong> and <strong>total population</strong>. Points are assigned to counties by a <code>within</code> join, with stragglers snapped to the nearest county; <code>PointSupport</code> then groups them.</p>
+<div id="38835882" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:26:13.260926Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:26:13.260475Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:26:13.892776Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:26:13.891809Z&quot;}}" data-execution_count="2">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>areas <span class="op">=</span> gpd.read_file(<span class="st">"../data/cancer_areas.shp"</span>)<span class="op">;</span> areas[<span class="st">"FIPS"</span>] <span class="op">=</span> areas[<span class="st">"FIPS"</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>pts   <span class="op">=</span> gpd.read_file(<span class="st">"../data/cancer_data.gpkg"</span>, layer<span class="op">=</span><span class="st">"points"</span>).set_crs(areas.crs, allow_override<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>j <span class="op">=</span> gpd.sjoin(pts, areas[[<span class="st">"FIPS"</span>,<span class="st">"geometry"</span>]], how<span class="op">=</span><span class="st">"left"</span>, predicate<span class="op">=</span><span class="st">"within"</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>miss <span class="op">=</span> j[<span class="st">"FIPS"</span>].isna()</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> miss.<span class="bu">any</span>():</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    jn <span class="op">=</span> gpd.sjoin_nearest(pts[miss.values], areas[[<span class="st">"FIPS"</span>,<span class="st">"geometry"</span>]], how<span class="op">=</span><span class="st">"left"</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    j.loc[miss.values, <span class="st">"FIPS"</span>] <span class="op">=</span> jn[<span class="st">"FIPS"</span>].values</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>j[<span class="st">"FIPS"</span>] <span class="op">=</span> j[<span class="st">"FIPS"</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>pxy <span class="op">=</span> np.column_stack([j.geometry.x, j.geometry.y])</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>ps  <span class="op">=</span> PointSupport(pxy, j[<span class="st">"POP10"</span>].values, j[<span class="st">"FIPS"</span>].values)   <span class="co"># &lt;-- module class</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>pop_area <span class="op">=</span> j.groupby(<span class="st">"FIPS"</span>)[<span class="st">"POP10"</span>].<span class="bu">sum</span>()</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>areas[<span class="st">"pop"</span>] <span class="op">=</span> areas[<span class="st">"FIPS"</span>].<span class="bu">map</span>(pop_area)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>fips  <span class="op">=</span> areas[<span class="st">"FIPS"</span>].values</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>rates <span class="op">=</span> areas[<span class="st">"rate"</span>].values</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>pops  <span class="op">=</span> areas[<span class="st">"pop"</span>].values</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>cent  <span class="op">=</span> np.array([ps.centroid(<span class="bu">int</span>(f)) <span class="cf">for</span> f <span class="kw">in</span> fips])          <span class="co"># pop-weighted centroids</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>areas[<span class="st">"cx"</span>], areas[<span class="st">"cy"</span>] <span class="op">=</span> cent[:,<span class="dv">0</span>], cent[:,<span class="dv">1</span>]</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(areas)<span class="sc">}</span><span class="ss"> counties | </span><span class="sc">{</span><span class="bu">len</span>(j)<span class="sc">}</span><span class="ss"> points (</span><span class="sc">{</span>miss<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">}</span><span class="ss"> snapped) | </span><span class="sc">{</span><span class="bu">len</span>(ps)<span class="sc">}</span><span class="ss"> supports"</span>)</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"population/county: </span><span class="sc">{</span>pops<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:,.0f}</span><span class="ss">–</span><span class="sc">{</span>pops<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:,.0f}</span><span class="ss"> (median </span><span class="sc">{</span>np<span class="sc">.</span>median(pops)<span class="sc">:,.0f}</span><span class="ss">)"</span>)</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"rate/100k: </span><span class="sc">{</span>rates<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.1f}</span><span class="ss">–</span><span class="sc">{</span>rates<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.1f}</span><span class="ss"> (mean </span><span class="sc">{</span>rates<span class="sc">.</span>mean()<span class="sc">:.1f}</span><span class="ss">)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>217 counties | 5419 points (459 snapped) | 217 supports
+population/county: 4,886–2,371,499 (median 104,290)
+rate/100k: 98.1–192.2 (mean 131.6)</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="exploratory-maps" class="level2">
+<h2 class="anchored" data-anchor-id="exploratory-maps">7. Exploratory Maps</h2>
+<div id="00ff0a2d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:26:13.895328Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:26:13.894816Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:26:18.936749Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:26:18.935541Z&quot;}}" data-execution_count="3">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="fl">4.6</span>))</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>areas.plot(<span class="st">"rate"</span>, cmap<span class="op">=</span><span class="st">"RdBu_r"</span>, legend<span class="op">=</span><span class="va">True</span>, ax<span class="op">=</span>ax[<span class="dv">0</span>], edgecolor<span class="op">=</span><span class="st">"k"</span>, linewidth<span class="op">=</span><span class="fl">.2</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>           legend_kwds<span class="op">=</span>{<span class="st">"label"</span>:<span class="st">"rate / 100k"</span>,<span class="st">"shrink"</span>:<span class="fl">.7</span>})<span class="op">;</span> ax[<span class="dv">0</span>].set_title(<span class="st">"Raw mortality rate"</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>areas.plot(<span class="st">"pop"</span>, cmap<span class="op">=</span><span class="st">"viridis"</span>, legend<span class="op">=</span><span class="va">True</span>, ax<span class="op">=</span>ax[<span class="dv">1</span>], edgecolor<span class="op">=</span><span class="st">"k"</span>, linewidth<span class="op">=</span><span class="fl">.2</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>           norm<span class="op">=</span>Normalize(), legend_kwds<span class="op">=</span>{<span class="st">"label"</span>:<span class="st">"population"</span>,<span class="st">"shrink"</span>:<span class="fl">.7</span>})</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].scatter(cent[:,<span class="dv">0</span>], cent[:,<span class="dv">1</span>], s<span class="op">=</span><span class="dv">3</span>, c<span class="op">=</span><span class="st">"red"</span>)<span class="op">;</span> ax[<span class="dv">1</span>].set_title(<span class="st">"Population at risk"</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>areas[<span class="st">"npts"</span>] <span class="op">=</span> areas[<span class="st">"FIPS"</span>].<span class="bu">map</span>(j.groupby(<span class="st">"FIPS"</span>).size())</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>areas.plot(<span class="st">"npts"</span>, cmap<span class="op">=</span><span class="st">"magma"</span>, legend<span class="op">=</span><span class="va">True</span>, ax<span class="op">=</span>ax[<span class="dv">2</span>], edgecolor<span class="op">=</span><span class="st">"k"</span>, linewidth<span class="op">=</span><span class="fl">.2</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>           legend_kwds<span class="op">=</span>{<span class="st">"label"</span>:<span class="st">"# support points"</span>,<span class="st">"shrink"</span>:<span class="fl">.7</span>})<span class="op">;</span> ax[<span class="dv">2</span>].set_title(<span class="st">"Point-support density"</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> a <span class="kw">in</span> ax: a.set_axis_off()</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="17_01_poisson_Kriging_ata_atp_files/figure-html/cell-4-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="semivariogram-model" class="level2">
+<h2 class="anchored" data-anchor-id="semivariogram-model">8. Semivariogram Model</h2>
+<p><code>AreaPoissonKriging</code> / <code>PoissonKriging</code> expect a <code>variogram</code> with <code>fitted_params = [nugget, partial_sill, range]</code> that is callable as <code>variogram(h) → γ(h)</code>. We supply this small <code>VariogramModel</code>; the range is capped at the largest lag so it cannot rail past the domain.</p>
+<div id="fa0248bc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:26:18.940950Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:26:18.940703Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:26:18.949816Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:26:18.948964Z&quot;}}" data-execution_count="4">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _spherical(h, n, ps_, r):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> np.asarray(h, <span class="bu">float</span>)<span class="op">;</span> g <span class="op">=</span> np.where(h <span class="op">&lt;=</span> r, ps_<span class="op">*</span>(<span class="fl">1.5</span><span class="op">*</span>h<span class="op">/</span>r <span class="op">-</span> <span class="fl">0.5</span><span class="op">*</span>(h<span class="op">/</span>r)<span class="op">**</span><span class="dv">3</span>), ps_)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> n <span class="op">+</span> np.where(h <span class="op">==</span> <span class="dv">0</span>, <span class="fl">0.0</span>, g)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _exponential(h, n, ps_, r):</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> np.asarray(h, <span class="bu">float</span>)<span class="op">;</span> <span class="cf">return</span> n <span class="op">+</span> np.where(h <span class="op">==</span> <span class="dv">0</span>, <span class="fl">0.0</span>, ps_<span class="op">*</span>(<span class="dv">1</span><span class="op">-</span>np.exp(<span class="op">-</span><span class="dv">3</span><span class="op">*</span>h<span class="op">/</span>r)))</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>_MODELS <span class="op">=</span> {<span class="st">"spherical"</span>:_spherical, <span class="st">"exponential"</span>:_exponential}</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> VariogramModel:</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Callable gamma(h) with fitted_params = [nugget, psill, range]."""</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, model<span class="op">=</span><span class="st">"spherical"</span>, nugget<span class="op">=</span><span class="fl">0.0</span>, psill<span class="op">=</span><span class="fl">1.0</span>, rng<span class="op">=</span><span class="fl">1.0</span>):</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.model <span class="op">=</span> model<span class="op">;</span> <span class="va">self</span>.fitted_params <span class="op">=</span> [nugget, psill, rng]</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(<span class="va">self</span>, h):</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> _MODELS[<span class="va">self</span>.model](h, <span class="op">*</span><span class="va">self</span>.fitted_params)</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">@property</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> sill(<span class="va">self</span>):</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.fitted_params[<span class="dv">0</span>] <span class="op">+</span> <span class="va">self</span>.fitted_params[<span class="dv">1</span>]</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> fit(<span class="va">self</span>, lags, gamma, weights<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        lags, gamma <span class="op">=</span> np.asarray(lags, <span class="bu">float</span>), np.asarray(gamma, <span class="bu">float</span>)</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> np.ones_like(gamma) <span class="cf">if</span> weights <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> np.asarray(weights, <span class="bu">float</span>)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        s0 <span class="op">=</span> gamma.<span class="bu">max</span>()</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        <span class="kw">def</span> resid(p):</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> (_MODELS[<span class="va">self</span>.model](lags, <span class="op">*</span>p) <span class="op">-</span> gamma)<span class="op">*</span>np.sqrt(w)</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>        sol <span class="op">=</span> least_squares(resid, [gamma.<span class="bu">min</span>(), s0, lags[<span class="bu">len</span>(lags)<span class="op">//</span><span class="dv">2</span>]],</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>                            bounds<span class="op">=</span>([<span class="dv">0</span>,<span class="dv">0</span>,lags.<span class="bu">min</span>()], [s0, <span class="dv">3</span><span class="op">*</span>s0, lags.<span class="bu">max</span>()]))</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.fitted_params <span class="op">=</span> <span class="bu">list</span>(sol.x)<span class="op">;</span> <span class="cf">return</span> <span class="va">self</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<hr>
+</section>
+<section id="population-weighted-distance-and-risk-semivariogram" class="level2">
+<h2 class="anchored" data-anchor-id="population-weighted-distance-and-risk-semivariogram">9. Population-Weighted Distance and Risk Semivariogram</h2>
+<p>The Monestiez/Goovaerts estimator down-weights unreliable pairs and removes the Poisson noise variance (Eq. 5). Distances are the population-weighted distances of Eq. 1.</p>
+<div id="ccef0535" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:26:18.952270Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:26:18.951965Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:26:19.533863Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:26:19.532680Z&quot;}}" data-execution_count="5">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pop_weighted_distance(ca, va, cb, vb):</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Eq. 1: population-weighted mean distance between two point supports."""</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    d <span class="op">=</span> cdist(ca, cb)<span class="op">;</span> w <span class="op">=</span> np.outer(va, vb)<span class="op">;</span> tw <span class="op">=</span> w.<span class="bu">sum</span>()</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>((d<span class="op">*</span>w).<span class="bu">sum</span>()<span class="op">/</span>tw) <span class="cf">if</span> tw <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> <span class="bu">float</span>(d.mean())</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> risk_semivariogram(coords, rates, pops, n_lags<span class="op">=</span><span class="dv">12</span>, max_dist<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Eq. 5: population-weighted, Poisson-corrected experimental risk semivariogram."""</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    d <span class="op">=</span> cdist(coords, coords)<span class="op">;</span> iu <span class="op">=</span> np.triu_indices(<span class="bu">len</span>(coords), <span class="dv">1</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    dd, zi, zj <span class="op">=</span> d[iu], rates[iu[<span class="dv">0</span>]], rates[iu[<span class="dv">1</span>]]</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    ni, nj <span class="op">=</span> pops[iu[<span class="dv">0</span>]], pops[iu[<span class="dv">1</span>]]</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    mstar <span class="op">=</span> np.<span class="bu">sum</span>(rates<span class="op">*</span>pops)<span class="op">/</span>np.<span class="bu">sum</span>(pops)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    w    <span class="op">=</span> ni<span class="op">*</span>nj<span class="op">/</span>(ni<span class="op">+</span>nj)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    incr <span class="op">=</span> (zi<span class="op">-</span>zj)<span class="op">**</span><span class="dv">2</span> <span class="op">-</span> mstar</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> max_dist <span class="kw">is</span> <span class="va">None</span>: max_dist <span class="op">=</span> dd.<span class="bu">max</span>()<span class="op">/</span><span class="dv">2</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    edges <span class="op">=</span> np.linspace(<span class="dv">0</span>, max_dist, n_lags<span class="op">+</span><span class="dv">1</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    L, G, N <span class="op">=</span> [], [], []</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(edges)<span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>        m <span class="op">=</span> (dd <span class="op">&gt;</span> edges[k]) <span class="op">&amp;</span> (dd <span class="op">&lt;=</span> edges[k<span class="op">+</span><span class="dv">1</span>])</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> m.<span class="bu">sum</span>() <span class="op">&lt;</span> <span class="dv">5</span>: <span class="cf">continue</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>        L.append(dd[m].mean())<span class="op">;</span> G.append(np.<span class="bu">sum</span>(w[m]<span class="op">*</span>incr[m])<span class="op">/</span>(<span class="dv">2</span><span class="op">*</span>np.<span class="bu">sum</span>(w[m])))<span class="op">;</span> N.append(<span class="bu">int</span>(m.<span class="bu">sum</span>()))</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(L), np.clip(np.array(G), <span class="dv">0</span>, <span class="va">None</span>), np.array(N)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>dmax <span class="op">=</span> cdist(cent, cent).<span class="bu">max</span>()</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>lags, gam, npair <span class="op">=</span> risk_semivariogram(cent, rates, pops, n_lags<span class="op">=</span><span class="dv">12</span>, max_dist<span class="op">=</span>dmax<span class="op">*</span><span class="fl">0.5</span>)</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>vg_area <span class="op">=</span> VariogramModel(<span class="st">"spherical"</span>).fit(lags, gam, weights<span class="op">=</span>npair)</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"areal risk model: nugget=</span><span class="sc">{</span>vg_area<span class="sc">.</span>fitted_params[<span class="dv">0</span>]<span class="sc">:.1f}</span><span class="ss">  sill=</span><span class="sc">{</span>vg_area<span class="sc">.</span>sill<span class="sc">:.1f}</span><span class="ss">  "</span></span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"range=</span><span class="sc">{</span>vg_area<span class="sc">.</span>fitted_params[<span class="dv">2</span>]<span class="op">/</span><span class="dv">1000</span><span class="sc">:.0f}</span><span class="ss"> km"</span>)</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>hh <span class="op">=</span> np.linspace(<span class="dv">0</span>, lags.<span class="bu">max</span>(), <span class="dv">200</span>)</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>,<span class="dv">4</span>))</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>ax.scatter(lags<span class="op">/</span><span class="dv">1000</span>, gam, s<span class="op">=</span>npair<span class="op">/</span>npair.<span class="bu">max</span>()<span class="op">*</span><span class="dv">120</span>, c<span class="op">=</span><span class="st">"#c0392b"</span>, alpha<span class="op">=</span><span class="fl">.7</span>,</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>           label<span class="op">=</span><span class="st">"experimental (size ∝ #pairs)"</span>)</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>ax.plot(hh<span class="op">/</span><span class="dv">1000</span>, vg_area(hh), <span class="st">"b-"</span>, lw<span class="op">=</span><span class="dv">2</span>, label<span class="op">=</span><span class="st">"fitted spherical (areal)"</span>)</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"distance (km)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">gamma_R</span><span class="kw">(</span><span class="vs">h</span><span class="kw">)</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Population-weighted risk semivariogram (Eq. 5)"</span>)<span class="op">;</span> ax.legend()</span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>areal risk model: nugget=37.1  sill=78.0  range=590 km</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="17_01_poisson_Kriging_ata_atp_files/figure-html/cell-6-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="deconvolution-to-point-support" class="level2">
+<h2 class="anchored" data-anchor-id="deconvolution-to-point-support">10. Deconvolution to Point Support</h2>
+<p>ATA/ATP need the <strong>point-support</strong> model. We invert <span class="math inline">\(\gamma_v(h)=\bar\gamma(v,v_h)-\bar\gamma_h(v,v)\)</span> iteratively, reusing the module’s own block-semivariance helpers so the regularisation is consistent with the kriging engine.</p>
+<div id="6cb2af06" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:26:19.536510Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:26:19.536252Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:26:25.530952Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:26:25.529822Z&quot;}}" data-execution_count="6">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> regularize(vg_pt, ps, ids, centd, lags, lag_tol):</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Regularise a point-support model to a theoretical areal gamma_v(h) (Eq. 18)."""</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    within <span class="op">=</span> np.array([within_gamma(vg_pt, ps.coords(<span class="bu">int</span>(b)), ps.values(<span class="bu">int</span>(b))) <span class="cf">for</span> b <span class="kw">in</span> ids])</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    iu <span class="op">=</span> np.triu_indices(<span class="bu">len</span>(ids), <span class="dv">1</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    gv <span class="op">=</span> np.full(<span class="bu">len</span>(lags), np.nan)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> li, h <span class="kw">in</span> <span class="bu">enumerate</span>(lags):</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        m <span class="op">=</span> (centd[iu] <span class="op">&gt;</span> h<span class="op">-</span>lag_tol) <span class="op">&amp;</span> (centd[iu] <span class="op">&lt;=</span> h<span class="op">+</span>lag_tol)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>        ii, jj <span class="op">=</span> iu[<span class="dv">0</span>][m], iu[<span class="dv">1</span>][m]</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(ii) <span class="op">&lt;</span> <span class="dv">3</span>: <span class="cf">continue</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>        vals <span class="op">=</span> [wgamma(vg_pt, ps.coords(<span class="bu">int</span>(ids[a])), ps.values(<span class="bu">int</span>(ids[a])),</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>                       ps.coords(<span class="bu">int</span>(ids[b])), ps.values(<span class="bu">int</span>(ids[b]))) <span class="op">-</span> <span class="fl">0.5</span><span class="op">*</span>(within[a]<span class="op">+</span>within[b])</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(ii, jj)]</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        gv[li] <span class="op">=</span> np.mean(vals)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> gv</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> deconvolute(vg_area, ps, ids, centd, lags, exp_gamma, lag_tol, max_iter<span class="op">=</span><span class="dv">12</span>, tol<span class="op">=</span><span class="fl">0.01</span>):</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    vg_pt <span class="op">=</span> VariogramModel(vg_area.model, <span class="op">*</span>vg_area.fitted_params)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    reg <span class="op">=</span> regularize(vg_pt, ps, ids, centd, lags, lag_tol)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    good <span class="op">=</span> np.isfinite(reg) <span class="op">&amp;</span> np.isfinite(exp_gamma)</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    dev <span class="op">=</span> <span class="kw">lambda</span> a, b: np.mean(np.<span class="bu">abs</span>(a<span class="op">-</span>b)<span class="op">/</span>np.where(b<span class="op">&gt;</span><span class="dv">0</span>, b, <span class="dv">1</span>))</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    bestD, hist <span class="op">=</span> dev(reg[good], exp_gamma[good]), []</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    best <span class="op">=</span> vg_pt<span class="op">;</span> hist.append(bestD)</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(max_iter):</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>        r <span class="op">=</span> np.where((reg <span class="op">&gt;</span> <span class="dv">0</span>) <span class="op">&amp;</span> np.isfinite(reg), exp_gamma<span class="op">/</span>reg, <span class="fl">1.0</span>)</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> <span class="bu">float</span>(np.clip(np.nanmean(r), <span class="fl">0.5</span>, <span class="fl">2.0</span>))</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>        n, psl, rng <span class="op">=</span> best.fitted_params</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>        cand <span class="op">=</span> VariogramModel(best.model, n<span class="op">*</span>s, psl<span class="op">*</span>s, rng)</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>        reg2 <span class="op">=</span> regularize(cand, ps, ids, centd, lags, lag_tol)</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>        g2 <span class="op">=</span> np.isfinite(reg2) <span class="op">&amp;</span> np.isfinite(exp_gamma)</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>        D <span class="op">=</span> dev(reg2[g2], exp_gamma[g2])<span class="op">;</span> hist.append(D)</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> D <span class="op">&lt;</span> bestD: best, bestD, reg <span class="op">=</span> cand, D, reg2</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(hist) <span class="op">&gt;</span> <span class="dv">3</span> <span class="kw">and</span> <span class="bu">abs</span>(hist[<span class="op">-</span><span class="dv">2</span>]<span class="op">-</span>hist[<span class="op">-</span><span class="dv">1</span>]) <span class="op">&lt;</span> tol<span class="op">*</span>hist[<span class="dv">0</span>]: <span class="cf">break</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> best, bestD, hist</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>centd   <span class="op">=</span> cdist(cent, cent)</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>lag_tol <span class="op">=</span> (lags[<span class="dv">1</span>]<span class="op">-</span>lags[<span class="dv">0</span>])<span class="op">/</span><span class="dv">2</span></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>vg_pt, Dstat, hist <span class="op">=</span> deconvolute(vg_area, ps, fips, centd, lags, gam, lag_tol)</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>reg_final <span class="op">=</span> regularize(vg_pt, ps, fips, centd, lags, lag_tol)</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"point-support model: nugget=</span><span class="sc">{</span>vg_pt<span class="sc">.</span>fitted_params[<span class="dv">0</span>]<span class="sc">:.1f}</span><span class="ss">  sill=</span><span class="sc">{</span>vg_pt<span class="sc">.</span>sill<span class="sc">:.1f}</span><span class="ss">  "</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"range=</span><span class="sc">{</span>vg_pt<span class="sc">.</span>fitted_params[<span class="dv">2</span>]<span class="op">/</span><span class="dv">1000</span><span class="sc">:.0f}</span><span class="ss"> km  (D=</span><span class="sc">{</span>Dstat<span class="sc">:.3f}</span><span class="ss">, </span><span class="sc">{</span><span class="bu">len</span>(hist)<span class="sc">}</span><span class="ss"> iters)"</span>)</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"areal sill=</span><span class="sc">{</span>vg_area<span class="sc">.</span>sill<span class="sc">:.1f}</span><span class="ss"> -&gt; point-support sill=</span><span class="sc">{</span>vg_pt<span class="sc">.</span>sill<span class="sc">:.1f}</span><span class="ss"> (higher, as expected)"</span>)</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>,<span class="dv">4</span>))</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>ax.scatter(lags<span class="op">/</span><span class="dv">1000</span>, gam, s<span class="op">=</span><span class="dv">40</span>, c<span class="op">=</span><span class="st">"#c0392b"</span>, label<span class="op">=</span><span class="st">"experimental areal"</span>)</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>ax.plot(hh<span class="op">/</span><span class="dv">1000</span>, vg_area(hh), <span class="st">"r--"</span>, lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="st">"fitted areal"</span>)</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>ax.plot(hh<span class="op">/</span><span class="dv">1000</span>, vg_pt(hh),  <span class="st">"g-"</span>,  lw<span class="op">=</span><span class="dv">2</span>,   label<span class="op">=</span><span class="st">"deconvoluted point-support"</span>)</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>ax.plot(lags<span class="op">/</span><span class="dv">1000</span>, reg_final, <span class="st">"b:o"</span>, ms<span class="op">=</span><span class="dv">4</span>, lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="st">"regularised point-support"</span>)</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"distance (km)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">gamma</span><span class="kw">(</span><span class="vs">h</span><span class="kw">)</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Deconvolution (Eq. 18)"</span>)<span class="op">;</span> ax.legend()<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>point-support model: nugget=74.2  sill=156.0  range=590 km  (D=0.294, 4 iters)
+areal sill=78.0 -&gt; point-support sill=156.0 (higher, as expected)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="17_01_poisson_Kriging_ata_atp_files/figure-html/cell-7-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="run-the-three-estimators" class="level2">
+<h2 class="anchored" data-anchor-id="run-the-three-estimators">11. Run the Three Estimators</h2>
+<p>We pass the deconvoluted point-support model and let <code>rate_base</code> auto-detect. Centroid and ATA run leave-one-out (each county predicted from the others) so predictions can be scored against observed rates.</p>
+<div id="fcb160d9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:26:25.533304Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:26:25.533071Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:26:27.914890Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:26:27.914101Z&quot;}}" data-execution_count="7">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>K <span class="op">=</span> <span class="dv">16</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>pk_cent <span class="op">=</span> PoissonKriging(vg_pt).fit(cent, rates, pops, ids<span class="op">=</span>fips)          <span class="co"># module class</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>apk     <span class="op">=</span> AreaPoissonKriging(vg_pt).fit(ps, pd.Series(rates, index<span class="op">=</span>fips)) <span class="co"># module class</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"auto-detected rate_base: centroid=</span><span class="sc">{</span>pk_cent<span class="sc">.</span>rate_base<span class="sc">:.0f}</span><span class="ss">  area=</span><span class="sc">{</span>apk<span class="sc">.</span>rate_base<span class="sc">:.0f}</span><span class="ss">"</span>)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>cpk <span class="op">=</span> [pk_cent.predict_id(<span class="bu">int</span>(f), number_of_neighbors<span class="op">=</span>K) <span class="cf">for</span> f <span class="kw">in</span> fips]</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>ata <span class="op">=</span> [apk.predict_area(<span class="bu">int</span>(f), number_of_neighbors<span class="op">=</span>K)   <span class="cf">for</span> f <span class="kw">in</span> fips]</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>zc <span class="op">=</span> np.array([r[<span class="st">"zhat"</span>] <span class="cf">for</span> r <span class="kw">in</span> cpk])<span class="op">;</span> sc <span class="op">=</span> np.array([r[<span class="st">"sig"</span>] <span class="cf">for</span> r <span class="kw">in</span> cpk])</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>za <span class="op">=</span> np.array([r[<span class="st">"zhat"</span>] <span class="cf">for</span> r <span class="kw">in</span> ata])<span class="op">;</span> sa <span class="op">=</span> np.array([r[<span class="st">"sig"</span>] <span class="cf">for</span> r <span class="kw">in</span> ata])</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>areas[<span class="st">"z_centroid"</span>], areas[<span class="st">"s_centroid"</span>] <span class="op">=</span> zc, sc</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>areas[<span class="st">"z_ata"</span>],      areas[<span class="st">"s_ata"</span>]      <span class="op">=</span> za, sa</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> st(z): <span class="cf">return</span> (z<span class="op">-</span>rates).mean(), np.<span class="bu">abs</span>(z<span class="op">-</span>rates).mean(), z.var()</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>pd.DataFrame({</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ME"</span>:  [np.nan, st(zc)[<span class="dv">0</span>], st(za)[<span class="dv">0</span>]],</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MAE"</span>: [np.nan, st(zc)[<span class="dv">1</span>], st(za)[<span class="dv">1</span>]],</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"variance"</span>: [rates.var(), zc.var(), za.var()],</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"mean kriging sd"</span>: [np.nan, np.nanmean(sc), np.nanmean(sa)],</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>}, index<span class="op">=</span>[<span class="st">"raw rates"</span>,<span class="st">"Centroid PK"</span>,<span class="st">"ATA PK"</span>]).<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>auto-detected rate_base: centroid=100000  area=100000</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">ME</th>
+<th data-quarto-table-cell-role="th">MAE</th>
+<th data-quarto-table-cell-role="th">variance</th>
+<th data-quarto-table-cell-role="th">mean kriging sd</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">raw rates</th>
+<td>NaN</td>
+<td>NaN</td>
+<td>171.273</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">Centroid PK</th>
+<td>1.755</td>
+<td>9.326</td>
+<td>23.833</td>
+<td>9.621</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">ATA PK</th>
+<td>1.914</td>
+<td>9.333</td>
+<td>24.326</td>
+<td>3.699</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Centroid and ATA agree on the risk (similar ME/MAE), but ATA’s <strong>kriging standard deviation is far smaller</strong> — the change-of-support pay-off of respecting each county’s area and population. Both are much smoother than the raw map.</p>
+<div id="d9c312b4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:26:27.918079Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:26:27.917828Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:26:33.059684Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:26:33.058755Z&quot;}}" data-execution_count="8">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">9</span>))</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>vmin, vmax <span class="op">=</span> np.percentile(rates, <span class="dv">2</span>), np.percentile(rates, <span class="dv">98</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> a, col, ttl <span class="kw">in</span> [(ax[<span class="dv">0</span>,<span class="dv">0</span>],<span class="st">"rate"</span>,<span class="st">"Raw rate"</span>), (ax[<span class="dv">0</span>,<span class="dv">1</span>],<span class="st">"z_centroid"</span>,<span class="st">"Centroid PK risk"</span>),</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>                    (ax[<span class="dv">1</span>,<span class="dv">0</span>],<span class="st">"z_ata"</span>,<span class="st">"ATA PK risk"</span>)]:</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    areas.plot(col, cmap<span class="op">=</span><span class="st">"RdBu_r"</span>, ax<span class="op">=</span>a, vmin<span class="op">=</span>vmin, vmax<span class="op">=</span>vmax, edgecolor<span class="op">=</span><span class="st">"k"</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>               linewidth<span class="op">=</span><span class="fl">.2</span>, legend<span class="op">=</span><span class="va">True</span>, legend_kwds<span class="op">=</span>{<span class="st">"shrink"</span>:<span class="fl">.7</span>})<span class="op">;</span> a.set_title(ttl)<span class="op">;</span> a.set_axis_off()</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>,<span class="dv">1</span>].scatter(rates, zc, s<span class="op">=</span><span class="dv">14</span>, alpha<span class="op">=</span><span class="fl">.6</span>, label<span class="op">=</span><span class="st">"Centroid"</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>,<span class="dv">1</span>].scatter(rates, za, s<span class="op">=</span><span class="dv">14</span>, alpha<span class="op">=</span><span class="fl">.6</span>, label<span class="op">=</span><span class="st">"ATA"</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>lim<span class="op">=</span>[rates.<span class="bu">min</span>()<span class="op">-</span><span class="dv">5</span>, rates.<span class="bu">max</span>()<span class="op">+</span><span class="dv">5</span>]<span class="op">;</span> ax[<span class="dv">1</span>,<span class="dv">1</span>].plot(lim, lim, <span class="st">"k--"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>,<span class="dv">1</span>].set_xlabel(<span class="st">"observed"</span>)<span class="op">;</span> ax[<span class="dv">1</span>,<span class="dv">1</span>].set_ylabel(<span class="st">"LOO prediction"</span>)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>,<span class="dv">1</span>].set_title(<span class="st">"Leave-one-out CV"</span>)<span class="op">;</span> ax[<span class="dv">1</span>,<span class="dv">1</span>].legend()<span class="op">;</span> ax[<span class="dv">1</span>,<span class="dv">1</span>].set_aspect(<span class="st">"equal"</span>)<span class="op">;</span> ax[<span class="dv">1</span>,<span class="dv">1</span>].grid(alpha<span class="op">=</span><span class="fl">.3</span>)</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="17_01_poisson_Kriging_ata_atp_files/figure-html/cell-9-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="area-to-point-surface" class="level2">
+<h2 class="anchored" data-anchor-id="area-to-point-surface">12. Area-to-Point Surface</h2>
+<p><code>predict_points</code> accepts arbitrary <code>targets</code>, so we evaluate ATP on a 12 km grid. Each node inherits the block-kriging system of its containing county (only the area-to-point RHS is recomputed), giving a continuous <strong>isopleth</strong> surface.</p>
+<div id="09538341" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:26:33.064238Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:26:33.063972Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:26:39.574459Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:26:39.573378Z&quot;}}" data-execution_count="9">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>step <span class="op">=</span> <span class="dv">12_000</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>minx, miny, maxx, maxy <span class="op">=</span> areas.total_bounds</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>gx, gy <span class="op">=</span> np.meshgrid(np.arange(minx, maxx, step), np.arange(miny, maxy, step))</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> gpd.GeoDataFrame(geometry<span class="op">=</span>[Point(x,y) <span class="cf">for</span> x,y <span class="kw">in</span> <span class="bu">zip</span>(gx.ravel(), gy.ravel())], crs<span class="op">=</span>areas.crs)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>gj <span class="op">=</span> gpd.sjoin(grid, areas[[<span class="st">"FIPS"</span>,<span class="st">"geometry"</span>]], how<span class="op">=</span><span class="st">"inner"</span>, predicate<span class="op">=</span><span class="st">"within"</span>)</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>parts <span class="op">=</span> []</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> fid, sub <span class="kw">in</span> gj.groupby(<span class="st">"FIPS"</span>):</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    tgt <span class="op">=</span> np.column_stack([sub.geometry.x, sub.geometry.y])</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    d <span class="op">=</span> apk.predict_points(<span class="bu">int</span>(fid), number_of_neighbors<span class="op">=</span>K, targets<span class="op">=</span>tgt)   <span class="co"># &lt;-- module ATP</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    d[<span class="st">"FIPS"</span>] <span class="op">=</span> <span class="bu">int</span>(fid)<span class="op">;</span> parts.append(d)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>atp <span class="op">=</span> pd.concat(parts, ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"ATP surface: </span><span class="sc">{</span><span class="bu">len</span>(atp)<span class="sc">}</span><span class="ss"> nodes | risk </span><span class="sc">{</span>atp<span class="sc">.</span>zhat<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.1f}</span><span class="ss">–</span><span class="sc">{</span>atp<span class="sc">.</span>zhat<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.1f}</span><span class="ss"> "</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"| variance </span><span class="sc">{</span>atp<span class="sc">.</span>zhat<span class="sc">.</span>var()<span class="sc">:.1f}</span><span class="ss"> (ATA </span><span class="sc">{</span>za<span class="sc">.</span>var()<span class="sc">:.1f}</span><span class="ss">, less smoothed)"</span>)</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="fl">5.4</span>))</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>vmin, vmax <span class="op">=</span> np.percentile(rates, <span class="dv">2</span>), np.percentile(rates, <span class="dv">98</span>)</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>s1 <span class="op">=</span> ax[<span class="dv">0</span>].scatter(atp.x, atp.y, c<span class="op">=</span>atp.zhat, cmap<span class="op">=</span><span class="st">"RdBu_r"</span>, s<span class="op">=</span><span class="dv">16</span>, vmin<span class="op">=</span>vmin, vmax<span class="op">=</span>vmax, marker<span class="op">=</span><span class="st">"s"</span>)</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>areas.boundary.plot(ax<span class="op">=</span>ax[<span class="dv">0</span>], color<span class="op">=</span><span class="st">"k"</span>, linewidth<span class="op">=</span><span class="fl">.25</span>)<span class="op">;</span> plt.colorbar(s1, ax<span class="op">=</span>ax[<span class="dv">0</span>], shrink<span class="op">=</span><span class="fl">.8</span>, label<span class="op">=</span><span class="st">"risk/100k"</span>)</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_title(<span class="st">"ATP isopleth risk surface (12 km)"</span>)</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>s2 <span class="op">=</span> ax[<span class="dv">1</span>].scatter(atp.x, atp.y, c<span class="op">=</span>atp.sig, cmap<span class="op">=</span><span class="st">"magma"</span>, s<span class="op">=</span><span class="dv">16</span>, marker<span class="op">=</span><span class="st">"s"</span>)</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>areas.boundary.plot(ax<span class="op">=</span>ax[<span class="dv">1</span>], color<span class="op">=</span><span class="st">"w"</span>, linewidth<span class="op">=</span><span class="fl">.25</span>)<span class="op">;</span> plt.colorbar(s2, ax<span class="op">=</span>ax[<span class="dv">1</span>], shrink<span class="op">=</span><span class="fl">.8</span>, label<span class="op">=</span><span class="st">"kriging sd"</span>)</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_title(<span class="st">"ATP kriging standard deviation"</span>)</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> a <span class="kw">in</span> ax: a.set_axis_off()</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>ATP surface: 2988 nodes | risk 121.5–145.6 | variance 29.5 (ATA 24.3, less smoothed)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="17_01_poisson_Kriging_ata_atp_files/figure-html/cell-10-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="coherence-constraint" class="level2">
+<h2 class="anchored" data-anchor-id="coherence-constraint">13. Coherence Constraint</h2>
+<p>With the module’s corrected ATP, the <strong>population-weighted average</strong> of a county’s point estimates equals its ATA estimate — verified to machine precision (Eq. 15).</p>
+<div id="b35a12ba" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:26:39.578735Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:26:39.578405Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:26:39.844366Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:26:39.843165Z&quot;}}" data-execution_count="10">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> fid <span class="kw">in</span> fips[:<span class="dv">8</span>]:</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    a  <span class="op">=</span> apk.predict_area(<span class="bu">int</span>(fid), number_of_neighbors<span class="op">=</span>K)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    pp <span class="op">=</span> apk.predict_points(<span class="bu">int</span>(fid), number_of_neighbors<span class="op">=</span>K)   <span class="co"># county's own support points</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    wavg <span class="op">=</span> np.<span class="bu">sum</span>(pp.zhat<span class="op">*</span>pp.population)<span class="op">/</span>pp.population.<span class="bu">sum</span>()</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    rows.append([<span class="bu">int</span>(fid), a[<span class="st">"zhat"</span>], wavg, <span class="bu">abs</span>(a[<span class="st">"zhat"</span>]<span class="op">-</span>wavg), <span class="bu">len</span>(pp)])</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>coh <span class="op">=</span> pd.DataFrame(rows, columns<span class="op">=</span>[<span class="st">"FIPS"</span>,<span class="st">"ATA estimate"</span>,<span class="st">"pop-wtd avg of ATP"</span>,<span class="st">"abs diff"</span>,<span class="st">"# points"</span>])</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"max coherence error:"</span>, <span class="ss">f"</span><span class="sc">{</span>coh[<span class="st">'abs diff'</span>]<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2e}</span><span class="ss">"</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>coh.<span class="bu">round</span>(<span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>max coherence error: 5.68e-14</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="10">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">FIPS</th>
+<th data-quarto-table-cell-role="th">ATA estimate</th>
+<th data-quarto-table-cell-role="th">pop-wtd avg of ATP</th>
+<th data-quarto-table-cell-role="th">abs diff</th>
+<th data-quarto-table-cell-role="th"># points</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>25019</td>
+<td>140.0914</td>
+<td>140.0914</td>
+<td>0.0</td>
+<td>8</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>36121</td>
+<td>140.7116</td>
+<td>140.7116</td>
+<td>0.0</td>
+<td>18</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>33001</td>
+<td>140.7006</td>
+<td>140.7006</td>
+<td>0.0</td>
+<td>15</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>25007</td>
+<td>138.7217</td>
+<td>138.7217</td>
+<td>0.0</td>
+<td>17</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>25001</td>
+<td>135.2036</td>
+<td>135.2036</td>
+<td>0.0</td>
+<td>38</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>33013</td>
+<td>140.7808</td>
+<td>140.7808</td>
+<td>0.0</td>
+<td>26</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>9007</td>
+<td>137.6608</td>
+<td>137.6608</td>
+<td>0.0</td>
+<td>14</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>25021</td>
+<td>133.1922</td>
+<td>133.1922</td>
+<td>0.0</td>
+<td>13</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="kriging-variance-comparison" class="level2">
+<h2 class="anchored" data-anchor-id="kriging-variance-comparison">14. Kriging-Variance Comparison</h2>
+<div id="5c328075" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:26:39.847120Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:26:39.846856Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:26:43.199099Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:26:43.198176Z&quot;}}" data-execution_count="11">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="fl">4.8</span>))</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>smax <span class="op">=</span> np.nanpercentile(np.r_[sc, sa], <span class="dv">98</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>areas.plot(<span class="st">"s_centroid"</span>, cmap<span class="op">=</span><span class="st">"magma"</span>, ax<span class="op">=</span>ax[<span class="dv">0</span>], vmin<span class="op">=</span><span class="dv">0</span>, vmax<span class="op">=</span>smax, edgecolor<span class="op">=</span><span class="st">"k"</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>           linewidth<span class="op">=</span><span class="fl">.2</span>, legend<span class="op">=</span><span class="va">True</span>, legend_kwds<span class="op">=</span>{<span class="st">"shrink"</span>:<span class="fl">.7</span>})</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_title(<span class="ss">f"Centroid PK sd (mean </span><span class="sc">{</span>np<span class="sc">.</span>nanmean(sc)<span class="sc">:.2f}</span><span class="ss">)"</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>areas.plot(<span class="st">"s_ata"</span>, cmap<span class="op">=</span><span class="st">"magma"</span>, ax<span class="op">=</span>ax[<span class="dv">1</span>], vmin<span class="op">=</span><span class="dv">0</span>, vmax<span class="op">=</span>smax, edgecolor<span class="op">=</span><span class="st">"k"</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>           linewidth<span class="op">=</span><span class="fl">.2</span>, legend<span class="op">=</span><span class="va">True</span>, legend_kwds<span class="op">=</span>{<span class="st">"shrink"</span>:<span class="fl">.7</span>})</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_title(<span class="ss">f"ATA PK sd (mean </span><span class="sc">{</span>np<span class="sc">.</span>nanmean(sa)<span class="sc">:.2f}</span><span class="ss">)"</span>)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> a <span class="kw">in</span> ax: a.set_axis_off()</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Summary"</span>)</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  raw-rate variance ......... </span><span class="sc">{</span>rates<span class="sc">.</span>var()<span class="sc">:8.2f}</span><span class="ss">"</span>)</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  Centroid PK variance ...... </span><span class="sc">{</span>zc<span class="sc">.</span>var()<span class="sc">:8.2f}</span><span class="ss">  (</span><span class="sc">{</span><span class="dv">100</span><span class="op">*</span>zc<span class="sc">.</span>var()<span class="op">/</span>rates<span class="sc">.</span>var()<span class="sc">:.0f}</span><span class="ss">% of raw)"</span>)</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  ATA PK variance ........... </span><span class="sc">{</span>za<span class="sc">.</span>var()<span class="sc">:8.2f}</span><span class="ss">  (</span><span class="sc">{</span><span class="dv">100</span><span class="op">*</span>za<span class="sc">.</span>var()<span class="op">/</span>rates<span class="sc">.</span>var()<span class="sc">:.0f}</span><span class="ss">% of raw)"</span>)</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  ATP surface variance ...... </span><span class="sc">{</span>atp<span class="sc">.</span>zhat<span class="sc">.</span>var()<span class="sc">:8.2f}</span><span class="ss">  (less smoothed than ATA)"</span>)</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  mean sd  centroid / ATA ... </span><span class="sc">{</span>np<span class="sc">.</span>nanmean(sc)<span class="sc">:.2f}</span><span class="ss"> / </span><span class="sc">{</span>np<span class="sc">.</span>nanmean(sa)<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  max coherence error ....... </span><span class="sc">{</span>coh[<span class="st">'abs diff'</span>]<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.1e}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="17_01_poisson_Kriging_ata_atp_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Summary
+  raw-rate variance .........   171.27
+  Centroid PK variance ......    23.83  (14% of raw)
+  ATA PK variance ...........    24.33  (14% of raw)
+  ATP surface variance ......    29.54  (less smoothed than ATA)
+  mean sd  centroid / ATA ... 9.62 / 3.70
+  max coherence error ....... 5.7e-14</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="cpu-vs-gpu-poisson-kriging-timing" class="level2">
+<h2 class="anchored" data-anchor-id="cpu-vs-gpu-poisson-kriging-timing">15. CPU vs GPU Poisson Kriging Timing</h2>
+<p>The 217-county Northeastern-US cancer set is too small for a GPU comparison: the batched Poisson-kriging solve is a stack of tiny <span class="math inline">\((k+1)\times(k+1)\)</span> systems, and host→device copies dominate. Here we time <strong>k-nearest-neighbor</strong> centroid Poisson kriging (<code>PoissonKriging.predict</code>) on <strong>CPU</strong> (<code>use_gpu=False</code>) versus <strong>GPU</strong> (<code>use_gpu=True</code>) using <strong>USA county diabetes prevalence</strong>.</p>
+<p>Data:</p>
+<ol type="1">
+<li>Join <code>data/usa_diabetes_data.csv</code> (3,107 counties) to <code>data/US_COUNTY.shp</code> on <code>FIPS</code>. Coordinates are NAD 1983 Albers metres (same CRS as the polygons).</li>
+<li>The target is the county diabetes percentage (<code>Diabetes_per</code>); population support is <code>POP_Total</code>. <code>rate_base=100</code> because the rate is a percentage.</li>
+<li>Fit one exponential <code>pygstat.Variogram</code> on the 3,107 centroids (fitting <span class="math inline">\(\gamma\)</span> is <strong>not</strong> in the times). Draw a separate prediction set in the county bounding box.</li>
+</ol>
+<p>Unlike global ordinary kriging, Poisson kriging’s GPU work scales with <strong><span class="math inline">\(n_{\mathrm{pred}}\)</span></strong> (one stacked solve of shape <code>(n_pred, k+1, k+1)</code>), not <span class="math inline">\(n_{\mathrm{train}}^3\)</span>. Training size is therefore held at 3,107 and we vary <span class="math inline">\(n_{\mathrm{pred}}\)</span>. Neighborhood size is <span class="math inline">\(k=16\)</span>, the same <span class="math inline">\(K\)</span> as §11.</p>
+<p>Each timing is the <strong>median</strong> of three <code>fit</code> + <code>predict</code> calls after a short GPU warmup so CUDA kernel compilation is not counted. If CuPy cannot run a kernel here, the GPU column is skipped. ATA / ATP are not timed: block-to-block covariances are not a fixed-<span class="math inline">\(k\)</span> stack.</p>
+<div id="cpu-gpu-pk-timing-code" class="cell" data-execution_count="23">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat <span class="im">import</span> Variogram</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>N_REPEATS <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>PRED_SIZES <span class="op">=</span> [<span class="dv">500</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="dv">4000</span>, <span class="dv">8000</span>]</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>N_PRED_MAX <span class="op">=</span> <span class="bu">max</span>(PRED_SIZES)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>K <span class="op">=</span> <span class="dv">16</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>RATE_BASE <span class="op">=</span> <span class="fl">100.0</span>  <span class="co"># Diabetes_per is a percentage</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>df_dm <span class="op">=</span> pd.read_csv(<span class="st">"../data/usa_diabetes_data.csv"</span>)</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>gdf_cty <span class="op">=</span> gpd.read_file(<span class="st">"../data/US_COUNTY.shp"</span>)</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>df_dm[<span class="st">"FIPS"</span>] <span class="op">=</span> df_dm[<span class="st">"FIPS"</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>gdf_cty[<span class="st">"FIPS"</span>] <span class="op">=</span> gdf_cty[<span class="st">"FIPS"</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>joined <span class="op">=</span> gdf_cty.merge(df_dm, on<span class="op">=</span><span class="st">"FIPS"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>xy_train <span class="op">=</span> joined[[<span class="st">"X"</span>, <span class="st">"Y"</span>]].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>z_train <span class="op">=</span> joined[<span class="st">"Diabetes_per"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>pop_train <span class="op">=</span> joined[<span class="st">"POP_Total"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>n_train <span class="op">=</span> <span class="bu">len</span>(xy_train)</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>xmin, ymin, xmax, ymax <span class="op">=</span> joined.total_bounds</span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>rng_sim <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>xy_pred_all <span class="op">=</span> rng_sim.uniform([xmin, ymin], [xmax, ymax], size<span class="op">=</span>(N_PRED_MAX, <span class="dv">2</span>))</span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>vg_dm <span class="op">=</span> Variogram(xy_train, z_train, model<span class="op">=</span><span class="st">"exponential"</span>, n_lags<span class="op">=</span><span class="dv">15</span>, use_gpu<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>vg_dm.fit()</span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>nugget, sill, rng_m <span class="op">=</span> vg_dm.fitted_params[:<span class="dv">3</span>]</span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"USA county diabetes (centroid Poisson kriging)"</span>)</span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  counties   : </span><span class="sc">{</span>n_train<span class="sc">:,}</span><span class="ss"> joined on FIPS (usa_diabetes_data.csv + US_COUNTY.shp)"</span>)</span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  rate       : Diabetes_per  [</span><span class="sc">{</span>z_train<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.2f}</span><span class="ss">, </span><span class="sc">{</span>z_train<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2f}</span><span class="ss">] %"</span>)</span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  population : POP_Total     [</span><span class="sc">{</span>pop_train<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.0f}</span><span class="ss">, </span><span class="sc">{</span>pop_train<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.0f}</span><span class="ss">]"</span>)</span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  variogram  : exponential  nugget=</span><span class="sc">{</span>nugget<span class="sc">:.4f}</span><span class="ss">  partial sill=</span><span class="sc">{</span>sill<span class="sc">:.4f}</span><span class="ss">  "</span></span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"range=</span><span class="sc">{</span>rng_m<span class="op">/</span><span class="dv">1000</span><span class="sc">:.1f}</span><span class="ss"> km"</span>)</span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"  CRS        : NAD 1983 Albers (metres)"</span>)</span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _time_pk(xy_pr, use_gpu, repeats<span class="op">=</span>N_REPEATS, warmup<span class="op">=</span><span class="va">True</span>):</span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Median wall time of PoissonKriging.fit + predict (k-NN)."""</span></span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> warmup:</span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a>        k_tr <span class="op">=</span> <span class="bu">min</span>(<span class="dv">40</span>, <span class="bu">len</span>(xy_train))</span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a>        k_pr <span class="op">=</span> <span class="bu">min</span>(<span class="dv">40</span>, <span class="bu">len</span>(xy_pr))</span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a>        PoissonKriging(vg_dm, rate_base<span class="op">=</span>RATE_BASE, use_gpu<span class="op">=</span>use_gpu).fit(</span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a>            xy_train[:k_tr], z_train[:k_tr], pop_train[:k_tr]</span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a>        ).predict(xy_pred_all[:k_pr], number_of_neighbors<span class="op">=</span>K)</span>
+<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> use_gpu:</span>
+<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a>            <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb20-50"><a href="#cb20-50" aria-hidden="true" tabindex="-1"></a>            cp.cuda.Device(<span class="dv">0</span>).synchronize()</span>
+<span id="cb20-51"><a href="#cb20-51" aria-hidden="true" tabindex="-1"></a>    times <span class="op">=</span> []</span>
+<span id="cb20-52"><a href="#cb20-52" aria-hidden="true" tabindex="-1"></a>    last <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(repeats):</span>
+<span id="cb20-54"><a href="#cb20-54" aria-hidden="true" tabindex="-1"></a>        t0 <span class="op">=</span> time.perf_counter()</span>
+<span id="cb20-55"><a href="#cb20-55" aria-hidden="true" tabindex="-1"></a>        pk_m <span class="op">=</span> PoissonKriging(vg_dm, rate_base<span class="op">=</span>RATE_BASE, use_gpu<span class="op">=</span>use_gpu)</span>
+<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a>        pk_m.fit(xy_train, z_train, pop_train)</span>
+<span id="cb20-57"><a href="#cb20-57" aria-hidden="true" tabindex="-1"></a>        last <span class="op">=</span> pk_m.predict(xy_pr, number_of_neighbors<span class="op">=</span>K)</span>
+<span id="cb20-58"><a href="#cb20-58" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> use_gpu:</span>
+<span id="cb20-59"><a href="#cb20-59" aria-hidden="true" tabindex="-1"></a>            <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb20-60"><a href="#cb20-60" aria-hidden="true" tabindex="-1"></a>            cp.cuda.Device(<span class="dv">0</span>).synchronize()</span>
+<span id="cb20-61"><a href="#cb20-61" aria-hidden="true" tabindex="-1"></a>        times.append(time.perf_counter() <span class="op">-</span> t0)</span>
+<span id="cb20-62"><a href="#cb20-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.median(times)), last</span>
+<span id="cb20-63"><a href="#cb20-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-64"><a href="#cb20-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-65"><a href="#cb20-65" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"GPU usable : </span><span class="sc">{</span>USE_GPU<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb20-66"><a href="#cb20-66" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Repeats    : </span><span class="sc">{</span>N_REPEATS<span class="sc">}</span><span class="ss">  (median wall time of PK fit + predict, k-NN)"</span>)</span>
+<span id="cb20-67"><a href="#cb20-67" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"n_train    : </span><span class="sc">{</span>n_train<span class="sc">}</span><span class="ss">  (USA diabetes counties)"</span>)</span>
+<span id="cb20-68"><a href="#cb20-68" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"n_pred     : </span><span class="sc">{</span>PRED_SIZES<span class="sc">}</span><span class="ss">  (random locations in the US_COUNTY bbox)"</span>)</span>
+<span id="cb20-69"><a href="#cb20-69" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"neighbors  : </span><span class="sc">{</span>K<span class="sc">}</span><span class="ss">; rate_base=</span><span class="sc">{</span>RATE_BASE<span class="sc">:.0f}</span><span class="ss"> (percentage)"</span>)</span>
+<span id="cb20-70"><a href="#cb20-70" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb20-71"><a href="#cb20-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-72"><a href="#cb20-72" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb20-73"><a href="#cb20-73" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n_pred <span class="kw">in</span> PRED_SIZES:</span>
+<span id="cb20-74"><a href="#cb20-74" aria-hidden="true" tabindex="-1"></a>    xy_pr <span class="op">=</span> xy_pred_all[:n_pred]</span>
+<span id="cb20-75"><a href="#cb20-75" aria-hidden="true" tabindex="-1"></a>    cpu_t, pred_cpu <span class="op">=</span> _time_pk(xy_pr, use_gpu<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb20-76"><a href="#cb20-76" aria-hidden="true" tabindex="-1"></a>    row <span class="op">=</span> {</span>
+<span id="cb20-77"><a href="#cb20-77" aria-hidden="true" tabindex="-1"></a>        <span class="st">"dataset"</span>: <span class="st">"USA diabetes"</span>,</span>
+<span id="cb20-78"><a href="#cb20-78" aria-hidden="true" tabindex="-1"></a>        <span class="st">"n_train"</span>: n_train,</span>
+<span id="cb20-79"><a href="#cb20-79" aria-hidden="true" tabindex="-1"></a>        <span class="st">"n_pred"</span>: n_pred,</span>
+<span id="cb20-80"><a href="#cb20-80" aria-hidden="true" tabindex="-1"></a>        <span class="st">"CPU (s)"</span>: cpu_t,</span>
+<span id="cb20-81"><a href="#cb20-81" aria-hidden="true" tabindex="-1"></a>        <span class="st">"GPU (s)"</span>: np.nan,</span>
+<span id="cb20-82"><a href="#cb20-82" aria-hidden="true" tabindex="-1"></a>        <span class="st">"speedup"</span>: np.nan,</span>
+<span id="cb20-83"><a href="#cb20-83" aria-hidden="true" tabindex="-1"></a>        <span class="st">"match"</span>: <span class="st">"—"</span>,</span>
+<span id="cb20-84"><a href="#cb20-84" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb20-85"><a href="#cb20-85" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> USE_GPU:</span>
+<span id="cb20-86"><a href="#cb20-86" aria-hidden="true" tabindex="-1"></a>        gpu_t, pred_gpu <span class="op">=</span> _time_pk(xy_pr, use_gpu<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb20-87"><a href="#cb20-87" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"GPU (s)"</span>] <span class="op">=</span> gpu_t</span>
+<span id="cb20-88"><a href="#cb20-88" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"speedup"</span>] <span class="op">=</span> cpu_t <span class="op">/</span> gpu_t</span>
+<span id="cb20-89"><a href="#cb20-89" aria-hidden="true" tabindex="-1"></a>        zc, sc <span class="op">=</span> pred_cpu</span>
+<span id="cb20-90"><a href="#cb20-90" aria-hidden="true" tabindex="-1"></a>        zg, sg <span class="op">=</span> pred_gpu</span>
+<span id="cb20-91"><a href="#cb20-91" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"match"</span>] <span class="op">=</span> <span class="bu">bool</span>(</span>
+<span id="cb20-92"><a href="#cb20-92" aria-hidden="true" tabindex="-1"></a>            np.allclose(zc, zg, rtol<span class="op">=</span><span class="fl">1e-4</span>, atol<span class="op">=</span><span class="fl">1e-4</span>, equal_nan<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb20-93"><a href="#cb20-93" aria-hidden="true" tabindex="-1"></a>            <span class="kw">and</span> np.allclose(sc, sg, rtol<span class="op">=</span><span class="fl">1e-4</span>, atol<span class="op">=</span><span class="fl">1e-4</span>, equal_nan<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb20-94"><a href="#cb20-94" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb20-95"><a href="#cb20-95" aria-hidden="true" tabindex="-1"></a>        <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb20-96"><a href="#cb20-96" aria-hidden="true" tabindex="-1"></a>        cp.get_default_memory_pool().free_all_blocks()</span>
+<span id="cb20-97"><a href="#cb20-97" aria-hidden="true" tabindex="-1"></a>    rows.append(row)</span>
+<span id="cb20-98"><a href="#cb20-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-99"><a href="#cb20-99" aria-hidden="true" tabindex="-1"></a>df_bench <span class="op">=</span> pd.DataFrame(rows)</span>
+<span id="cb20-100"><a href="#cb20-100" aria-hidden="true" tabindex="-1"></a>df_show <span class="op">=</span> df_bench.copy()</span>
+<span id="cb20-101"><a href="#cb20-101" aria-hidden="true" tabindex="-1"></a>df_show[<span class="st">"CPU (ms)"</span>] <span class="op">=</span> (df_show[<span class="st">"CPU (s)"</span>] <span class="op">*</span> <span class="dv">1000</span>).<span class="bu">round</span>(<span class="dv">1</span>)</span>
+<span id="cb20-102"><a href="#cb20-102" aria-hidden="true" tabindex="-1"></a>df_show[<span class="st">"GPU (ms)"</span>] <span class="op">=</span> (df_show[<span class="st">"GPU (s)"</span>] <span class="op">*</span> <span class="dv">1000</span>).<span class="bu">round</span>(<span class="dv">1</span>)</span>
+<span id="cb20-103"><a href="#cb20-103" aria-hidden="true" tabindex="-1"></a>df_show[<span class="st">"speedup"</span>] <span class="op">=</span> df_show[<span class="st">"speedup"</span>].<span class="bu">map</span>(</span>
+<span id="cb20-104"><a href="#cb20-104" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> x: <span class="st">"—"</span> <span class="cf">if</span> pd.isna(x) <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span>x<span class="sc">:.2f}</span><span class="ss">×"</span></span>
+<span id="cb20-105"><a href="#cb20-105" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-106"><a href="#cb20-106" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_show[[<span class="st">"dataset"</span>, <span class="st">"n_train"</span>, <span class="st">"n_pred"</span>, <span class="st">"CPU (ms)"</span>, <span class="st">"GPU (ms)"</span>, <span class="st">"speedup"</span>, <span class="st">"match"</span>]].to_string(index<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb20-107"><a href="#cb20-107" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb20-108"><a href="#cb20-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-109"><a href="#cb20-109" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="fl">4.2</span>))</span>
+<span id="cb20-110"><a href="#cb20-110" aria-hidden="true" tabindex="-1"></a>n_vals <span class="op">=</span> df_bench[<span class="st">"n_pred"</span>].to_numpy()</span>
+<span id="cb20-111"><a href="#cb20-111" aria-hidden="true" tabindex="-1"></a>cpu_ms <span class="op">=</span> df_bench[<span class="st">"CPU (s)"</span>].to_numpy() <span class="op">*</span> <span class="dv">1000</span></span>
+<span id="cb20-112"><a href="#cb20-112" aria-hidden="true" tabindex="-1"></a>gpu_ms <span class="op">=</span> df_bench[<span class="st">"GPU (s)"</span>].to_numpy() <span class="op">*</span> <span class="dv">1000</span></span>
+<span id="cb20-113"><a href="#cb20-113" aria-hidden="true" tabindex="-1"></a>labels <span class="op">=</span> [<span class="bu">str</span>(<span class="bu">int</span>(n)) <span class="cf">for</span> n <span class="kw">in</span> n_vals]</span>
+<span id="cb20-114"><a href="#cb20-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-115"><a href="#cb20-115" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.arange(<span class="bu">len</span>(n_vals))</span>
+<span id="cb20-116"><a href="#cb20-116" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> <span class="fl">0.36</span></span>
+<span id="cb20-117"><a href="#cb20-117" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].bar(x <span class="op">-</span> w <span class="op">/</span> <span class="dv">2</span>, cpu_ms, w, label<span class="op">=</span><span class="st">"CPU (NumPy)"</span>, color<span class="op">=</span><span class="st">"steelblue"</span>)</span>
+<span id="cb20-118"><a href="#cb20-118" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> USE_GPU <span class="kw">and</span> np.isfinite(gpu_ms).<span class="bu">all</span>():</span>
+<span id="cb20-119"><a href="#cb20-119" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">0</span>].bar(x <span class="op">+</span> w <span class="op">/</span> <span class="dv">2</span>, gpu_ms, w, label<span class="op">=</span><span class="st">"GPU (CuPy)"</span>, color<span class="op">=</span><span class="st">"darkorange"</span>)</span>
+<span id="cb20-120"><a href="#cb20-120" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xticks(x)</span>
+<span id="cb20-121"><a href="#cb20-121" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xticklabels(labels, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb20-122"><a href="#cb20-122" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="vs">r"Number of prediction points </span><span class="dv">$</span><span class="vs">n_{</span><span class="dv">\m</span><span class="vs">athrm{pred}}</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb20-123"><a href="#cb20-123" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"Median time (ms)"</span>)</span>
+<span id="cb20-124"><a href="#cb20-124" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"PoissonKriging.predict (k-NN) — CPU vs GPU"</span>)</span>
+<span id="cb20-125"><a href="#cb20-125" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend()</span>
+<span id="cb20-126"><a href="#cb20-126" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_yscale(<span class="st">"log"</span>)</span>
+<span id="cb20-127"><a href="#cb20-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-128"><a href="#cb20-128" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> USE_GPU:</span>
+<span id="cb20-129"><a href="#cb20-129" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].plot(n_vals, df_bench[<span class="st">"speedup"</span>], <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"darkgreen"</span>, lw<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb20-130"><a href="#cb20-130" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].axhline(<span class="fl">1.0</span>, color<span class="op">=</span><span class="st">"grey"</span>, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb20-131"><a href="#cb20-131" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_xlabel(<span class="vs">r"Number of prediction points </span><span class="dv">$</span><span class="vs">n_{</span><span class="dv">\m</span><span class="vs">athrm{pred}}</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb20-132"><a href="#cb20-132" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_ylabel(<span class="st">"Speedup (CPU time / GPU time)"</span>)</span>
+<span id="cb20-133"><a href="#cb20-133" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_title(<span class="st">"GPU speedup vs prediction size"</span>)</span>
+<span id="cb20-134"><a href="#cb20-134" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb20-135"><a href="#cb20-135" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb20-136"><a href="#cb20-136" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].text(</span>
+<span id="cb20-137"><a href="#cb20-137" aria-hidden="true" tabindex="-1"></a>        <span class="fl">0.5</span>, <span class="fl">0.5</span>,</span>
+<span id="cb20-138"><a href="#cb20-138" aria-hidden="true" tabindex="-1"></a>        <span class="st">"GPU not usable in this environment</span><span class="ch">\n</span><span class="st">CPU-only timings shown"</span>,</span>
+<span id="cb20-139"><a href="#cb20-139" aria-hidden="true" tabindex="-1"></a>        ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>, transform<span class="op">=</span>axes[<span class="dv">1</span>].transAxes,</span>
+<span id="cb20-140"><a href="#cb20-140" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb20-141"><a href="#cb20-141" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_axis_off()</span>
+<span id="cb20-142"><a href="#cb20-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-143"><a href="#cb20-143" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb20-144"><a href="#cb20-144" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>USA county diabetes (centroid Poisson kriging)
+  counties   : 3,107 joined on FIPS (usa_diabetes_data.csv + US_COUNTY.shp)
+  rate       : Diabetes_per  [3.84, 16.96] %
+  population : POP_Total     [150, 10077819]
+  variogram  : exponential  nugget=1.4023  partial sill=1.2185  range=613.1 km
+  CRS        : NAD 1983 Albers (metres)
+
+GPU usable : True
+Repeats    : 3  (median wall time of PK fit + predict, k-NN)
+n_train    : 3107  (USA diabetes counties)
+n_pred     : [500, 1000, 2000, 4000, 8000]  (random locations in the US_COUNTY bbox)
+neighbors  : 16; rate_base=100 (percentage)
+
+     dataset  n_train  n_pred  CPU (ms)  GPU (ms) speedup  match
+USA diabetes     3107     500       9.3       4.1   2.25×   True
+USA diabetes     3107    1000      17.1       5.4   3.13×   True
+USA diabetes     3107    2000      34.3       7.8   4.41×   True
+USA diabetes     3107    4000      79.7      12.8   6.24×   True
+USA diabetes     3107    8000     163.2      23.6   6.93×   True
+</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="17_01_poisson_Kriging_ata_atp_files/figure-html/cell-13-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Predictions and kriging standard errors from the two backends should <strong>match</strong> (<code>match = True</code>). The GPU speedup comes from the batched <span class="math inline">\((n_{\mathrm{pred}}, k+1, k+1)\)</span> Poisson-kriging solve, not from the county join or the variogram fit (those run once on CPU and are excluded from the times). Small <span class="math inline">\(n_{\mathrm{pred}}\)</span> can show little GPU gain because kernel-launch overhead dominates; as the prediction set grows the stacked solve keeps the GPU several times faster. Use <code>use_gpu=USE_GPU</code> so the same cells run on a laptop CPU or a CUDA workstation without edits. ATA / ATP stay on CPU.</p>
+<hr>
+</section>
+<section id="summary-and-conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="summary-and-conclusions">16. Summary and Conclusions</h2>
+<ul>
+<li><strong>Poisson kriging</strong> estimates the latent risk <span class="math inline">\(R\)</span> behind an areal rate <span class="math inline">\(z=B\,d/n\)</span> by adding a population-dependent variance to the ordinary-kriging diagonal. Small-population counties are down-weighted instead of being allowed to distort the map.</li>
+<li><strong><code>pygstat.poisson_kriging</code></strong> implements three supports: centroid (<code>PoissonKriging</code>), area-to-area, and area-to-point (<code>AreaPoissonKriging</code>), with <code>PointSupport</code> grouping census points by county.</li>
+<li>On <strong>Northeastern-US breast-cancer mortality</strong>, deconvolution recovers a point-support model with a <strong>higher sill</strong> than the areal model. Centroid and ATA predict very similar risk, but <strong>ATA reports markedly smaller uncertainty</strong>.</li>
+<li>ATP yields a smooth continuous surface, less over-smoothed than ATA, and satisfies the <strong>coherence constraint to machine precision</strong>.</li>
+<li><code>rate_base</code> auto-detects to <span class="math inline">\(10^5\)</span>; the correctly scaled Poisson diagonal is what keeps ATA/ATP stable.</li>
+<li><strong>CPU / GPU.</strong> k-NN centroid Poisson kriging (<code>PoissonKriging.predict</code>, <code>use_gpu=USE_GPU</code>) was timed on <strong>USA county diabetes</strong> (3,107 counties joined to <code>US_COUNTY.shp</code>). The GPU batched <code>(n_pred, k+1, k+1)</code> solve is the accelerated step; <code>predict_id</code> and ATA/ATP stay on CPU.</li>
+</ul>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Object</th>
+<th>Role in this notebook</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>PoissonKriging</code></td>
+<td>centroid-based Poisson kriging (Eq. 2–4); <code>use_gpu</code> for batched k-NN <code>predict</code></td>
+</tr>
+<tr class="even">
+<td><code>AreaPoissonKriging</code></td>
+<td>ATA + ATP (Eq. 6–14)</td>
+</tr>
+<tr class="odd">
+<td><code>PointSupport</code></td>
+<td>census points grouped by county</td>
+</tr>
+<tr class="even">
+<td><code>_weighted_semivariance</code> / <code>_within_support_semivariance</code></td>
+<td>block-semivariance for deconvolution</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="resources" class="level2">
+<h2 class="anchored" data-anchor-id="resources">17. Resources</h2>
+<section id="textbooks" class="level3">
+<h3 class="anchored" data-anchor-id="textbooks">Textbooks</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Reference</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Goovaerts, P. (1997). <em>Geostatistics for Natural Resources Evaluation</em>. Oxford University Press.</td>
+<td>Change of support, block kriging, Poisson rates</td>
+</tr>
+<tr class="even">
+<td>Chilès, J.-P. &amp; Delfiner, P. (2012). <em>Geostatistics: Modeling Spatial Uncertainty</em> (2nd ed.). Wiley.</td>
+<td>Regularisation and deconvolution</td>
+</tr>
+<tr class="odd">
+<td>Webster, R. &amp; Oliver, M.A.&nbsp;(2007). <em>Geostatistics for Environmental Scientists</em> (2nd ed.). Wiley.</td>
+<td>Practical variogram fitting</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="key-papers" class="level3">
+<h3 class="anchored" data-anchor-id="key-papers">Key papers</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Paper</th>
+<th>Contribution</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Goovaerts, P. (2006). Geostatistical analysis of disease data: accounting for spatial support and population density in the isopleth mapping of cancer mortality risk using area-to-point Poisson kriging. <em>Int. J. Health Geographics</em> 5:52.</td>
+<td>Centroid, ATA, and ATP Poisson kriging</td>
+</tr>
+<tr class="even">
+<td>Monestiez, P., Dubroca, L., Bonnin, E., Durbec, J.P. &amp; Guinet, C. (2006). Geostatistical modelling of spatial uncertainty using Poisson kriging. <em>Ecological Modelling</em> 194, 233–243.</td>
+<td>Population-weighted risk semivariogram</td>
+</tr>
+<tr class="odd">
+<td>Goovaerts, P. (2008). Kriging and semivariogram deconvolution in the presence of irregular geographical units. <em>Mathematical Geosciences</em> 40, 101–128.</td>
+<td>Areal-to-point deconvolution</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="in-this-library" class="level3">
+<h3 class="anchored" data-anchor-id="in-this-library">In this library</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Object</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>pygstat.PoissonKriging</code></td>
+<td>centroid-based Poisson kriging (<code>use_gpu</code> for batched k-NN <code>predict</code>)</td>
+</tr>
+<tr class="even">
+<td><code>pygstat.AreaPoissonKriging</code></td>
+<td>area-to-area and area-to-point Poisson kriging</td>
+</tr>
+<tr class="odd">
+<td><code>pygstat.PointSupport</code></td>
+<td>population points grouped by areal unit</td>
+</tr>
+<tr class="even">
+<td><code>pygstat.STPoissonKriging</code></td>
+<td>space-time extension (Tutorial 13.3)</td>
+</tr>
+</tbody>
+</table>
+
+
+</section>
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/zia207\.github\.io\/pygstat\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../Tutorial/16_kriging_STGTN.html" class="pagination-link" aria-label="STGTN (STTN / GMAN)">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">STGTN (STTN / GMAN)</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../Tutorial/17_02_poisson_cokriging.html" class="pagination-link" aria-label="Poisson Cokriging">
+        <span class="nav-page-text">Poisson Cokriging</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© CC-By Zia Ahmed, Upatta Analytics, 2026</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>This page is built with <a href="https://quarto.org/">Quarto</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

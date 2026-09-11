@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Getting Started with Geostatistical Analysis in PyGStat – PyGStat</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../Image/pygstat_logo_light.svg" rel="icon" type="image/svg+xml">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f1aadacce99040138bbb613f9330654f.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-bf6de5ccb156a65fc439966d4053cafd.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-c3ddef8e9936373b1ee063945a43a984.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-bf6de5ccb156a65fc439966d4053cafd.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../Image/pygstat_logo_light.svg" alt="" class="navbar-logo light-content">
+    <img src="../Image/pygstat_logo_light.svg" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">PyGStat</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../index.html" aria-current="page"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-getting-started" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Getting Started</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-getting-started">    
+        <li>
+    <a class="dropdown-item" href="../Tutorial/00_getting_started.html">
+ <span class="dropdown-text">Getting Started</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../install.html">
+ <span class="dropdown-text">PyGStat Installation</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-tutorial" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Tutorial</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-tutorial">    
+        <li class="dropdown-header">Core Interpolation</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/01_variogram_modeling.html">
+ <span class="dropdown-text">Variogram Modeling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/02_simple_kriging.html">
+ <span class="dropdown-text">Simple Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/03_ordinary_kriging.html">
+ <span class="dropdown-text">Ordinary Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/04_universal_kriging.html">
+ <span class="dropdown-text">Universal Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/05_cokriging.html">
+ <span class="dropdown-text">Cokriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/08_kriging_3d.html">
+ <span class="dropdown-text">3-D Kriging (KT3D)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Regression Kriging</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_01_regression_kriging_scikit_learn.html">
+ <span class="dropdown-text">scikit-learn</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_02_regression_kriging_H20.html">
+ <span class="dropdown-text">H2O AutoML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_03_regression_kriging_pytorch.html">
+ <span class="dropdown-text">PyTorch MLP</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_04_regression_krigingDNN_TF.html">
+ <span class="dropdown-text">TensorFlow / Keras</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_05_regression_kriging_gnn.html">
+ <span class="dropdown-text">Graph Neural Nets</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Indicators, Structure, and Space–Time</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/07_indicator_kriging.html">
+ <span class="dropdown-text">Indicator Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/10_disjunctive_kriging.html">
+ <span class="dropdown-text">Disjunctive Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/11_empirical_bayesian_kriging.html">
+ <span class="dropdown-text">Empirical Bayesian Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/09_soft_kriging.html">
+ <span class="dropdown-text">Soft Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/12_factorial_kriging.html">
+ <span class="dropdown-text">Factorial Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/13_krigingST.html">
+ <span class="dropdown-text">Spatio-Temporal OK</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/14_kriging_CNNLSTM.html">
+ <span class="dropdown-text">ConvLSTM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/15_kriging_STGNN.html">
+ <span class="dropdown-text">STGNN (TGCN / DCRNN)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/16_kriging_STGTN.html">
+ <span class="dropdown-text">STGTN (STTN / GMAN)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Poisson Kriging</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_01_poisson_Kriging_ata_atp.html">
+ <span class="dropdown-text">Area-to-Area / Area-to-Point</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_02_poisson_cokriging.html">
+ <span class="dropdown-text">Poisson Cokriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_03_poisson_kriging_ST.html">
+ <span class="dropdown-text">Spatio-Temporal Poisson</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Simulation</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/18_sgsim.html">
+ <span class="dropdown-text">SGSIM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/19_sisim.html">
+ <span class="dropdown-text">SISIM</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://sites.google.com/view/r-data-sci-env/home"> <i class="bi bi-house" role="img" aria-label="Upatta Analytics">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://pypi.org/project/pygstat/"> <i class="bi bi-box" role="img" aria-label="PyPI">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/zia207/pygstat"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/zia-ahmed207"> <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="mailto:zia207@gmail.com"> <i class="bi bi-envelope" role="img" aria-label="Email">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">Getting Started with Geostatistical Analysis in PyGStat</li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Getting Started with Geostatistical Analysis in PyGStat</h1>
+                      </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-center sidebar-header">
+      <a href="../index.html" class="sidebar-logo-link">
+      <img src="../Image/pygstat_logo_light.svg" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="../Image/pygstat_logo_light.svg" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Package Overview</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Core Interpolation</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/01_variogram_modeling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Variogram Modeling</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/02_simple_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Simple Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/03_ordinary_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Ordinary Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/04_universal_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Universal Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/05_cokriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cokriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/08_kriging_3d.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">3-D Kriging (KT3D)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Regression Kriging</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_01_regression_kriging_scikit_learn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">scikit-learn</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_02_regression_kriging_H20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">H2O AutoML</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_03_regression_kriging_pytorch.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PyTorch MLP</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_04_regression_krigingDNN_TF.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TensorFlow / Keras</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_05_regression_kriging_gnn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Graph Neural Nets</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Indicators, Structure, and Space–Time</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/07_indicator_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Indicator Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/10_disjunctive_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Disjunctive Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/11_empirical_bayesian_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Empirical Bayesian Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/09_soft_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Soft Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/12_factorial_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Factorial Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/13_krigingST.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spatio-Temporal OK</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/14_kriging_CNNLSTM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ConvLSTM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/15_kriging_STGNN.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">STGNN (TGCN / DCRNN)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/16_kriging_STGTN.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">STGTN (STTN / GMAN)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Poisson Kriging</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_01_poisson_Kriging_ata_atp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Area-to-Area / Area-to-Point</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_02_poisson_cokriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Poisson Cokriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_03_poisson_kriging_ST.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spatio-Temporal Poisson</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Simulation</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/18_sgsim.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">SGSIM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/19_sisim.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">SISIM</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On This Page</h2>
+   
+  <ul>
+  <li><a href="#kriging" id="toc-kriging" class="nav-link active" data-scroll-target="#kriging">Kriging</a>
+  <ul>
+  <li><a href="#step-1-the-estimator-is-just-a-weighted-average" id="toc-step-1-the-estimator-is-just-a-weighted-average" class="nav-link" data-scroll-target="#step-1-the-estimator-is-just-a-weighted-average">Step 1: the estimator is just a weighted average</a></li>
+  <li><a href="#step-2-the-variogram-is-the-engine" id="toc-step-2-the-variogram-is-the-engine" class="nav-link" data-scroll-target="#step-2-the-variogram-is-the-engine">Step 2: the variogram is the engine</a></li>
+  <li><a href="#step-3-solve-for-the-weights" id="toc-step-3-solve-for-the-weights" class="nav-link" data-scroll-target="#step-3-solve-for-the-weights">Step 3: solve for the weights</a></li>
+  <li><a href="#uncertainty-map" id="toc-uncertainty-map" class="nav-link" data-scroll-target="#uncertainty-map">Uncertainty map</a></li>
+  </ul></li>
+  <li><a href="#types-of-variogram" id="toc-types-of-variogram" class="nav-link" data-scroll-target="#types-of-variogram">Types of Variogram</a></li>
+  <li><a href="#bounded-models-reach-a-sill" id="toc-bounded-models-reach-a-sill" class="nav-link" data-scroll-target="#bounded-models-reach-a-sill">Bounded models (reach a sill)</a></li>
+  <li><a href="#unbounded-models-no-sill" id="toc-unbounded-models-no-sill" class="nav-link" data-scroll-target="#unbounded-models-no-sill">Unbounded models (no sill)</a></li>
+  <li><a href="#special-purpose" id="toc-special-purpose" class="nav-link" data-scroll-target="#special-purpose">Special-purpose</a></li>
+  <li><a href="#beyond-the-single-univariate-curve" id="toc-beyond-the-single-univariate-curve" class="nav-link" data-scroll-target="#beyond-the-single-univariate-curve">Beyond the single univariate curve</a></li>
+  <li><a href="#types-kriging" id="toc-types-kriging" class="nav-link" data-scroll-target="#types-kriging">Types Kriging</a>
+  <ul>
+  <li><a href="#simple-kriging-sk" id="toc-simple-kriging-sk" class="nav-link" data-scroll-target="#simple-kriging-sk">1. Simple Kriging (SK)</a></li>
+  <li><a href="#ordinary-kriging-ok" id="toc-ordinary-kriging-ok" class="nav-link" data-scroll-target="#ordinary-kriging-ok">2. Ordinary Kriging (OK)</a></li>
+  <li><a href="#universal-kriging-uk-kriging-with-a-trend" id="toc-universal-kriging-uk-kriging-with-a-trend" class="nav-link" data-scroll-target="#universal-kriging-uk-kriging-with-a-trend">3. Universal Kriging (UK) / Kriging with a Trend</a></li>
+  <li><a href="#co-kriging-multivariate-kriging" id="toc-co-kriging-multivariate-kriging" class="nav-link" data-scroll-target="#co-kriging-multivariate-kriging">4. Co-Kriging (Multivariate Kriging)</a></li>
+  <li><a href="#indicator-kriging-ik" id="toc-indicator-kriging-ik" class="nav-link" data-scroll-target="#indicator-kriging-ik">5. Indicator Kriging (IK)</a></li>
+  <li><a href="#regression-kriging-rk-residual-kriging" id="toc-regression-kriging-rk-residual-kriging" class="nav-link" data-scroll-target="#regression-kriging-rk-residual-kriging">6. Regression Kriging (RK) / Residual Kriging</a></li>
+  <li><a href="#poisson-kriging-pk" id="toc-poisson-kriging-pk" class="nav-link" data-scroll-target="#poisson-kriging-pk">7. Poisson Kriging (PK)</a></li>
+  <li><a href="#summary-of-all-kriging-types" id="toc-summary-of-all-kriging-types" class="nav-link" data-scroll-target="#summary-of-all-kriging-types">Summary of All Kriging Types</a></li>
+  </ul></li>
+  <li><a href="#pygstat" id="toc-pygstat" class="nav-link" data-scroll-target="#pygstat"><strong>PyGStat</strong></a></li>
+  <li><a href="#features" id="toc-features" class="nav-link" data-scroll-target="#features">Features</a></li>
+  <li><a href="#installation" id="toc-installation" class="nav-link" data-scroll-target="#installation">Installation</a>
+  <ul>
+  <li><a href="#from-github" id="toc-from-github" class="nav-link" data-scroll-target="#from-github">From GitHub</a></li>
+  <li><a href="#from-pypi" id="toc-from-pypi" class="nav-link" data-scroll-target="#from-pypi">From PyPI</a></li>
+  <li><a href="#from-source-editable-install" id="toc-from-source-editable-install" class="nav-link" data-scroll-target="#from-source-editable-install">From source (editable install)</a></li>
+  </ul></li>
+  <li><a href="#quick-start" id="toc-quick-start" class="nav-link" data-scroll-target="#quick-start">Quick Start</a></li>
+  <li><a href="#important-python-packages-for-geostatistical-analysis" id="toc-important-python-packages-for-geostatistical-analysis" class="nav-link" data-scroll-target="#important-python-packages-for-geostatistical-analysis">Important Python Packages for Geostatistical Analysis</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  <li><a href="#resources" id="toc-resources" class="nav-link" data-scroll-target="#resources">Resources</a>
+  <ul>
+  <li><a href="#foundational-advanced-textbooks" id="toc-foundational-advanced-textbooks" class="nav-link" data-scroll-target="#foundational-advanced-textbooks">1. Foundational &amp; Advanced Textbooks</a></li>
+  <li><a href="#seminal-modern-academic-papers" id="toc-seminal-modern-academic-papers" class="nav-link" data-scroll-target="#seminal-modern-academic-papers">2. Seminal &amp; Modern Academic Papers</a></li>
+  <li><a href="#software-libraries-tailored-to-your-stack" id="toc-software-libraries-tailored-to-your-stack" class="nav-link" data-scroll-target="#software-libraries-tailored-to-your-stack">3. Software &amp; Libraries (Tailored to Your Stack)</a>
+  <ul class="collapse">
+  <li><a href="#python-with-pytorch-gpu-focus" id="toc-python-with-pytorch-gpu-focus" class="nav-link" data-scroll-target="#python-with-pytorch-gpu-focus"><strong>Python (with PyTorch / GPU Focus)</strong></a></li>
+  <li><a href="#r-for-statistical-rigor-mixed-methods" id="toc-r-for-statistical-rigor-mixed-methods" class="nav-link" data-scroll-target="#r-for-statistical-rigor-mixed-methods"><strong>R (for Statistical Rigor &amp; Mixed-Methods)</strong></a></li>
+  </ul></li>
+  <li><a href="#advanced-validation-best-practices-resources" id="toc-advanced-validation-best-practices-resources" class="nav-link" data-scroll-target="#advanced-validation-best-practices-resources">4. Advanced Validation &amp; Best Practices Resources</a></li>
+  <li><a href="#recommended-learning-path-for-your-specific-workflow" id="toc-recommended-learning-path-for-your-specific-workflow" class="nav-link" data-scroll-target="#recommended-learning-path-for-your-specific-workflow">5. Recommended Learning Path for Your Specific Workflow</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+
+<p><img src="../Image/pygstat_logo_light.svg" alt="pygstat logo" width="240"></p>
+<p>Welcome to this hands-on guide for performing geostatistical analysis with Python’s library PyGStat! Geostatistics is a powerful branch of statistics that focuses on analyzing and making predictions about spatially correlated data. It’s widely used in fields like environmental science, natural resource management, agriculture, epidemiology, and geology—where understanding how things change across space is essential.</p>
+<p>In this tutorial, we’ll learn how to use Python tools to: - Explore spatial datasets - Visualize spatial patterns - Quantify how spatial similarity fades with distance (variograms) - Predict values at unsampled locations with kriging</p>
+<p>We’ll walk step-by-step through the core concepts, equations, and practical recipes, using real datasets. You’ll not only see the math but also get a sense for <em>when</em> and <em>why</em> geostatistical tools work—and how to interpret the results.</p>
+<p>By the end, you’ll be able to: - Prepare and visualize spatial data for analysis - Build and interpret variograms - Apply kriging to interpolate unknown values across space, along with their uncertainties</p>
+<p>Let’s get started on your journey to spatial data mastery!</p>
+<section id="kriging" class="level2">
+<h2 class="anchored" data-anchor-id="kriging">Kriging</h2>
+<p>Kriging is a way to guess the value of something at a place you <em>didn’t</em> measure, using the places you <em>did</em>. Soil lead, rainfall, disease rate, elevation, anything that varies smoothly over space. What makes it special is that it doesn’t just average nearby points; it works out the <em>smartest possible</em> weighted average by first learning how your variable’s similarity decays with distance, and it hands you an uncertainty estimate for free.</p>
+<p>Everything rests on one idea (Tobler’s first law): <strong>near things are more alike than distant things.</strong> Kriging’s whole job is to measure exactly <em>how fast</em> alikeness fades with distance, then use that to weight the neighbors.</p>
+<section id="step-1-the-estimator-is-just-a-weighted-average" class="level3">
+<h3 class="anchored" data-anchor-id="step-1-the-estimator-is-just-a-weighted-average">Step 1: the estimator is just a weighted average</h3>
+<p>To predict the value at an unsampled spot <span class="math inline">\(s_0\)</span>, you take a weighted sum of your <span class="math inline">\(n\)</span> measurements:</p>
+<p><span class="math display">\[\hat{Z}(s_0) = \sum_{i=1}^{n} \lambda_i \, Z(s_i)\]</span></p>
+<p>The whole game is choosing the weights <span class="math inline">\(\lambda_i\)</span>. Two rules govern them: closer and better-connected points get more weight, and (for <em>ordinary</em> kriging) the weights must sum to 1, i.e.&nbsp;<span class="math inline">\(\sum \lambda_i = 1\)</span>, so the prediction is <strong>unbiased</strong> — no systematic over- or under-shooting.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../Image/kriging_wt.png" class="img-fluid figure-img"></p>
+<figcaption>Illustration of kriging weights — the closest sample exerts the strongest pull, the farthest the weakest. The four weights sum to 1.</figcaption>
+</figure>
+</div>
+<p>The closest point (λ = 0.34) pulls the hardest; the farthest contributes least; the four weights sum to 1. But notice we haven’t said <em>where those numbers come from</em> yet. That’s the heart of kriging.</p>
+</section>
+<section id="step-2-the-variogram-is-the-engine" class="level3">
+<h3 class="anchored" data-anchor-id="step-2-the-variogram-is-the-engine">Step 2: the variogram is the engine</h3>
+<p>Before computing any weight, kriging measures how your variable’s similarity decays with distance. The tool for this is the <strong>semivariogram</strong>. For every pair of points separated by distance <span class="math inline">\(h\)</span>, compute half the squared difference of their values, then average over all pairs at that distance:</p>
+<p><span class="math display">\[\gamma(h) = \frac{1}{2N(h)} \sum_{(i,j)} \big(Z(s_i) - Z(s_j)\big)^2\]</span></p>
+<p>Small <span class="math inline">\(h\)</span> (nearby points) → small <span class="math inline">\(\gamma\)</span> (very alike). Large <span class="math inline">\(h\)</span> → larger <span class="math inline">\(\gamma\)</span> (less alike), until it flattens out. Plotting <span class="math inline">\(\gamma\)</span> against <span class="math inline">\(h\)</span> gives the curve every kriging model is built on:The gray dots are your raw data (the <em>empirical</em> variogram); the purple line is a smooth model fitted through them (spherical, exponential, Gaussian, etc.).</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../Image/variogram.png" class="img-fluid figure-img"></p>
+<figcaption>Variogram</figcaption>
+</figure>
+</div>
+<p>Three numbers define it:</p>
+<ul>
+<li><strong>Nugget</strong>: where the curve meets the y-axis. In theory two points at zero distance should be identical (γ = 0), so any gap here is measurement noise or variation finer than your sampling.</li>
+<li><strong>Sill</strong>: the plateau. Beyond this, points are so far apart they’re effectively unrelated; it equals the overall variance of the data.</li>
+<li><strong>Range</strong>: the distance at which the curve reaches the sill. Inside the range, points inform each other; past it, they don’t. This is literally “how far does the neighborhood extend.”</li>
+</ul>
+</section>
+<section id="step-3-solve-for-the-weights" class="level3">
+<h3 class="anchored" data-anchor-id="step-3-solve-for-the-weights">Step 3: solve for the weights</h3>
+<p>Now the payoff. Kriging picks the weights that <strong>minimize the prediction error variance</strong> subject to the unbiasedness constraint. Solving that constrained optimization (via a Lagrange multiplier <span class="math inline">\(\mu\)</span>) gives a tidy linear system — one equation per sample point, plus one for the constraint:</p>
+<p><span class="math display">\[\sum_{j=1}^{n} \lambda_j \, \gamma(s_i, s_j) + \mu = \gamma(s_i, s_0), \qquad \sum_{j=1}^{n}\lambda_j = 1\]</span></p>
+<p>In matrix form it’s just <span class="math inline">\(\mathbf{A}\boldsymbol{\lambda} = \mathbf{b}\)</span>, which you invert to get the weights:</p>
+<p><span class="math display">\[
+\underbrace{\begin{bmatrix} \gamma_{11} &amp; \cdots &amp; \gamma_{1n} &amp; 1 \\ \vdots &amp; \ddots &amp; \vdots &amp; \vdots \\ \gamma_{n1} &amp; \cdots &amp; \gamma_{nn} &amp; 1 \\ 1 &amp; \cdots &amp; 1 &amp; 0 \end{bmatrix}}_{\text{how samples relate to each other}}
+\begin{bmatrix} \lambda_1 \\ \vdots \\ \lambda_n \\ \mu \end{bmatrix}
+=
+\underbrace{\begin{bmatrix} \gamma(s_1,s_0) \\ \vdots \\ \gamma(s_n,s_0) \\ 1 \end{bmatrix}}_{\text{samples vs. target}}
+\]</span></p>
+<p>The left matrix <span class="math inline">\(\mathbf{A}\)</span> contains the variogram value between every <em>pair of samples</em> — this is what lets kriging <strong>de-cluster</strong>: two samples sitting on top of each other are near-redundant, and the matrix automatically splits their weight instead of double-counting them. The right vector <span class="math inline">\(\mathbf{b}\)</span> contains the variogram value between each sample and the target location — this is what makes closer, better-connected points get more weight. Every <span class="math inline">\(\gamma\)</span> in there is read straight off the fitted curve from Step 2.</p>
+</section>
+<section id="uncertainty-map" class="level3">
+<h3 class="anchored" data-anchor-id="uncertainty-map">Uncertainty map</h3>
+<p>Because kriging minimized error variance, it can also <em>report</em> that minimized variance at every point:</p>
+<p><span class="math display">\[\sigma_k^2(s_0) = \boldsymbol{\lambda}^\top \mathbf{b} = \sum_{i=1}^{n} \lambda_i\,\gamma(s_i, s_0) + \mu\]</span></p>
+<p>This is why kriging beats simple inverse-distance weighting: alongside the prediction map, you get a <strong>kriging variance map</strong> showing where predictions are trustworthy (dense sampling, low variance) and where they’re shaky (sparse areas, high variance), invaluable for deciding where to sample next.</p>
+</section>
+</section>
+<section id="types-of-variogram" class="level2">
+<h2 class="anchored" data-anchor-id="types-of-variogram">Types of Variogram</h2>
+<p>A <strong>variogram</strong> describes how the similarity between sample points changes as the distance between them increases. It’s a plot (and mathematical function) that summarizes spatial correlation as distance grows, letting you see how much nearby values “know” about each other versus faraway ones. There are different types of variogram <em>models</em>: some flatten out beyond a certain distance (“bounded” types), while others keep rising (“unbounded” types). The shape you choose (spherical, exponential, Gaussian, etc.) controls how interpolation works, especially how smooth or sensitive your spatial predictions will be.</p>
+<p>The <strong>experimental</strong> or <strong>empirical</strong> variogram is the cloud of points you compute directly from your data,</p>
+<p><span class="math display">\[\hat\gamma(h)=\frac{1}{2N(h)}\sum(Z(s_i)-Z(s_j))^2\]</span></p>
+<p>The <strong>theoretical</strong> (model) variogram, the smooth authorized function you fit through those points and actually feed to kriging and those split cleanly into <strong>bounded</strong> models (they flatten out at a sill) and <strong>unbounded</strong> ones (they rise forever, for data with a trend). Here’s how the common shapes compare with the same sill and range: The single most important thing to read off that plot is the <strong>behavior near the origin</strong>, because it dictates how smooth the resulting surface is: Gaussian leaves the origin flat (parabolic) → very smooth fields; spherical and exponential leave linearly → continuous but rougher; the power/linear model just keeps climbing → no sill at all.</p>
+<p>Throughout, I’ll use <span class="math inline">\(c_0\)</span> = nugget, <span class="math inline">\(c\)</span> = partial sill, <span class="math inline">\(a\)</span> = range, so total sill <span class="math inline">\(= c_0 + c\)</span>.</p>
+</section>
+<section id="bounded-models-reach-a-sill" class="level2">
+<h2 class="anchored" data-anchor-id="bounded-models-reach-a-sill">Bounded models (reach a sill)</h2>
+<p>These are for second-order stationary data — variance settles down at large distances.</p>
+<p><strong>Pure nugget</strong>: no spatial structure at all; <span class="math inline">\(\gamma(h)=c_0\)</span> for <span class="math inline">\(h&gt;0\)</span> and <span class="math inline">\(0\)</span> at <span class="math inline">\(h=0\)</span>. This is white noise; kriging with it just returns the global mean. Useful as a diagnostic (if your empirical variogram looks like this, there’s no correlation to exploit at your sampling scale).</p>
+<p><strong>Spherical</strong>: the workhorse in mining and soil science: <span class="math display">\[\gamma(h)=c_0+c\left[\tfrac{3}{2}\tfrac{h}{a}-\tfrac{1}{2}\left(\tfrac{h}{a}\right)^3\right]\ \text{for } h\le a,\quad =c_0+c \text{ for } h&gt;a\]</span> It reaches the sill <em>exactly</em> at the range <span class="math inline">\(a\)</span> — a genuine “correlation stops here” distance, which is why it’s intuitive.</p>
+<p><strong>Exponential</strong>: rises fast then approaches the sill asymptotically: <span class="math display">\[\gamma(h)=c_0+c\left[1-\exp\!\left(-\tfrac{h}{a}\right)\right]\]</span> It never quite reaches the sill, so people quote a <em>practical range</em> of <span class="math inline">\(\approx 3a\)</span> (95% of the sill). Good for phenomena with abrupt local variation. It’s also the Ornstein–Uhlenbeck / Markov correlation, so it shows up a lot in environmental data.</p>
+<p><strong>Gaussian</strong>: parabolic at the origin → extremely smooth interpolation: <span class="math display">\[\gamma(h)=c_0+c\left[1-\exp\!\left(-\tfrac{h^2}{a^2}\right)\right]\]</span> Practical range <span class="math inline">\(\approx a\sqrt{3}\)</span>. Beware: with a zero or tiny nugget it makes the kriging matrix nearly singular and produces unrealistic overshoots — always pair it with a small nugget.</p>
+<p><strong>Matérn</strong>: the general parent of the family, with an extra smoothness parameter <span class="math inline">\(\nu\)</span>: <span class="math display">\[\gamma(h)=c_0+c\left[1-\tfrac{1}{2^{\nu-1}\Gamma(\nu)}\left(\tfrac{h}{a}\right)^{\nu}K_\nu\!\left(\tfrac{h}{a}\right)\right]\]</span> where <span class="math inline">\(K_\nu\)</span> is the modified Bessel function. It contains the others as special cases: <span class="math inline">\(\nu=0.5\)</span> gives exponential, <span class="math inline">\(\nu\to\infty\)</span> gives Gaussian. Instead of <em>guessing</em> which shape fits, you let the data estimate <span class="math inline">\(\nu\)</span>. This is the modern default in spatial statistics (e.g.&nbsp;<code>gstat</code>, <code>fields</code>, most Gaussian-process libraries).</p>
+<p>Also in this bucket, less common: <strong>circular</strong>, <strong>cubic</strong>, and <strong>pentaspherical</strong> — alternative bounded shapes that differ mainly in near-origin curvature; you’ll rarely need them over the four above plus Matérn.</p>
+</section>
+<section id="unbounded-models-no-sill" class="level2">
+<h2 class="anchored" data-anchor-id="unbounded-models-no-sill">Unbounded models (no sill)</h2>
+<p>These describe data with a trend or fractal-like behavior — variance keeps growing with distance, so the process isn’t stationary in the mean.</p>
+<p><strong>Power</strong>: <span class="math inline">\(\gamma(h)=c_0+b\,h^{\omega}\)</span> with <span class="math inline">\(0&lt;\omega&lt;2\)</span>. The exponent controls roughness; <span class="math inline">\(\omega\to 2\)</span> is smooth, small <span class="math inline">\(\omega\)</span> is rough. <strong>Linear</strong> is just the <span class="math inline">\(\omega=1\)</span> special case, <span class="math inline">\(\gamma(h)=c_0+bh\)</span>. The <strong>logarithmic (De Wijsian)</strong> model, <span class="math inline">\(\gamma(h)=c_0+b\ln(h)\)</span>, is the classic mining variant (only valid for regularized/block support, not as a point model). Unbounded variograms go with <em>universal kriging</em> or <em>intrinsic</em> kriging, where a trend is modeled separately.</p>
+</section>
+<section id="special-purpose" class="level2">
+<h2 class="anchored" data-anchor-id="special-purpose">Special-purpose</h2>
+<p><strong>Hole-effect</strong> — a damped oscillation for periodic or cyclic phenomena (repeating ore bands, seasonal spatial patterns): <span class="math display">\[\gamma(h)=c_0+c\left[1-\tfrac{\sin(h/a)}{h/a}\right]\]</span> The dip below and rise above the sill encode negative-then-positive correlation at regular spacings.</p>
+</section>
+<section id="beyond-the-single-univariate-curve" class="level2">
+<h2 class="anchored" data-anchor-id="beyond-the-single-univariate-curve">Beyond the single univariate curve</h2>
+<p>The word “variogram” also extends in two directions that are genuinely different <em>types</em>, not just different shapes:</p>
+<p>By <strong>direction</strong>: an <em>omnidirectional</em> variogram pools all point pairs regardless of orientation, while <em>directional</em> variograms compute <span class="math inline">\(\gamma\)</span> within angular bands to detect <strong>anisotropy</strong>. If the range differs by direction (correlation reaches farther N–S than E–W) that’s <em>geometric</em> anisotropy; if the sill differs, it’s <em>zonal</em> anisotropy. This is often where the real modeling effort goes.</p>
+<p>By <strong>what’s being correlated</strong>, the <strong>cross-variogram</strong> measures joint spatial covariation between <em>two</em> variables and is the engine of co-kriging; the <strong>indicator variogram</strong> is computed on a 0/1 threshold indicator of the variable and drives indicator kriging (for non-Gaussian data or probability mapping). There are also robust alternatives to the classic estimator — the <strong>madogram</strong> (uses <span class="math inline">\(|Z_i-Z_j|\)</span> instead of squared differences) and <strong>rodogram</strong> (square-root differences) — which resist outliers, plus <strong>relative variograms</strong> (general and pairwise) for data whose variability scales with the local mean.</p>
+<p>One expert caveat that ties it all together: you can’t fit <em>any</em> curve you like. A valid model must be <strong>conditionally negative definite</strong> so the kriging system stays solvable and variances stay non-negative — that’s exactly why this short, blessed list of “authorized” models exists, and why nested combinations (a nugget plus a spherical plus another structure) are built by <em>adding</em> authorized models rather than inventing new ones.</p>
+<p>If it’d be useful, I can add a model picker to the workbench — swapping in Matérn (with a <span class="math inline">\(\nu\)</span> slider) and a directional/anisotropy toggle would let you see these differences on a live surface rather than just the curve.</p>
+<p>It measure how similarity fades with distance (the variogram), then solve a small linear system that turns that decay curve into optimal, de-clustered, unbiased weights for a weighted average — and get a built-in uncertainty estimate as a bonus.</p>
+</section>
+<section id="types-kriging" class="level2">
+<h2 class="anchored" data-anchor-id="types-kriging">Types Kriging</h2>
+<p>Kriging is a family of geostatistical interpolation algorithms used to predict values at unsampled locations based on observed data. At its core, kriging is a <strong>Best Linear Unbiased Predictor (BLUP)</strong>.</p>
+<p>The differences between the types of kriging lie in their <strong>assumptions about the mean (trend) of the spatial process</strong> and the resulting <strong>mathematical constraints</strong> used to solve for the weights <span class="math inline">\(\lambda_i\)</span>.</p>
+<hr>
+<section id="simple-kriging-sk" class="level3">
+<h3 class="anchored" data-anchor-id="simple-kriging-sk">1. Simple Kriging (SK)</h3>
+<p><strong>Assumption:</strong> The global mean of the spatial process is <strong>known and constant</strong>. (This is rare in practice but mathematically the simplest). <strong>Model:</strong> <span class="math inline">\(Z(x) = \mu + \epsilon(x)\)</span>, where <span class="math inline">\(\mu\)</span> is a known constant and <span class="math inline">\(E[\epsilon(x)] = 0\)</span>.</p>
+<p><strong>Predictor:</strong> <span class="math display">\[ \hat{Z}_{SK}(x_0) = \mu + \sum_{i=1}^n \lambda_i [Z(x_i) - \mu] \]</span></p>
+<p><strong>Mathematics &amp; Optimization:</strong> Because the mean is known, the predictor is inherently unbiased without restricting the sum of the weights. The goal is to minimize the estimation variance <span class="math inline">\(\sigma_{SK}^2 = E[(\hat{Z}_{SK}(x_0) - Z(x_0))^2]\)</span>.</p>
+<p>Taking the derivative with respect to <span class="math inline">\(\lambda_i\)</span> and setting it to zero yields the <strong>Simple Kriging System</strong>: <span class="math display">\[ \sum_{j=1}^n \lambda_j C(x_i, x_j) = C(x_i, x_0) \quad \text{for } i = 1, \dots, n \]</span></p>
+<p>In matrix form: <span class="math display">\[ \mathbf{C} \boldsymbol{\lambda} = \mathbf{c}_0 \]</span> * <span class="math inline">\(\mathbf{C}\)</span> is the <span class="math inline">\(n \times n\)</span> covariance matrix between data points: <span class="math inline">\(C_{ij} = C(x_i, x_j)\)</span>. * <span class="math inline">\(\mathbf{c}_0\)</span> is the <span class="math inline">\(n \times 1\)</span> covariance vector between data points and the prediction location: <span class="math inline">\(c_{0i} = C(x_i, x_0)\)</span>. * <span class="math inline">\(\boldsymbol{\lambda}\)</span> is the vector of weights.</p>
+<hr>
+</section>
+<section id="ordinary-kriging-ok" class="level3">
+<h3 class="anchored" data-anchor-id="ordinary-kriging-ok">2. Ordinary Kriging (OK)</h3>
+<p><strong>Assumption:</strong> The global mean is <strong>unknown but constant</strong> (intrinsic stationarity). This is the most commonly used form of kriging. <strong>Model:</strong> <span class="math inline">\(Z(x) = \mu + \epsilon(x)\)</span>, where <span class="math inline">\(\mu\)</span> is an unknown constant.</p>
+<p><strong>Predictor:</strong> <span class="math display">\[ \hat{Z}_{OK}(x_0) = \sum_{i=1}^n \lambda_i Z(x_i) \]</span></p>
+<p><strong>Mathematics &amp; Optimization:</strong> To ensure the predictor is unbiased (<span class="math inline">\(E[\hat{Z}_{OK}(x_0)] = \mu\)</span>), the weights must sum to 1: <span class="math display">\[ \sum_{i=1}^n \lambda_i = 1 \]</span></p>
+<p>We minimize the variance <span class="math inline">\(\sigma_{OK}^2\)</span> subject to this constraint using a <strong>Lagrange multiplier</strong> (<span class="math inline">\(\psi\)</span>). The Lagrangian is: <span class="math display">\[ \mathcal{L} = \sigma_{OK}^2 - 2\psi \left( \sum_{i=1}^n \lambda_i - 1 \right) \]</span></p>
+<p>Taking derivatives and setting to zero yields the <strong>Ordinary Kriging System</strong>. It is traditionally written using the <strong>variogram</strong> <span class="math inline">\(\gamma(h)\)</span> rather than covariance: <span class="math display">\[ \sum_{j=1}^n \lambda_j \gamma(x_i, x_j) - \psi = \gamma(x_i, x_0) \quad \text{for } i = 1, \dots, n \]</span> <span class="math display">\[ \sum_{i=1}^n \lambda_i = 1 \]</span></p>
+<p>In matrix form: <span class="math display">\[ \begin{bmatrix} \mathbf{\Gamma} &amp; \mathbf{1} \\ \mathbf{1}^T &amp; 0 \end{bmatrix} \begin{bmatrix} \boldsymbol{\lambda} \\ \psi \end{bmatrix} = \begin{bmatrix} \boldsymbol{\gamma}_0 \\ 1 \end{bmatrix} \]</span> * <span class="math inline">\(\mathbf{\Gamma}\)</span> is the <span class="math inline">\(n \times n\)</span> variogram matrix between data points. * <span class="math inline">\(\boldsymbol{\gamma}_0\)</span> is the <span class="math inline">\(n \times 1\)</span> variogram vector to the prediction location. * <span class="math inline">\(\mathbf{1}\)</span> is a column vector of ones. * <span class="math inline">\(\psi\)</span> is the Lagrange multiplier (which also represents the minimized kriging variance when multiplied out).</p>
+<hr>
+</section>
+<section id="universal-kriging-uk-kriging-with-a-trend" class="level3">
+<h3 class="anchored" data-anchor-id="universal-kriging-uk-kriging-with-a-trend">3. Universal Kriging (UK) / Kriging with a Trend</h3>
+<p><strong>Assumption:</strong> The mean is <strong>not constant</strong>, but is a deterministic function of the spatial coordinates (a trend or polynomial). <strong>Model:</strong> <span class="math inline">\(E[Z(x)] = m(x) = \sum_{k=0}^K a_k f_k(x)\)</span>, where <span class="math inline">\(f_k(x)\)</span> are known basis functions (e.g., <span class="math inline">\(1, x, y, x^2, xy\)</span>) and <span class="math inline">\(a_k\)</span> are unknown coefficients.</p>
+<p><strong>Predictor:</strong> <span class="math display">\[ \hat{Z}_{UK}(x_0) = \sum_{i=1}^n \lambda_i Z(x_i) \]</span></p>
+<p><strong>Mathematics &amp; Optimization:</strong> For the predictor to be unbiased, the weights must perfectly reproduce the trend at the prediction location: <span class="math display">\[ \sum_{i=1}^n \lambda_i f_k(x_i) = f_k(x_0) \quad \text{for } k = 0, \dots, K \]</span></p>
+<p>This requires <strong><span class="math inline">\(K+1\)</span> Lagrange multipliers</strong> (<span class="math inline">\(\mu_k\)</span>). The resulting <strong>Universal Kriging System</strong> is: <span class="math display">\[ \sum_{j=1}^n \lambda_j C(x_i, x_j) + \sum_{k=0}^K \mu_k f_k(x_i) = C(x_i, x_0) \quad \text{for } i = 1, \dots, n \]</span> <span class="math display">\[ \sum_{i=1}^n \lambda_i f_k(x_i) = f_k(x_0) \quad \text{for } k = 0, \dots, K \]</span></p>
+<p>In matrix form: <span class="math display">\[ \begin{bmatrix} \mathbf{C} &amp; \mathbf{F} \\ \mathbf{F}^T &amp; \mathbf{0} \end{bmatrix} \begin{bmatrix} \boldsymbol{\lambda} \\ \boldsymbol{\mu} \end{bmatrix} = \begin{bmatrix} \mathbf{c}_0 \\ \mathbf{f}_0 \end{bmatrix} \]</span> * <span class="math inline">\(\mathbf{F}\)</span> is an <span class="math inline">\(n \times (K+1)\)</span> matrix where <span class="math inline">\(F_{ik} = f_k(x_i)\)</span>. * <span class="math inline">\(\mathbf{f}_0\)</span> is a <span class="math inline">\((K+1) \times 1\)</span> vector where <span class="math inline">\(f_{0k} = f_k(x_0)\)</span>. * <span class="math inline">\(\boldsymbol{\mu}\)</span> is the vector of Lagrange multipliers.</p>
+<hr>
+</section>
+<section id="co-kriging-multivariate-kriging" class="level3">
+<h3 class="anchored" data-anchor-id="co-kriging-multivariate-kriging">4. Co-Kriging (Multivariate Kriging)</h3>
+<p><strong>Assumption:</strong> You are trying to predict a primary variable <span class="math inline">\(Z_1\)</span>, but you have secondary, cheaper-to-measure variables <span class="math inline">\(Z_2, \dots, Z_M\)</span> that are spatially correlated with <span class="math inline">\(Z_1\)</span>.</p>
+<p><strong>Predictor:</strong> <span class="math display">\[ \hat{Z}_1(x_0) = \sum_{m=1}^M \sum_{i=1}^{n_m} \lambda_{m,i} Z_m(x_{m,i}) \]</span> <em>(Where <span class="math inline">\(n_m\)</span> is the number of samples for variable <span class="math inline">\(m\)</span>).</em></p>
+<p><strong>Mathematics &amp; Optimization:</strong> The optimization minimizes the variance of the prediction error for <span class="math inline">\(Z_1\)</span>, subject to unbiasedness constraints for each variable. The math is identical to Ordinary Kriging, but the covariance/variogram matrices are replaced by <strong>block matrices of cross-covariances</strong>.</p>
+<p>For two variables (<span class="math inline">\(Z_1\)</span> and <span class="math inline">\(Z_2\)</span>), the matrix system looks like this: <span class="math display">\[ \begin{bmatrix}
+\mathbf{C}_{11} &amp; \mathbf{C}_{12} &amp; \mathbf{1} &amp; \mathbf{0} \\
+\mathbf{C}_{21} &amp; \mathbf{C}_{22} &amp; \mathbf{0} &amp; \mathbf{1} \\
+\mathbf{1}^T &amp; \mathbf{0}^T &amp; 0 &amp; 0 \\
+\mathbf{0}^T &amp; \mathbf{1}^T &amp; 0 &amp; 0
+\end{bmatrix}
+\begin{bmatrix}
+\boldsymbol{\lambda}_1 \\
+\boldsymbol{\lambda}_2 \\
+\psi_1 \\
+\psi_2
+\end{bmatrix} =
+\begin{bmatrix}
+\mathbf{c}_{10} \\
+\mathbf{c}_{20} \\
+1 \\
+1
+\end{bmatrix} \]</span> * <span class="math inline">\(\mathbf{C}_{11}\)</span> is the auto-covariance of <span class="math inline">\(Z_1\)</span>. * <span class="math inline">\(\mathbf{C}_{12}\)</span> is the cross-covariance between <span class="math inline">\(Z_1\)</span> and <span class="math inline">\(Z_2\)</span>. * <span class="math inline">\(\boldsymbol{\lambda}_1\)</span> and <span class="math inline">\(\boldsymbol{\lambda}_2\)</span> are the weight vectors for the two variables.</p>
+<hr>
+</section>
+<section id="indicator-kriging-ik" class="level3">
+<h3 class="anchored" data-anchor-id="indicator-kriging-ik">5. Indicator Kriging (IK)</h3>
+<p><strong>Assumption:</strong> Used for categorical data, or to estimate the <strong>probability</strong> that a variable exceeds a certain threshold <span class="math inline">\(z\)</span> (e.g., probability of soil lead levels exceeding safety limits).</p>
+<p><strong>Mathematics:</strong> IK transforms the continuous variable <span class="math inline">\(Z(x)\)</span> into a binary indicator variable <span class="math inline">\(I(x; z)\)</span>: <span class="math display">\[ I(x; z) = \begin{cases} 1 &amp; \text{if } Z(x) \le z \\ 0 &amp; \text{if } Z(x) &gt; z \end{cases} \]</span></p>
+<p>The expected value of the indicator is the probability: <span class="math inline">\(E[I(x; z)] = P(Z(x) \le z)\)</span>.</p>
+<p>IK is mathematically identical to <strong>Ordinary Kriging</strong>, but it is applied to the binary indicator variable <span class="math inline">\(I\)</span> instead of the raw data <span class="math inline">\(Z\)</span>. <span class="math display">\[ \hat{I}(x_0; z) = \sum_{i=1}^n \lambda_i I(x_i; z) \]</span> The resulting prediction <span class="math inline">\(\hat{I}(x_0; z)\)</span> is an estimate of the conditional probability <span class="math inline">\(P(Z(x_0) \le z | \text{data})\)</span>. By running IK across multiple thresholds <span class="math inline">\(z\)</span>, you can reconstruct the entire local probability distribution at <span class="math inline">\(x_0\)</span>.</p>
+</section>
+<section id="regression-kriging-rk-residual-kriging" class="level3">
+<h3 class="anchored" data-anchor-id="regression-kriging-rk-residual-kriging">6. Regression Kriging (RK) / Residual Kriging</h3>
+<p><strong>The Problem it Solves:</strong> Universal Kriging (UK) models a spatial trend, but if you have a massive dataset (e.g., <span class="math inline">\(n &gt; 10,000\)</span>), solving the massive <span class="math inline">\((n+K+1) \times (n+K+1)\)</span> matrix for UK becomes computationally impossible. <strong>The Solution:</strong> Regression Kriging splits the prediction into two distinct, computationally cheaper steps: modeling the deterministic trend using auxiliary covariates (Regression), and then modeling the spatially correlated leftovers (Kriging).</p>
+<p><strong>Assumption:</strong> The spatial process is composed of a deterministic mean driven by external covariates, plus a spatially autocorrelated stochastic residual. <strong>Model:</strong> <span class="math inline">\(Z(x) = m(x) + e(x) = \mathbf{X}(x)\boldsymbol{\beta} + e(x)\)</span> * <span class="math inline">\(\mathbf{X}(x)\)</span> is a vector of auxiliary covariates at location <span class="math inline">\(x\)</span> (e.g., elevation, satellite imagery). * <span class="math inline">\(\boldsymbol{\beta}\)</span> is a vector of regression coefficients. * <span class="math inline">\(e(x)\)</span> is the spatially correlated residual with <span class="math inline">\(E[e(x)] = 0\)</span>.</p>
+<p><strong>Predictor:</strong> <span class="math display">\[ \hat{Z}_{RK}(x_0) = \hat{m}(x_0) + \hat{e}(x_0) = \mathbf{X}(x_0)\hat{\boldsymbol{\beta}} + \sum_{i=1}^n \lambda_i \hat{e}(x_i) \]</span></p>
+<p><strong>Mathematics &amp; Optimization (The Two-Step Process):</strong> Unlike Universal Kriging which solves for trend and spatial correlation simultaneously via Generalized Least Squares (GLS), Regression Kriging is typically implemented in two steps using Ordinary Least Squares (OLS):</p>
+<p><strong>Step 1: Global Regression</strong> Estimate the trend coefficients <span class="math inline">\(\boldsymbol{\beta}\)</span> using OLS across all data points: <span class="math display">\[ \hat{\boldsymbol{\beta}} = (\mathbf{X}^T \mathbf{X})^{-1} \mathbf{X}^T \mathbf{Z} \]</span> Calculate the residuals at the sample locations: <span class="math display">\[ \hat{e}(x_i) = Z(x_i) - \mathbf{X}(x_i)\hat{\boldsymbol{\beta}} \]</span></p>
+<p><strong>Step 2: Ordinary Kriging of Residuals</strong> Fit a variogram to the residuals <span class="math inline">\(\hat{e}(x_i)\)</span> and apply standard Ordinary Kriging to predict the residual at the unsampled location: <span class="math display">\[ \hat{e}(x_0) = \sum_{i=1}^n \lambda_i \hat{e}(x_i) \]</span> <em>(Where <span class="math inline">\(\lambda_i\)</span> are solved using the standard OK matrix system shown in the previous response).</em></p>
+<p><em>Note on Equivalence:</em> If Step 1 uses Generalized Least Squares (GLS) instead of OLS—incorporating the spatial covariance matrix <span class="math inline">\(\mathbf{C}\)</span>—Regression Kriging becomes <strong>mathematically identical to Universal Kriging</strong>. However, the OLS+OK two-step approach is heavily preferred in practice because inverting <span class="math inline">\(\mathbf{X}^T \mathbf{X}\)</span> is vastly faster than inverting the spatial covariance matrix for large datasets.</p>
+<hr>
+</section>
+<section id="poisson-kriging-pk" class="level3">
+<h3 class="anchored" data-anchor-id="poisson-kriging-pk">7. Poisson Kriging (PK)</h3>
+<p><strong>The Problem it Solves:</strong> Standard kriging assumes data is continuous and Gaussian. It fails for <strong>spatial count data</strong> (e.g., number of disease cases, crime incidents in a county). Count data follows a Poisson distribution, meaning the variance is tied to the mean. Furthermore, areas with small populations have highly unreliable rates (high variance), violating the assumption of homoscedasticity (constant variance). <strong>The Solution:</strong> Poisson Kriging smooths the observed rates by accounting for the population size, effectively filtering out the “Poisson noise” (random fluctuations due to small populations) to reveal the true underlying spatial risk.</p>
+<p><strong>Assumption:</strong> The observed counts <span class="math inline">\(Y(x_i)\)</span> in area <span class="math inline">\(i\)</span> follow a Poisson distribution. The underlying true relative risk <span class="math inline">\(\theta(x)\)</span> is spatially correlated. <strong>Model:</strong> <span class="math display">\[ Y(x_i) \sim \text{Poisson}(E_i \theta(x_i)) \]</span> * <span class="math inline">\(E_i\)</span> is the expected count (e.g., population at risk <span class="math inline">\(\times\)</span> baseline disease rate). * <span class="math inline">\(\theta(x_i)\)</span> is the true, unobserved relative risk. * The observed rate is <span class="math inline">\(Z(x_i) = Y(x_i) / E_i\)</span>.</p>
+<p><strong>Predictor:</strong> <span class="math display">\[ \hat{\theta}_{PK}(x_0) = \sum_{i=1}^n \lambda_i Z(x_i) \]</span> Subject to the unbiasedness constraint: <span class="math inline">\(\sum_{i=1}^n \lambda_i = 1\)</span>.</p>
+<p><strong>Mathematics &amp; Optimization:</strong> Because the variance of the observed rate <span class="math inline">\(Z(x_i)\)</span> is <span class="math inline">\(\theta(x_i)/E_i\)</span>, the variance changes depending on the population <span class="math inline">\(E_i\)</span> (heteroscedasticity). If we just calculate a standard variogram of the rates <span class="math inline">\(Z\)</span>, it will be artificially inflated by this Poisson noise.</p>
+<p><strong>1. Deconvolution of the Variogram:</strong> Before kriging, we must separate the true spatial variance from the Poisson noise. The observed variogram of the rates <span class="math inline">\(\gamma_Z(h)\)</span> is a convolution of the true risk variogram <span class="math inline">\(\gamma_\theta(h)\)</span> and the Poisson noise: <span class="math display">\[ \gamma_Z(h) = \gamma_\theta(h) + q(h) \]</span> Where the noise term <span class="math inline">\(q(h)\)</span> for a pair of locations <span class="math inline">\((i, j)\)</span> separated by distance <span class="math inline">\(h\)</span> is: <span class="math display">\[ q(h) = \frac{\bar{\theta}}{2} \left( \frac{1}{E_i} + \frac{1}{E_j} \right) \]</span> <em>(Here, <span class="math inline">\(\bar{\theta}\)</span> is the global weighted average of the rates, estimated as <span class="math inline">\(\sum Y_i / \sum E_i\)</span>).</em> We calculate <span class="math inline">\(\gamma_Z(h)\)</span> from the data, subtract the calculated noise <span class="math inline">\(q(h)\)</span>, and fit a model to get the <strong>deconvolved variogram</strong> <span class="math inline">\(\gamma_\theta(h)\)</span>.</p>
+<p><strong>2. The Modified Kriging System:</strong> We minimize the variance of the prediction error for the true risk <span class="math inline">\(\theta(x_0)\)</span>. Because the variance of the data points depends on their populations, the diagonal of the kriging matrix must be adjusted to include the Poisson variance for each specific location.</p>
+<p>The <strong>Poisson Kriging System</strong> is: <span class="math display">\[ \sum_{j \neq i}^n \lambda_j \gamma_\theta(x_i, x_j) + \lambda_i \left[ \gamma_\theta(0) + \frac{\bar{\theta}}{E_i} \right] - \psi = \gamma_\theta(x_i, x_0) \quad \text{for } i = 1, \dots, n \]</span> <span class="math display">\[ \sum_{i=1}^n \lambda_i = 1 \]</span></p>
+<p>In matrix form: <span class="math display">\[ \begin{bmatrix} \mathbf{\Gamma}^* + \mathbf{D} &amp; \mathbf{1} \\ \mathbf{1}^T &amp; 0 \end{bmatrix} \begin{bmatrix} \boldsymbol{\lambda} \\ \psi \end{bmatrix} = \begin{bmatrix} \boldsymbol{\gamma}_0 \\ 1 \end{bmatrix} \]</span> * <span class="math inline">\(\mathbf{\Gamma}^*\)</span> is the <span class="math inline">\(n \times n\)</span> matrix of the <strong>deconvolved</strong> variogram <span class="math inline">\(\gamma_\theta(x_i, x_j)\)</span>. * <span class="math inline">\(\mathbf{D}\)</span> is a diagonal matrix where <span class="math inline">\(D_{ii} = \frac{\bar{\theta}}{E_i}\)</span>. This adds the Poisson noise back <em>only</em> to the variance (the diagonal) of the specific data points, properly weighting areas with small populations. * <span class="math inline">\(\boldsymbol{\gamma}_0\)</span> is the vector of the deconvolved variogram <span class="math inline">\(\gamma_\theta(x_i, x_0)\)</span> to the prediction location (which does <em>not</em> include Poisson noise, because we are predicting the true underlying risk, not a noisy observation).</p>
+<hr>
+</section>
+<section id="summary-of-all-kriging-types" class="level3">
+<h3 class="anchored" data-anchor-id="summary-of-all-kriging-types">Summary of All Kriging Types</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Mean / Data Assumption</th>
+<th style="text-align: left;">Constraint on Weights</th>
+<th style="text-align: left;">Matrix Size / Complexity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Simple (SK)</strong></td>
+<td style="text-align: left;">Known constant mean</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;"><span class="math inline">\(n \times n\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Ordinary (OK)</strong></td>
+<td style="text-align: left;">Unknown constant mean</td>
+<td style="text-align: left;"><span class="math inline">\(\sum \lambda_i = 1\)</span></td>
+<td style="text-align: left;"><span class="math inline">\((n+1) \times (n+1)\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Universal (UK)</strong></td>
+<td style="text-align: left;">Polynomial trend</td>
+<td style="text-align: left;"><span class="math inline">\(\sum \lambda_i f_k(x_i) = f_k(x_0)\)</span></td>
+<td style="text-align: left;"><span class="math inline">\((n+K+1) \times (n+K+1)\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Regression (RK)</strong></td>
+<td style="text-align: left;">Trend via covariates (OLS)</td>
+<td style="text-align: left;"><span class="math inline">\(\sum \lambda_i = 1\)</span> (on residuals)</td>
+<td style="text-align: left;">Two steps: <span class="math inline">\(p \times p\)</span> (OLS) + <span class="math inline">\((n+1) \times (n+1)\)</span> (OK)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Co-Kriging</strong></td>
+<td style="text-align: left;">Unknown constant mean</td>
+<td style="text-align: left;"><span class="math inline">\(\sum \lambda_{m,i} = 1\)</span> per variable</td>
+<td style="text-align: left;">Block matrix (Highly complex)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Indicator (IK)</strong></td>
+<td style="text-align: left;">Binary threshold probability</td>
+<td style="text-align: left;"><span class="math inline">\(\sum \lambda_i = 1\)</span></td>
+<td style="text-align: left;"><span class="math inline">\((n+1) \times (n+1)\)</span> (Same as OK)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Poisson (PK)</strong></td>
+<td style="text-align: left;">Count data (Poisson dist.)</td>
+<td style="text-align: left;"><span class="math inline">\(\sum \lambda_i = 1\)</span></td>
+<td style="text-align: left;"><span class="math inline">\((n+1) \times (n+1)\)</span> (Modified diagonal for population noise)</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="pygstat" class="level2">
+<h2 class="anchored" data-anchor-id="pygstat"><strong>PyGStat</strong></h2>
+<p>PyGStat is a GPU-accelerated geostatistics for Python. Supports variogram modeling, kriging (including Poisson and space-time), simulation, and spatial uncertainty analysis; interoperates with GeoPandas and NumPy.</p>
+</section>
+<section id="features" class="level2">
+<h2 class="anchored" data-anchor-id="features">Features</h2>
+<p><strong>Variograms</strong> - Models: spherical, exponential, Gaussian, Matérn, stable, cubic - Estimators: Matheron, Cressie–Hawkins, Dowd - Variogram cloud diagnostics - Geometric anisotropy - Space–time (metric) variogram models</p>
+<p><strong>Kriging</strong> - Ordinary and simple kriging - Universal kriging (polynomial drift) - Cokriging with a linear model of coregionalization - Indicator kriging and E-type / probability maps - Regression kriging with scikit-learn, H2O AutoML, PyTorch, or TensorFlow - Spatio-temporal ordinary kriging (<code>STKriging</code>)</p>
+<p><strong>Areal / count data</strong> - Centroid-based Poisson kriging (Goovaerts, 2006) - Area-to-area and area-to-point Poisson kriging - Multivariate Poisson cokriging - Spatio-temporal Poisson kriging for rate panels</p>
+<p><strong>Simulation &amp; GSLIB helpers</strong> - Sequential Gaussian Simulation (<code>sgsim</code>) - Sequential Indicator Simulation (<code>sisim</code>) - Geo-EAS I/O, normal-score and Box–Cox transforms, cell declustering, grid coordinates</p>
+<p><strong>Validation &amp; backends</strong> - Leave-one-out and k-fold cross-validation (including spatial CV helpers) - GPU acceleration via CuPy - Interoperable with GeoPandas, pandas, NumPy, and scikit-learn - Kriging standard error and uncertainty maps</p>
+<p>Heavy optional backends (H2O, PyTorch, TensorFlow) are imported lazily, so <code>import pygstat</code> still works if they are not installed.</p>
+</section>
+<section id="installation" class="level2">
+<h2 class="anchored" data-anchor-id="installation">Installation</h2>
+<section id="from-github" class="level3">
+<h3 class="anchored" data-anchor-id="from-github">From GitHub</h3>
+<p>Clone the repository and install in editable mode:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/zia207/pygstat.git</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> pygstat</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> venv .venv</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> .venv/bin/activate</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">--upgrade</span> pip</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-e</span> .</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional: install extras</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-e</span> <span class="st">".[plot,test,gpu]"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="from-pypi" class="level3">
+<h3 class="anchored" data-anchor-id="from-pypi">From PyPI</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Core</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pygstat</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pygstat<span class="pp">[</span><span class="ss">plot</span><span class="pp">]</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># GPU (CUDA 11.x extra)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pygstat<span class="pp">[</span><span class="ss">gpu</span><span class="pp">]</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># GPU (CUDA 12.x) — install CuPy separately</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pygstat</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install cupy-cuda12x</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Deep / AutoML backends</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pygstat<span class="pp">[</span><span class="ss">h2o</span><span class="pp">]</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pygstat<span class="pp">[</span><span class="ss">pytorch</span><span class="pp">]</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pygstat<span class="pp">[</span><span class="ss">tensorflow</span><span class="pp">]</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pygstat<span class="pp">[</span><span class="ss">deep</span><span class="pp">]</span>          <span class="co"># all three</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="from-source-editable-install" class="level3">
+<h3 class="anchored" data-anchor-id="from-source-editable-install">From source (editable install)</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /path/to/PyGStat</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> venv .venv</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> .venv/bin/activate          <span class="co"># Linux/macOS</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">--upgrade</span> pip</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-e</span> .</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-e</span> <span class="st">".[plot,test]"</span>      <span class="co"># optional extras</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Confirm the install:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-c</span> <span class="st">"import pygstat; print(pygstat.__version__)"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<hr>
+</section>
+</section>
+<section id="quick-start" class="level2">
+<h2 class="anchored" data-anchor-id="quick-start">Quick Start</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat <span class="im">import</span> Variogram, OrdinaryKriging, loo_cv</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="st">"data/meuse.csv"</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>coords <span class="op">=</span> df[[<span class="st">"x"</span>, <span class="st">"y"</span>]].values</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>values <span class="op">=</span> np.log(df[<span class="st">"zinc"</span>].values)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>vg <span class="op">=</span> Variogram(coords, values, model<span class="op">=</span><span class="st">"spherical"</span>, estimator<span class="op">=</span><span class="st">"matheron"</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>vg.fit()</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>ok <span class="op">=</span> OrdinaryKriging(vg)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>ok.fit(coords, values)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> pd.read_csv(<span class="st">"data/meuse_grid.csv"</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>pred, se <span class="op">=</span> ok.predict(grid[[<span class="st">"x"</span>, <span class="st">"y"</span>]].values, return_variance<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>cv <span class="op">=</span> loo_cv(ok, coords, values)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"LOO RMSE: </span><span class="sc">{</span>cv[<span class="st">'rmse'</span>]<span class="sc">:.3f}</span><span class="ss">, R²: </span><span class="sc">{</span>cv[<span class="st">'r2'</span>]<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>From a GeoDataFrame:</p>
+<p>```python from pygstat import from_geodataframe, Variogram, OrdinaryKriging</p>
+<p>coords, values = from_geodataframe(gdf, value_col=“zinc”) vg = Variogram(coords, values, model=“spherical”) vg.fit() ok = OrdinaryKriging(vg).fit(coords, values)</p>
+</section>
+<section id="important-python-packages-for-geostatistical-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="important-python-packages-for-geostatistical-analysis">Important Python Packages for Geostatistical Analysis</h2>
+<ul>
+<li><strong><a href="https://geostat-framework.readthedocs.io/projects/pykrige/">PyKrige</a></strong>: Kriging toolkit for geostatistical modeling (supports Ordinary, Universal, and other kriging methods)</li>
+<li><strong><a href="https://github.com/GeostatsGuy/geostatspy">geostatspy</a></strong>: Geostatistical tools for spatial analysis, including variogram modeling, simulation, and kriging.</li>
+<li><strong><a href="https://geostat-framework.readthedocs.io/projects/gstools/">gstools</a></strong>: Flexible framework for geostatistical modeling, variograms, kriging, and simulation.</li>
+<li><strong><a href="https://scikit-gstat.readthedocs.io/">scikit-gstat</a></strong>: Tools for variogram estimation, model fitting, and kriging with a simple scikit-learn-like API.</li>
+<li><strong><a href="http://sgems.sourceforge.net/">SGeMS</a> / <a href="https://geostat-framework.readthedocs.io/projects/pygslib/">pygslib</a></strong>: Python bindings and tools related to Stanford Geostatistical Modeling Software.</li>
+</ul>
+</section>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<p>This notebook provides an introduction to spatial data analysis and geostatistics using the <code>pygstat</code> package.</p>
+<p>You will learn the essential steps for: - Loading and visualizing spatial data (using the Meuse dataset as an example) - Calculating and modeling experimental variograms - Fitting theoretical variogram models to your data - Performing ordinary kriging to predict values at unknown locations and generate prediction uncertainty maps - Validating kriging results with leave-one-out (LOO) cross-validation</p>
+<p>The workflow demonstrates working with both pandas DataFrames and GeoPandas GeoDataFrames for spatial data, and introduces key objects like <code>Variogram</code> and <code>OrdinaryKriging</code>.</p>
+<p>By following this notebook, you’ll gain a foundational understanding of how to implement and interpret basic geostatistical workflows in Python, and will be ready to build more advanced spatial models and analyses.</p>
+</section>
+<section id="resources" class="level2">
+<h2 class="anchored" data-anchor-id="resources">Resources</h2>
+<section id="foundational-advanced-textbooks" class="level3">
+<h3 class="anchored" data-anchor-id="foundational-advanced-textbooks">1. Foundational &amp; Advanced Textbooks</h3>
+<ul>
+<li><strong>“Model-Based Geostatistics” by Peter J. Diggle &amp; Paulo J. Ribeiro Jr.</strong><br>
+<em>Why it’s relevant:</em> Bridges classical geostatistics (kriging) with modern statistical modeling (GLMMs). It provides the rigorous mathematical foundation for Regression Kriging and Poisson Kriging, framing them within a unified likelihood-based framework.</li>
+<li><strong>“Geostatistics for Environmental Scientists” by Richard Webster &amp; Margaret A. Oliver</strong><br>
+<em>Why it’s relevant:</em> The gold standard for understanding variograms, cross-variograms, and the assumptions behind Ordinary and Universal Kriging. Excellent for grounding your rigorous model validation protocols.</li>
+<li><strong>“A Practical Guide to Geostatistical Mapping” by Tomislav Hengl</strong><br>
+<em>Why it’s relevant:</em> Written by the pioneer of Regression Kriging. It provides practical, step-by-step mathematical and computational guidance on combining machine learning/regression with kriging of residuals, including handling large environmental datasets.</li>
+<li><strong>“Spatial and Spatio-Temporal Geostatistics with R” by Edzer Pebesma &amp; Roger Bivand</strong><br>
+<em>Why it’s relevant:</em> The definitive guide to implementing geostatistics in R, directly linking theory to the <code>gstat</code> and <code>sp</code>/<code>sf</code> ecosystems.</li>
+</ul>
+<hr>
+</section>
+<section id="seminal-modern-academic-papers" class="level3">
+<h3 class="anchored" data-anchor-id="seminal-modern-academic-papers">2. Seminal &amp; Modern Academic Papers</h3>
+<ul>
+<li><strong>Poisson Kriging:</strong><br>
+<em>Goovaerts, P. (2006). “Geostatistical analysis of disease data: accounting for spatial support and population density in the isopleth mapping of cancer risk.”</em> <em>International Journal of Health Geographics</em>.<br>
+<em>Why it’s relevant:</em> The definitive mathematical breakdown of how to deconvolve Poisson noise from the variogram and adjust the kriging matrix diagonal for population-based variance, exactly as outlined in the previous response.</li>
+<li><strong>Regression Kriging:</strong><br>
+<em>Hengl, T., Heuvelink, G. B., &amp; Stein, A. (2004). “A generic protocol for spatial prediction of soil properties based on regression-kriging.”</em> <em>Geoderma</em>.<br>
+<em>Why it’s relevant:</em> Establishes the mathematical equivalence (and practical differences) between Universal Kriging and Regression Kriging, and provides protocols for validation.</li>
+<li><strong>Scalable Geostatistics (Large-Scale / GPU):</strong><br>
+<em>Datta, A., Banerjee, S., Finley, A. O., &amp; Gelfand, A. E. (2016). “Hierarchical Nearest-Neighbor Gaussian Process Models for Large Geostatistical Datasets.”</em> <em>Journal of the American Statistical Association</em>.<br>
+<em>Why it’s relevant:</em> Since you work with large-scale environmental problems and GPU acceleration, NNGP (Nearest Neighbor Gaussian Processes) is the modern mathematical solution to the <span class="math inline">\(\mathcal{O}(n^3)\)</span> bottleneck of traditional kriging matrices.</li>
+</ul>
+<hr>
+</section>
+<section id="software-libraries-tailored-to-your-stack" class="level3">
+<h3 class="anchored" data-anchor-id="software-libraries-tailored-to-your-stack">3. Software &amp; Libraries (Tailored to Your Stack)</h3>
+<section id="python-with-pytorch-gpu-focus" class="level4">
+<h4 class="anchored" data-anchor-id="python-with-pytorch-gpu-focus"><strong>Python (with PyTorch / GPU Focus)</strong></h4>
+<ul>
+<li><strong><code>GSTools</code> (Geostatistical Tools)</strong><br>
+<em>Why it’s relevant:</em> The most modern, actively maintained Python library for geostatistics. It handles variogram fitting, ordinary/universal kriging, and condition random field generation. It is built on <code>SciPy</code> and is highly optimized, making it much more robust than older libraries like <code>PyKrige</code>.</li>
+<li><strong><code>scikit-gstat</code></strong><br>
+<em>Why it’s relevant:</em> A SciPy-based library focused heavily on rigorous variogram estimation, cross-variograms, and uncertainty quantification, aligning well with your thorough model validation requirements.</li>
+</ul>
+</section>
+<section id="r-for-statistical-rigor-mixed-methods" class="level4">
+<h4 class="anchored" data-anchor-id="r-for-statistical-rigor-mixed-methods"><strong>R (for Statistical Rigor &amp; Mixed-Methods)</strong></h4>
+<ul>
+<li><strong><code>gstat</code></strong><br>
+<em>Why it’s relevant:</em> The absolute standard for multivariate geostatistics. It seamlessly handles Ordinary, Universal, Co-Kriging, and Regression Kriging, and outputs the exact cross-validation metrics and 1:1 plot data you require for your n=50 split evaluations.</li>
+<li><strong><code>R-INLA</code> (Integrated Nested Laplace Approximation)</strong><br>
+<em>Why it’s relevant:</em> For Poisson Kriging and large-scale spatial modeling, INLA is vastly faster than MCMC. It handles spatial GLMMs (including Poisson-distributed count data with spatial random effects) with incredible speed and rigor.</li>
+<li><strong><code>spBayes</code></strong><br>
+<em>Why it’s relevant:</em> Excellent for scalable Bayesian spatial modeling, including predictive process models that approximate large kriging matrices.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="advanced-validation-best-practices-resources" class="level3">
+<h3 class="anchored" data-anchor-id="advanced-validation-best-practices-resources">4. Advanced Validation &amp; Best Practices Resources</h3>
+<p>Given your emphasis on robust evaluation (multiple random splits, stratified sampling, cross-validation, loss plots, and 1:1 plots): * <strong>Hengl, T. (2007). “A Practical Guide to Geostatistical Mapping of Environmental Variables.”</strong> (Chapter on Validation). It explicitly details why standard random cross-validation in spatial data leads to over-optimistic results due to spatial autocorrelation, and advocates for <strong>spatial block cross-validation</strong> (which aligns with your stratified sampling approach). * <strong><code>blockCV</code> (R package) / <code>spatialCV</code> (Python concepts)</strong>: Look into methodologies for spatial block cross-validation. Papers by <em>Valavi et al.&nbsp;(2019)</em> on <code>blockCV</code> provide the mathematical justification for ensuring your training and testing folds are spatially independent, preventing data leakage in your kriging/ML ensemble models.</p>
+<hr>
+</section>
+<section id="recommended-learning-path-for-your-specific-workflow" class="level3">
+<h3 class="anchored" data-anchor-id="recommended-learning-path-for-your-specific-workflow">5. Recommended Learning Path for Your Specific Workflow</h3>
+<ol type="1">
+<li><strong>Refresh the Math:</strong> Review Diggle &amp; Ribeiro for the GLMM connection to Regression/Poisson Kriging.</li>
+<li><strong>Prototype in R:</strong> Use <code>gstat</code> to build a baseline Regression Kriging or Co-Kriging model for your pyrogenic carbon/bioenergy data, generating the rigorous variogram, cross-variogram, and 1:1 validation plots.</li>
+<li><strong>Scale in Python:</strong> Transition the workflow to <code>GSTools</code> for standard large datasets, or <code>GPyTorch</code> if you need to integrate the kriging step into a larger, GPU-accelerated deep learning / stacked ensemble pipeline.</li>
+<li><strong>Validate Rigorously:</strong> Implement spatial block cross-validation (n=50 stratified splits) to ensure your performance metrics (RMSE, MAE, <span class="math inline">\(R^2\)</span>) are not inflated by spatial autocorrelation.</li>
+</ol>
+<p>If you would like code snippets for implementing <strong>Poisson Kriging deconvolution</strong> or <strong>GPU-accelerated Regression Kriging</strong> in <code>GPyTorch</code> or <code>GSTools</code>, just let me know!</p>
+
+
+</section>
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/zia207\.github\.io\/pygstat\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© CC-By Zia Ahmed, Upatta Analytics, 2026</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>This page is built with <a href="https://quarto.org/">Quarto</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

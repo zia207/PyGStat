@@ -1,0 +1,2065 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>12. Factorial Kriging – PyGStat</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../Tutorial/13_krigingST.html" rel="next">
+<link href="../Tutorial/09_soft_kriging.html" rel="prev">
+<link href="../Image/pygstat_logo_light.svg" rel="icon" type="image/svg+xml">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f1aadacce99040138bbb613f9330654f.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-bf6de5ccb156a65fc439966d4053cafd.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-c3ddef8e9936373b1ee063945a43a984.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-bf6de5ccb156a65fc439966d4053cafd.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../Image/pygstat_logo_light.svg" alt="" class="navbar-logo light-content">
+    <img src="../Image/pygstat_logo_light.svg" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">PyGStat</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../index.html" aria-current="page"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-getting-started" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Getting Started</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-getting-started">    
+        <li>
+    <a class="dropdown-item" href="../Tutorial/00_getting_started.html">
+ <span class="dropdown-text">Getting Started</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../install.html">
+ <span class="dropdown-text">PyGStat Installation</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-tutorial" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Tutorial</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-tutorial">    
+        <li class="dropdown-header">Core Interpolation</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/01_variogram_modeling.html">
+ <span class="dropdown-text">Variogram Modeling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/02_simple_kriging.html">
+ <span class="dropdown-text">Simple Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/03_ordinary_kriging.html">
+ <span class="dropdown-text">Ordinary Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/04_universal_kriging.html">
+ <span class="dropdown-text">Universal Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/05_cokriging.html">
+ <span class="dropdown-text">Cokriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/08_kriging_3d.html">
+ <span class="dropdown-text">3-D Kriging (KT3D)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Regression Kriging</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_01_regression_kriging_scikit_learn.html">
+ <span class="dropdown-text">scikit-learn</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_02_regression_kriging_H20.html">
+ <span class="dropdown-text">H2O AutoML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_03_regression_kriging_pytorch.html">
+ <span class="dropdown-text">PyTorch MLP</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_04_regression_krigingDNN_TF.html">
+ <span class="dropdown-text">TensorFlow / Keras</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_05_regression_kriging_gnn.html">
+ <span class="dropdown-text">Graph Neural Nets</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Indicators, Structure, and Space–Time</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/07_indicator_kriging.html">
+ <span class="dropdown-text">Indicator Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/10_disjunctive_kriging.html">
+ <span class="dropdown-text">Disjunctive Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/11_empirical_bayesian_kriging.html">
+ <span class="dropdown-text">Empirical Bayesian Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/09_soft_kriging.html">
+ <span class="dropdown-text">Soft Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/12_factorial_kriging.html">
+ <span class="dropdown-text">Factorial Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/13_krigingST.html">
+ <span class="dropdown-text">Spatio-Temporal OK</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/14_kriging_CNNLSTM.html">
+ <span class="dropdown-text">ConvLSTM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/15_kriging_STGNN.html">
+ <span class="dropdown-text">STGNN (TGCN / DCRNN)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/16_kriging_STGTN.html">
+ <span class="dropdown-text">STGTN (STTN / GMAN)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Poisson Kriging</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_01_poisson_Kriging_ata_atp.html">
+ <span class="dropdown-text">Area-to-Area / Area-to-Point</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_02_poisson_cokriging.html">
+ <span class="dropdown-text">Poisson Cokriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_03_poisson_kriging_ST.html">
+ <span class="dropdown-text">Spatio-Temporal Poisson</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Simulation</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/18_sgsim.html">
+ <span class="dropdown-text">SGSIM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/19_sisim.html">
+ <span class="dropdown-text">SISIM</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://sites.google.com/view/r-data-sci-env/home"> <i class="bi bi-house" role="img" aria-label="Upatta Analytics">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://pypi.org/project/pygstat/"> <i class="bi bi-box" role="img" aria-label="PyPI">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/zia207/pygstat"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/zia-ahmed207"> <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="mailto:zia207@gmail.com"> <i class="bi bi-envelope" role="img" aria-label="Email">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../Tutorial/07_indicator_kriging.html"><strong>Indicators, Structure, and Space–Time</strong></a></li><li class="breadcrumb-item"><a href="../Tutorial/12_factorial_kriging.html">Factorial Kriging</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../Tutorial/07_indicator_kriging.html"><strong>Indicators, Structure, and Space–Time</strong></a></li><li class="breadcrumb-item"><a href="../Tutorial/12_factorial_kriging.html">Factorial Kriging</a></li></ol></nav>
+      <h1 class="title">12. Factorial Kriging</h1>
+                      </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-center sidebar-header">
+      <a href="../index.html" class="sidebar-logo-link">
+      <img src="../Image/pygstat_logo_light.svg" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="../Image/pygstat_logo_light.svg" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Package Overview</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Core Interpolation</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/01_variogram_modeling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Variogram Modeling</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/02_simple_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Simple Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/03_ordinary_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Ordinary Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/04_universal_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Universal Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/05_cokriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cokriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/08_kriging_3d.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">3-D Kriging (KT3D)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Regression Kriging</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_01_regression_kriging_scikit_learn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">scikit-learn</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_02_regression_kriging_H20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">H2O AutoML</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_03_regression_kriging_pytorch.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PyTorch MLP</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_04_regression_krigingDNN_TF.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TensorFlow / Keras</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_05_regression_kriging_gnn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Graph Neural Nets</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Indicators, Structure, and Space–Time</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/07_indicator_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Indicator Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/10_disjunctive_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Disjunctive Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/11_empirical_bayesian_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Empirical Bayesian Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/09_soft_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Soft Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/12_factorial_kriging.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Factorial Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/13_krigingST.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spatio-Temporal OK</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/14_kriging_CNNLSTM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ConvLSTM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/15_kriging_STGNN.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">STGNN (TGCN / DCRNN)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/16_kriging_STGTN.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">STGTN (STTN / GMAN)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Poisson Kriging</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_01_poisson_Kriging_ata_atp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Area-to-Area / Area-to-Point</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_02_poisson_cokriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Poisson Cokriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_03_poisson_kriging_ST.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spatio-Temporal Poisson</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Simulation</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/18_sgsim.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">SGSIM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/19_sisim.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">SISIM</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On This Page</h2>
+   
+  <ul>
+  <li><a href="#table-of-contents" id="toc-table-of-contents" class="nav-link active" data-scroll-target="#table-of-contents">Table of Contents</a></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview">1. Overview</a></li>
+  <li><a href="#nested-models-as-sums-of-orthogonal-factors" id="toc-nested-models-as-sums-of-orthogonal-factors" class="nav-link" data-scroll-target="#nested-models-as-sums-of-orthogonal-factors">2. Nested Models as Sums of Orthogonal Factors</a></li>
+  <li><a href="#the-factorial-kriging-system" id="toc-the-factorial-kriging-system" class="nav-link" data-scroll-target="#the-factorial-kriging-system">3. The Factorial Kriging System</a></li>
+  <li><a href="#a-subtlety-worth-getting-right" id="toc-a-subtlety-worth-getting-right" class="nav-link" data-scroll-target="#a-subtlety-worth-getting-right">4. A Subtlety Worth Getting Right</a></li>
+  <li><a href="#python-setup" id="toc-python-setup" class="nav-link" data-scroll-target="#python-setup">5. Python Setup</a>
+  <ul>
+  <li><a href="#cpu-and-gpu" id="toc-cpu-and-gpu" class="nav-link" data-scroll-target="#cpu-and-gpu">5.1 CPU and GPU</a></li>
+  </ul></li>
+  <li><a href="#load-the-jura-cd-data-and-prediction-grid" id="toc-load-the-jura-cd-data-and-prediction-grid" class="nav-link" data-scroll-target="#load-the-jura-cd-data-and-prediction-grid">6. Load the Jura Cd Data and Prediction Grid</a></li>
+  <li><a href="#step-1-fit-a-nested-nugget-short-long-variogram" id="toc-step-1-fit-a-nested-nugget-short-long-variogram" class="nav-link" data-scroll-target="#step-1-fit-a-nested-nugget-short-long-variogram">7. Step 1: Fit a Nested (Nugget + Short + Long) Variogram</a></li>
+  <li><a href="#step-2-sanity-checks-before-trusting-the-maps" id="toc-step-2-sanity-checks-before-trusting-the-maps" class="nav-link" data-scroll-target="#step-2-sanity-checks-before-trusting-the-maps">8. Step 2: Sanity Checks Before Trusting the Maps</a></li>
+  <li><a href="#step-3-map-the-total-short-range-and-long-range-factors" id="toc-step-3-map-the-total-short-range-and-long-range-factors" class="nav-link" data-scroll-target="#step-3-map-the-total-short-range-and-long-range-factors">9. Step 3: Map the Total, Short-Range, and Long-Range Factors</a></li>
+  <li><a href="#step-4-quantify-the-scale-separation" id="toc-step-4-quantify-the-scale-separation" class="nav-link" data-scroll-target="#step-4-quantify-the-scale-separation">10. Step 4: Quantify the Scale Separation</a></li>
+  <li><a href="#step-5-filtering-the-nugget-a-denoised-cd-map" id="toc-step-5-filtering-the-nugget-a-denoised-cd-map" class="nav-link" data-scroll-target="#step-5-filtering-the-nugget-a-denoised-cd-map">11. Step 5: Filtering the Nugget: a Denoised Cd Map</a></li>
+  <li><a href="#cpu-vs-gpu-factorial-kriging-timing" id="toc-cpu-vs-gpu-factorial-kriging-timing" class="nav-link" data-scroll-target="#cpu-vs-gpu-factorial-kriging-timing">12. CPU vs GPU Factorial Kriging Timing</a></li>
+  <li><a href="#summary-and-conclusions" id="toc-summary-and-conclusions" class="nav-link" data-scroll-target="#summary-and-conclusions">13. Summary and Conclusions</a></li>
+  <li><a href="#resources" id="toc-resources" class="nav-link" data-scroll-target="#resources">14. Resources</a>
+  <ul>
+  <li><a href="#key-papers" id="toc-key-papers" class="nav-link" data-scroll-target="#key-papers">Key papers</a></li>
+  <li><a href="#textbooks" id="toc-textbooks" class="nav-link" data-scroll-target="#textbooks">Textbooks</a></li>
+  <li><a href="#in-this-library" id="toc-in-this-library" class="nav-link" data-scroll-target="#in-this-library">In this library</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+
+<p><strong>Dataset:</strong> Jura geochemical survey (<code>data/jura_data.csv</code>, 359 samples) + prediction grid (<code>data/jura_grid.csv</code>)</p>
+<p><strong>Target:</strong> Cadmium (Cd, mg/kg) – separating its short-range and long-range spatial structures</p>
+<p><strong>Library:</strong> <code>pygstat.factorial_kriging</code> – Matheron’s Factorial Kriging Analysis (Matheron, 1982; Sandjivy, 1984)</p>
+<hr>
+<section id="table-of-contents" class="level2">
+<h2 class="anchored" data-anchor-id="table-of-contents">Table of Contents</h2>
+<ol type="1">
+<li><a href="#1-overview">Overview</a></li>
+<li><a href="#2-theory--nested-models-as-sums-of-orthogonal-factors">Theory — Nested Models as Sums of Orthogonal Factors</a></li>
+<li><a href="#3-theory--the-factorial-kriging-system">Theory — The Factorial Kriging System</a></li>
+<li><a href="#4-theory--a-subtlety-worth-getting-right">Theory — A Subtlety Worth Getting Right</a></li>
+<li><a href="#5-python-setup">Python Setup</a></li>
+<li><a href="#6-load-the-jura-cd-data-and-prediction-grid">Load the Jura Cd Data and Prediction Grid</a></li>
+<li><a href="#7-step-1--fit-a-nested-nugget--short--long-variogram">Step 1 — Fit a Nested (Nugget + Short + Long) Variogram</a></li>
+<li><a href="#8-step-2--sanity-checks-before-trusting-the-maps">Step 2 — Sanity Checks Before Trusting the Maps</a></li>
+<li><a href="#9-step-3--map-the-total-short-range-and-long-range-factors">Step 3 — Map the Total, Short-Range, and Long-Range Factors</a></li>
+<li><a href="#10-step-4--quantify-the-scale-separation">Step 4 — Quantify the Scale Separation</a></li>
+<li><a href="#11-step-5--filtering-the-nugget-a-denoised-cd-map">Step 5 — Filtering the Nugget: a Denoised Cd Map</a></li>
+<li><a href="#12-cpu-vs-gpu-factorial-kriging-timing">CPU vs GPU Factorial Kriging Timing</a></li>
+<li><a href="#13-summary-and-conclusions">Summary and Conclusions</a></li>
+<li><a href="#14-resources">Resources</a></li>
+</ol>
+<hr>
+</section>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">1. Overview</h2>
+<p>A fitted variogram is almost always <strong>nested</strong> – a nugget plus one or more bounded structures, each with its own range. Ordinary kriging uses the <em>sum</em> of these structures to estimate <span class="math inline">\(Z(x_0)\)</span>. <strong>Factorial Kriging Analysis (FKA)</strong> goes one step further: if the structures represent genuinely different phenomena acting at different spatial scales, you can krige <strong>each structure separately</strong>, producing a map of just the short-range variability, just the long-range trend, or “<span class="math inline">\(Z\)</span> minus its nugget” (a spatial noise filter) – all from the <em>same</em> fitted variogram and the <em>same</em> data, just by changing the target of the kriging system.</p>
+<p>We test this on cadmium (Cd) from the Jura data set: its variogram is dominated by a large nugget (a lot of fine-scale/analytical variability, typical of trace-metal assays) plus two bounded structures at different ranges. We separate the short-range structure (very local geochemical patchiness) from the long-range one (broader spatial correlation) and confirm, quantitatively, that the two extracted maps really do decorrelate at different distances.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>What we do</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Data</td>
+<td>Load <code>jura_data.csv</code> (359 samples) and <code>jura_grid.csv</code> (prediction nodes)</td>
+</tr>
+<tr class="even">
+<td>Variogram</td>
+<td>Fit a nested nugget + short + long spherical model of Cd</td>
+</tr>
+<tr class="odd">
+<td>Maps</td>
+<td>Extract total / short-range / long-range / denoised factors on the grid</td>
+</tr>
+<tr class="even">
+<td>CPU / GPU</td>
+<td>Time k-NN <code>FactorialKriging.extract</code> on CPU vs GPU using <strong>sgsim</strong> Jura-like Cd (<span class="math inline">\(n=8{,}000\)</span>)</td>
+</tr>
+</tbody>
+</table>
+<p>By the end you will have nested-variogram maps of Cd’s short-range and long-range factors, a denoised Cd map with the nugget filtered out, and a CPU vs GPU timing of the batched k-NN factorial-kriging solve on an <strong>SGS-simulated</strong> Jura-like field with <span class="math inline">\(n &gt; 5{,}000\)</span>.</p>
+<hr>
+</section>
+<section id="nested-models-as-sums-of-orthogonal-factors" class="level2">
+<h2 class="anchored" data-anchor-id="nested-models-as-sums-of-orthogonal-factors">2. Nested Models as Sums of Orthogonal Factors</h2>
+<p>Assume <span class="math inline">\(Z(x)\)</span> decomposes into a mean plus mutually <strong>uncorrelated</strong>, zero-mean components (“factors”), one per structure of the nested model:</p>
+<p><span class="math display">\[
+Z(x) = m + Z_1(x) + Z_2(x) + \dots + Z_S(x), \qquad
+\mathrm{Cov}\big[Z_u(x), Z_v(x+h)\big] = 0 \ \text{for } u \ne v.
+\]</span></p>
+<p>This is exactly what a nested variogram says: <span class="math inline">\(\gamma(h) = \sum_u \gamma_u(h)\)</span>, or equivalently <span class="math inline">\(C(h) = \sum_u C_u(h)\)</span>. In <code>pygstat.factorial_kriging</code>, structure index <span class="math inline">\(0\)</span> is reserved for the <strong>nugget</strong> (a pure-noise, zero-range factor), and <span class="math inline">\(1, \dots, S\)</span> are the user-supplied bounded structures (e.g.&nbsp;a short-range and a long-range spherical model).</p>
+<hr>
+</section>
+<section id="the-factorial-kriging-system" class="level2">
+<h2 class="anchored" data-anchor-id="the-factorial-kriging-system">3. The Factorial Kriging System</h2>
+<p>To estimate a single factor <span class="math inline">\(Z_v(x_0)\)</span> linearly from the data, <span class="math inline">\(Z_v^*(x_0) = \sum_i \lambda_i Z(x_i)\)</span>, unbiasedness requires</p>
+<p><span class="math display">\[
+E[Z_v^*(x_0)] = m \sum_i \lambda_i \overset{!}{=} 0 = E[Z_v(x_0)]
+\quad\Longrightarrow\quad \sum_i \lambda_i = 0
+\]</span></p>
+<p>(compare ordinary kriging’s <span class="math inline">\(\sum_i \lambda_i = 1\)</span> – here we <em>also</em> want to filter out the unknown mean, along with every structure but <span class="math inline">\(v\)</span>). Because the components are uncorrelated, <span class="math inline">\(\mathrm{Cov}[Z(x_i), Z(x_j)] = C(x_i - x_j)\)</span> (the <strong>full</strong> model, same as OK) but <span class="math inline">\(\mathrm{Cov}[Z(x_i), Z_v(x_0)] = C_v(x_i - x_0)\)</span> (<strong>only</strong> structure <span class="math inline">\(v\)</span>). Minimizing the estimation variance under the constraint gives:</p>
+<p><span class="math display">\[
+\begin{pmatrix} C &amp; \mathbf{1} \\ \mathbf{1}^\top &amp; 0 \end{pmatrix}
+\begin{pmatrix} \boldsymbol\lambda^v \\ \mu \end{pmatrix}
+=
+\begin{pmatrix} \mathbf{c}_v \\ 0 \end{pmatrix},
+\qquad
+\sigma_v^2(x_0) = C_v(0) - \boldsymbol\lambda^{v\top}\mathbf{c}_v - \mu.
+\]</span></p>
+<p><strong>The key computational trick:</strong> the left-hand side (<span class="math inline">\(C\)</span>, the full-model data covariance matrix) is identical for <em>every</em> factor – it’s exactly the ordinary kriging matrix. Only the right-hand side <span class="math inline">\(\mathbf{c}_v\)</span> (and the constraint, 0 vs 1) changes. <code>pygstat.factorial_kriging.FactorialKriging.extract(factor=...)</code> implements precisely this: <code>factor='total'</code> uses the full covariance with constraint 1 (plain OK); any other <code>factor</code> uses only that structure’s covariance with constraint 0.</p>
+<p><strong>Search neighbourhood.</strong> Distant samples should not inform a local factor. The implementation builds a <code>cKDTree</code> and keeps at most <code>max_neighbors</code> points (optionally inside <code>search_radius</code>). When <code>search_radius</code> is <code>None</code> (k-NN), every prediction point has the same neighbourhood size <span class="math inline">\(k\)</span>, so pygstat stacks the systems into one <code>(n_{\mathrm{pred}}, k+1, k+1)</code> solve — NumPy on CPU, CuPy on GPU (<code>use_gpu</code>). A variable-radius search stays on the per-point CPU loop. Section 12 times the k-NN path.</p>
+<hr>
+</section>
+<section id="a-subtlety-worth-getting-right" class="level2">
+<h2 class="anchored" data-anchor-id="a-subtlety-worth-getting-right">4. A Subtlety Worth Getting Right</h2>
+<p>Because each factor’s system uses constraint <span class="math inline">\(\sum \lambda_i = 0\)</span>, it filters out the mean <strong>as estimated for that particular system</strong> – and different factors, using different right-hand sides, generally arrive at slightly different implicit estimates of that mean. The consequence:</p>
+<p><span class="math display">\[
+\texttt{extract('nugget')} + \texttt{extract(1)} + \dots + \texttt{extract(S)}
+\;\ne\; \texttt{extract('total')}.
+\]</span></p>
+<p>The sum of all individually-extracted factors reproduces <span class="math inline">\(Z^*_{OK}(x_0)\)</span> <strong>minus</strong> ordinary kriging’s own locally-varying implicit mean estimate – not <span class="math inline">\(Z\)</span> itself. This is standard, textbook behavior (Chilès &amp; Delfiner, 2012, Ch. 5): each factor is separately a best linear unbiased estimator of that factor, not a summand of a literal decomposition of the OK estimate. Whenever you want <span class="math inline">\(Z(x_0)\)</span> back, use <code>factor='total'</code> directly (equivalent to ordinary kriging). What <strong>is</strong> exactly true, because the kriging system is linear in its right-hand side, is that combining factors with the <em>same</em> constraint is additive: <code>extract([1,2]) == extract(1) + extract(2)</code> to machine precision – we check this below.</p>
+<hr>
+</section>
+<section id="python-setup" class="level2">
+<h2 class="anchored" data-anchor-id="python-setup">5. Python Setup</h2>
+<section id="cpu-and-gpu" class="level3">
+<h3 class="anchored" data-anchor-id="cpu-and-gpu">5.1 CPU and GPU</h3>
+<p><code>FactorialKriging</code> solves a <strong>local</strong> ordinary-kriging system at every prediction point. In the default <strong>k-nearest-neighbor</strong> mode (<code>search_radius=None</code>) every point has the same neighbour count <span class="math inline">\(k\)</span>, so pygstat stacks the systems into one <code>(n_{\mathrm{pred}}, k+1, k+1)</code> batched <code>xp.linalg.solve</code> — NumPy on CPU, CuPy on GPU.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 35%">
+<col style="width: 64%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument</th>
+<th>What it controls</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>use_gpu</code></td>
+<td>Batched k-NN factorial-kriging solve (NumPy or CuPy).</td>
+</tr>
+<tr class="even">
+<td><code>search_radius</code></td>
+<td>If set, neighbor counts vary by point and the batch path is skipped (<strong>CPU only</strong>).</td>
+</tr>
+</tbody>
+</table>
+<p><code>use_gpu</code> is:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 38%">
+<col style="width: 61%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Value</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>'auto'</code> (default)</td>
+<td>GPU when CuPy can run a kernel on this card. Falls back to CPU otherwise.</td>
+</tr>
+<tr class="even">
+<td><code>True</code></td>
+<td>Force GPU. Warns and falls back to CPU if CuPy is missing or cannot run a kernel.</td>
+</tr>
+<tr class="odd">
+<td><code>False</code></td>
+<td>Always CPU (NumPy/SciPy).</td>
+</tr>
+</tbody>
+</table>
+<p>This notebook probes the GPU once with <code>cupy_gpu_usable()</code> and stores the result in <code>USE_GPU</code>. <code>FactorialKriging(...)</code> calls below pass <code>use_gpu=USE_GPU</code>. The Jura maps in §9–11 use k-NN (so they can run on GPU); <strong>§12</strong> times that path on an <strong>SGS-simulated</strong> Jura-like Cd field with <span class="math inline">\(n &gt; 5{,}000\)</span>.</p>
+<p>Install CuPy with <code>pip install pygstat[gpu]</code> (CUDA 11) or <code>pip install cupy-cuda12x</code> for CUDA 12.</p>
+<div id="f470eeff" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:20:42.248605Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:20:42.247475Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:20:49.561290Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:20:49.560235Z&quot;}}" data-execution_count="1">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>matplotlib inline</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys, os, warnings</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>sys.modules.setdefault(<span class="st">"tensorflow"</span>, <span class="va">None</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>sys.path.insert(<span class="dv">0</span>, os.path.abspath(<span class="st">"../src"</span>))</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pygstat</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat.factorial_kriging <span class="im">import</span> FactorialKriging, fit_nested_variogram</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat <span class="im">import</span> sgsim</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat.utils.backend <span class="im">import</span> CUPY_AVAILABLE, cupy_gpu_usable</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"figure.dpi"</span>] <span class="op">=</span> <span class="dv">100</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"axes.grid"</span>] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"grid.alpha"</span>] <span class="op">=</span> <span class="fl">0.3</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"pygstat version:"</span>, pygstat.__version__)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># ── FactorialKriging batched k-NN: CPU / GPU dispatch (CuPy) ──────────────────</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># cupy_gpu_usable() runs a real kernel (not just `import cupy`).</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>USE_GPU <span class="op">=</span> cupy_gpu_usable()</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> USE_GPU:</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"CuPy            : </span><span class="sc">{</span>cp<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>        name <span class="op">=</span> cp.cuda.runtime.getDeviceProperties(<span class="dv">0</span>)[<span class="st">"name"</span>]</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(name, <span class="bu">bytes</span>):</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>            name <span class="op">=</span> name.decode()</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"GPU (CuPy)      : </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span>:</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"GPU (CuPy)      : available"</span>)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Backend         : GPU (CuPy) — FactorialKriging batched k-NN solve on GPU"</span>)</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> CUPY_AVAILABLE:</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>        <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"CuPy            : </span><span class="sc">{</span>cp<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss"> (installed, but cannot run a kernel on this GPU/CUDA setup)"</span>)</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"CuPy            : not installed  (pip install pygstat[gpu]  or  cupy-cuda12x)"</span>)</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Backend         : CPU (NumPy)"</span>)</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"use_gpu         : </span><span class="sc">{</span>USE_GPU<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>pygstat version: 0.1.0
+CuPy            : 14.2.0
+GPU (CuPy)      : NVIDIA GeForce RTX 2080 Ti
+Backend         : GPU (CuPy) — FactorialKriging batched k-NN solve on GPU
+use_gpu         : True</code></pre>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="load-the-jura-cd-data-and-prediction-grid" class="level2">
+<h2 class="anchored" data-anchor-id="load-the-jura-cd-data-and-prediction-grid">6. Load the Jura Cd Data and Prediction Grid</h2>
+<p>The Jura data are 359 topsoil samples from the Swiss Jura (Goovaerts, 1997). We model <strong>Cd</strong> at those sample locations and map the extracted factors onto the same prediction lattice as Tutorial 04 (<code>data/jura_grid.csv</code>, ~6 000 nodes).</p>
+<div id="c085ca90" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:20:49.565197Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:20:49.564591Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:20:49.836111Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:20:49.834849Z&quot;}}" data-execution_count="2">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>jura <span class="op">=</span> pd.read_csv(<span class="st">"../data/jura_data.csv"</span>, index_col<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> pd.read_csv(<span class="st">"../data/jura_grid.csv"</span>, index_col<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>coords <span class="op">=</span> jura[[<span class="st">"Xloc"</span>, <span class="st">"Yloc"</span>]].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>grid_pts <span class="op">=</span> grid[[<span class="st">"Xloc"</span>, <span class="st">"Yloc"</span>]].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>cd <span class="op">=</span> jura[<span class="st">"Cd"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(jura)<span class="sc">}</span><span class="ss"> samples; </span><span class="sc">{</span><span class="bu">len</span>(grid)<span class="sc">}</span><span class="ss"> prediction nodes"</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Cd mean=</span><span class="sc">{</span>cd<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">, std=</span><span class="sc">{</span>cd<span class="sc">.</span>std()<span class="sc">:.3f}</span><span class="ss">, skew=</span><span class="sc">{</span>pd<span class="sc">.</span>Series(cd)<span class="sc">.</span>skew()<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="fl">5.5</span>))</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>ax.scatter(grid[<span class="st">"Xloc"</span>], grid[<span class="st">"Yloc"</span>], s<span class="op">=</span><span class="dv">2</span>, c<span class="op">=</span><span class="st">"0.85"</span>, marker<span class="op">=</span><span class="st">"."</span>, label<span class="op">=</span><span class="st">"prediction grid"</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>sc <span class="op">=</span> ax.scatter(coords[:, <span class="dv">0</span>], coords[:, <span class="dv">1</span>], c<span class="op">=</span>cd, cmap<span class="op">=</span><span class="st">"viridis"</span>, s<span class="op">=</span><span class="dv">35</span>,</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>                edgecolor<span class="op">=</span><span class="st">"k"</span>, linewidth<span class="op">=</span><span class="fl">0.2</span>, label<span class="op">=</span><span class="st">"samples"</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"X (km)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"Y (km)"</span>)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Cadmium (Cd, mg/kg) on jura_grid.csv"</span>)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>ax.set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>plt.colorbar(sc, ax<span class="op">=</span>ax, label<span class="op">=</span><span class="st">"Cd (mg/kg)"</span>)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>359 samples; 5957 prediction nodes
+Cd mean=1.288, std=0.858, skew=1.48</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="12_factorial_kriging_files/figure-html/cell-3-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="step-1-fit-a-nested-nugget-short-long-variogram" class="level2">
+<h2 class="anchored" data-anchor-id="step-1-fit-a-nested-nugget-short-long-variogram">7. Step 1: Fit a Nested (Nugget + Short + Long) Variogram</h2>
+<p><code>fit_nested_variogram</code> bins the experimental semivariogram and fits a nugget plus two spherical structures by least squares. Jura’s Cd variogram trends upward well beyond ~3 km (a regional drift outside the scope of a simple bounded nested model), so we fit only the well-behaved part, up to <code>maxlag=3.0</code> km.</p>
+<div id="1cbdb275" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:20:49.838864Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:20:49.838597Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:20:50.111799Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:20:50.110679Z&quot;}}" data-execution_count="3">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>nugget, structures, lag_h, lag_g <span class="op">=</span> fit_nested_variogram(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    coords, cd, models<span class="op">=</span>(<span class="st">"spherical"</span>, <span class="st">"spherical"</span>), n_lags<span class="op">=</span><span class="dv">15</span>, maxlag<span class="op">=</span><span class="fl">3.0</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>short, long_ <span class="op">=</span> structures  <span class="co"># sorted short -&gt; long range by fit_nested_variogram</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"nugget           = </span><span class="sc">{</span>nugget<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"short-range (1)  : sill=</span><span class="sc">{</span>short[<span class="st">'sill'</span>]<span class="sc">:.4f}</span><span class="ss">, range=</span><span class="sc">{</span>short[<span class="st">'range'</span>]<span class="sc">:.3f}</span><span class="ss"> km"</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"long-range  (2)  : sill=</span><span class="sc">{</span>long_[<span class="st">'sill'</span>]<span class="sc">:.4f}</span><span class="ss">, range=</span><span class="sc">{</span>long_[<span class="st">'range'</span>]<span class="sc">:.3f}</span><span class="ss"> km"</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"total sill       = </span><span class="sc">{</span>nugget <span class="op">+</span> short[<span class="st">'sill'</span>] <span class="op">+</span> long_[<span class="st">'sill'</span>]<span class="sc">:.4f}</span><span class="ss">  (sample variance = </span><span class="sc">{</span>cd<span class="sc">.</span>var()<span class="sc">:.4f}</span><span class="ss">)"</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>h_fine <span class="op">=</span> np.linspace(<span class="dv">0</span>, lag_h.<span class="bu">max</span>(), <span class="dv">300</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> spherical_gamma(h, sill, rng):</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    u <span class="op">=</span> np.clip(h <span class="op">/</span> rng, <span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> sill <span class="op">*</span> (<span class="fl">1.5</span> <span class="op">*</span> u <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> u <span class="op">**</span> <span class="dv">3</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>model_g <span class="op">=</span> nugget <span class="op">+</span> spherical_gamma(h_fine, short[<span class="st">"sill"</span>], short[<span class="st">"range"</span>]) <span class="op">+</span> spherical_gamma(h_fine, long_[<span class="st">"sill"</span>], long_[<span class="st">"range"</span>])</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>nugget_short_g <span class="op">=</span> nugget <span class="op">+</span> spherical_gamma(h_fine, short[<span class="st">"sill"</span>], short[<span class="st">"range"</span>])</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">5</span>))</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>ax.scatter(lag_h, lag_g, s<span class="op">=</span><span class="dv">45</span>, color<span class="op">=</span><span class="st">"black"</span>, zorder<span class="op">=</span><span class="dv">3</span>, label<span class="op">=</span><span class="st">"experimental semivariogram"</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>ax.plot(h_fine, model_g, color<span class="op">=</span><span class="st">"steelblue"</span>, lw<span class="op">=</span><span class="dv">2</span>, label<span class="op">=</span><span class="st">"nugget + short + long (fitted)"</span>)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>ax.plot(h_fine, nugget_short_g, color<span class="op">=</span><span class="st">"darkorange"</span>, lw<span class="op">=</span><span class="fl">1.5</span>, ls<span class="op">=</span><span class="st">"--"</span>, label<span class="op">=</span><span class="st">"nugget + short only"</span>)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>ax.axhline(nugget, color<span class="op">=</span><span class="st">"gray"</span>, ls<span class="op">=</span><span class="st">":"</span>, lw<span class="op">=</span><span class="dv">1</span>, label<span class="op">=</span><span class="ss">f"nugget = </span><span class="sc">{</span>nugget<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>ax.axhline(nugget <span class="op">+</span> short[<span class="st">"sill"</span>] <span class="op">+</span> long_[<span class="st">"sill"</span>], color<span class="op">=</span><span class="st">"gray"</span>, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"lag distance (km)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"semivariance"</span>)</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Nested variogram of Cd: nugget + short-range + long-range"</span>)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>nugget           = 0.5588
+short-range (1)  : sill=0.0629, range=0.540 km
+long-range  (2)  : sill=0.0857, range=1.449 km
+total sill       = 0.7073  (sample variance = 0.7360)</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="12_factorial_kriging_files/figure-html/cell-4-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<blockquote class="blockquote">
+<p><strong>Reading this honestly.</strong> The nugget dominates (~75-80% of the fitted sill), typical of trace-metal geochemical assays – a lot of the variability in Cd happens below the shortest sampled distance. The two bounded structures are modest in amplitude but clearly separated in range (roughly a 2.5-3x ratio), which is enough for factorial kriging to tell them apart, as Section 10 verifies quantitatively.</p>
+</blockquote>
+<hr>
+</section>
+<section id="step-2-sanity-checks-before-trusting-the-maps" class="level2">
+<h2 class="anchored" data-anchor-id="step-2-sanity-checks-before-trusting-the-maps">8. Step 2: Sanity Checks Before Trusting the Maps</h2>
+<p>Two properties should hold <em>exactly</em> (up to floating point), because they follow directly from the linear-algebra structure of the kriging system, not from anything about this particular data set:</p>
+<ol type="1">
+<li><code>extract(factor='total')</code> is ordinary kriging of Cd – an exact interpolator, so it must reproduce the data precisely at the data locations.</li>
+<li><code>extract(factor=[1,2])</code> (one solve with a combined right-hand side) must equal <code>extract(factor=1) + extract(factor=2)</code> (two separate solves), since both use the same neighbors and the same sum-to-zero constraint.</li>
+</ol>
+<div id="d7d103fc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:20:50.115810Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:20:50.115560Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:20:50.303781Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:20:50.302771Z&quot;}}" data-execution_count="4">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fk <span class="op">=</span> FactorialKriging(nugget<span class="op">=</span>nugget, structures<span class="op">=</span>structures, max_neighbors<span class="op">=</span><span class="dv">30</span>, use_gpu<span class="op">=</span>USE_GPU)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>fk.fit(coords, cd)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>z_hat_at_data <span class="op">=</span> fk.extract(coords, factor<span class="op">=</span><span class="st">"total"</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"max |OK estimate - true Cd| at data locations:"</span>, np.<span class="bu">max</span>(np.<span class="bu">abs</span>(z_hat_at_data <span class="op">-</span> cd)))</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>check_pts <span class="op">=</span> coords[:<span class="dv">30</span>]</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>combined <span class="op">=</span> fk.extract(check_pts, factor<span class="op">=</span>[<span class="dv">1</span>, <span class="dv">2</span>])</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>separate <span class="op">=</span> fk.extract(check_pts, factor<span class="op">=</span><span class="dv">1</span>) <span class="op">+</span> fk.extract(check_pts, factor<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"max |combined - (short + long)| :"</span>, np.<span class="bu">max</span>(np.<span class="bu">abs</span>(combined <span class="op">-</span> separate)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>max |OK estimate - true Cd| at data locations: 4.808642550813147e-08
+max |combined - (short + long)| : 5.551115123125783e-16</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="step-3-map-the-total-short-range-and-long-range-factors" class="level2">
+<h2 class="anchored" data-anchor-id="step-3-map-the-total-short-range-and-long-range-factors">9. Step 3: Map the Total, Short-Range, and Long-Range Factors</h2>
+<p>We krige onto <code>jura_grid.csv</code> — the same prediction lattice as Tutorial 04 (~6 000 nodes covering the Jura domain) — and extract three views of the same data: the ordinary-kriging estimate of Cd itself, the short-range factor alone, and the long-range factor alone.</p>
+<div id="81d9820c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:20:50.305936Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:20:50.305727Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:20:57.994193Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:20:57.992762Z&quot;}}" data-execution_count="5">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Prediction grid: </span><span class="sc">{</span><span class="bu">len</span>(grid)<span class="sc">}</span><span class="ss"> nodes from jura_grid.csv"</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>total_grid <span class="op">=</span> fk.extract(grid_pts, factor<span class="op">=</span><span class="st">"total"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>short_grid <span class="op">=</span> fk.extract(grid_pts, factor<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>long_grid <span class="op">=</span> fk.extract(grid_pts, factor<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  total  min/mean/max : </span><span class="sc">{</span>np<span class="sc">.</span>nanmin(total_grid)<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>np<span class="sc">.</span>nanmean(total_grid)<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>np<span class="sc">.</span>nanmax(total_grid)<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  short  min/mean/max : </span><span class="sc">{</span>np<span class="sc">.</span>nanmin(short_grid)<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>np<span class="sc">.</span>nanmean(short_grid)<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>np<span class="sc">.</span>nanmax(short_grid)<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  long   min/mean/max : </span><span class="sc">{</span>np<span class="sc">.</span>nanmin(long_grid)<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>np<span class="sc">.</span>nanmean(long_grid)<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>np<span class="sc">.</span>nanmax(long_grid)<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">17</span>, <span class="fl">5.4</span>))</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, z, title, cmap, diverging <span class="kw">in</span> [</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    (axes[<span class="dv">0</span>], total_grid, <span class="st">"Total (ordinary kriging of Cd)"</span>, <span class="st">"viridis"</span>, <span class="va">False</span>),</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    (axes[<span class="dv">1</span>], short_grid, <span class="ss">f"Short-range factor</span><span class="ch">\n</span><span class="ss">(range = </span><span class="sc">{</span>short[<span class="st">'range'</span>]<span class="sc">:.2f}</span><span class="ss"> km)"</span>, <span class="st">"RdBu_r"</span>, <span class="va">True</span>),</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    (axes[<span class="dv">2</span>], long_grid, <span class="ss">f"Long-range factor</span><span class="ch">\n</span><span class="ss">(range = </span><span class="sc">{</span>long_[<span class="st">'range'</span>]<span class="sc">:.2f}</span><span class="ss"> km)"</span>, <span class="st">"RdBu_r"</span>, <span class="va">True</span>),</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>]:</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    vmax <span class="op">=</span> np.nanmax(np.<span class="bu">abs</span>(z)) <span class="cf">if</span> diverging <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    sc <span class="op">=</span> ax.scatter(</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>        grid[<span class="st">"Xloc"</span>], grid[<span class="st">"Yloc"</span>], c<span class="op">=</span>z,</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>        cmap<span class="op">=</span>cmap, s<span class="op">=</span><span class="dv">8</span>, marker<span class="op">=</span><span class="st">"."</span>,</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>        vmin<span class="op">=</span>(<span class="op">-</span>vmax <span class="cf">if</span> vmax <span class="cf">else</span> <span class="va">None</span>), vmax<span class="op">=</span>vmax,</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    ax.scatter(coords[:, <span class="dv">0</span>], coords[:, <span class="dv">1</span>], s<span class="op">=</span><span class="dv">12</span>, facecolors<span class="op">=</span><span class="st">"none"</span>,</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>               edgecolors<span class="op">=</span><span class="st">"k"</span>, linewidths<span class="op">=</span><span class="fl">0.4</span>)</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    ax.set_title(title)</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"X (km)"</span>)</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    ax.set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>    plt.colorbar(sc, ax<span class="op">=</span>ax, shrink<span class="op">=</span><span class="fl">0.75</span>)</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"Y (km)"</span>)</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Prediction grid: 5957 nodes from jura_grid.csv
+  total  min/mean/max : 0.440 / 1.320 / 2.426
+  short  min/mean/max : -0.306 / 0.002 / 0.455
+  long   min/mean/max : -0.241 / 0.008 / 0.309</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="12_factorial_kriging_files/figure-html/cell-6-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Notice the short-range map is visually “busier” – more small, localized patches – while the long-range map varies more smoothly and broadly across the domain. Both are legitimate, mutually-uncorrelated slices of the same Cd variogram.</p>
+<hr>
+</section>
+<section id="step-4-quantify-the-scale-separation" class="level2">
+<h2 class="anchored" data-anchor-id="step-4-quantify-the-scale-separation">10. Step 4: Quantify the Scale Separation</h2>
+<p>We check spatial autocorrelation at a lag comfortably inside the short structure’s own range: the long-range factor should still be clearly autocorrelated there, while the short-range factor should have largely decorrelated.</p>
+<div id="d73c05be" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:20:58.002086Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:20:58.001828Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:20:58.279960Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:20:58.278977Z&quot;}}" data-execution_count="6">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pivot_to_array(x, y, z):</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Reshape irregular lattice values onto the unique (x, y) mesh (NaN in holes)."""</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        pd.DataFrame({<span class="st">"x"</span>: x, <span class="st">"y"</span>: y, <span class="st">"z"</span>: z})</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        .pivot(index<span class="op">=</span><span class="st">"y"</span>, columns<span class="op">=</span><span class="st">"x"</span>, values<span class="op">=</span><span class="st">"z"</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>        .sort_index()</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>        .sort_index(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        .to_numpy()</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lag_autocorr(grid_2d, k):</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    a, b <span class="op">=</span> grid_2d[:<span class="op">-</span>k, :].ravel(), grid_2d[k:, :].ravel()</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> np.isfinite(a) <span class="op">&amp;</span> np.isfinite(b)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    c1 <span class="op">=</span> np.corrcoef(a[m], b[m])[<span class="dv">0</span>, <span class="dv">1</span>]</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    a2, b2 <span class="op">=</span> grid_2d[:, :<span class="op">-</span>k].ravel(), grid_2d[:, k:].ravel()</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    m2 <span class="op">=</span> np.isfinite(a2) <span class="op">&amp;</span> np.isfinite(b2)</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    c2 <span class="op">=</span> np.corrcoef(a2[m2], b2[m2])[<span class="dv">0</span>, <span class="dv">1</span>]</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (c1 <span class="op">+</span> c2) <span class="op">/</span> <span class="fl">2.0</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>short_2d <span class="op">=</span> pivot_to_array(grid[<span class="st">"Xloc"</span>], grid[<span class="st">"Yloc"</span>], short_grid)</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>long_2d <span class="op">=</span> pivot_to_array(grid[<span class="st">"Xloc"</span>], grid[<span class="st">"Yloc"</span>], long_grid)</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>gx <span class="op">=</span> np.sort(grid[<span class="st">"Xloc"</span>].unique())</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>cell_size <span class="op">=</span> <span class="bu">float</span>(np.median(np.diff(gx)))</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>lags_km <span class="op">=</span> np.arange(<span class="dv">1</span>, <span class="dv">15</span>) <span class="op">*</span> cell_size</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>corr_short <span class="op">=</span> [lag_autocorr(short_2d, k) <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">15</span>)]</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>corr_long <span class="op">=</span> [lag_autocorr(long_2d, k) <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">15</span>)]</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">5</span>))</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>ax.plot(lags_km, corr_short, <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"darkorange"</span>, label<span class="op">=</span><span class="ss">f"short-range factor (fitted range=</span><span class="sc">{</span>short[<span class="st">'range'</span>]<span class="sc">:.2f}</span><span class="ss"> km)"</span>)</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>ax.plot(lags_km, corr_long, <span class="st">"s-"</span>, color<span class="op">=</span><span class="st">"steelblue"</span>, label<span class="op">=</span><span class="ss">f"long-range factor (fitted range=</span><span class="sc">{</span>long_[<span class="st">'range'</span>]<span class="sc">:.2f}</span><span class="ss"> km)"</span>)</span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>ax.axvline(short[<span class="st">"range"</span>], color<span class="op">=</span><span class="st">"darkorange"</span>, ls<span class="op">=</span><span class="st">":"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>ax.axvline(long_[<span class="st">"range"</span>], color<span class="op">=</span><span class="st">"steelblue"</span>, ls<span class="op">=</span><span class="st">":"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"gray"</span>, lw<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"lag (km)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"spatial autocorrelation of the kriged factor"</span>)</span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"The short-range factor decorrelates much faster than the long-range factor"</span>)</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>k_check <span class="op">=</span> <span class="bu">max</span>(<span class="dv">1</span>, <span class="bu">round</span>(<span class="fl">0.6</span> <span class="op">*</span> short[<span class="st">"range"</span>] <span class="op">/</span> cell_size))</span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>lag_check <span class="op">=</span> k_check <span class="op">*</span> cell_size</span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>cs, cl <span class="op">=</span> lag_autocorr(short_2d, k_check), lag_autocorr(long_2d, k_check)</span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"At lag </span><span class="sc">{</span>lag_check<span class="sc">:.2f}</span><span class="ss"> km: corr(short-range factor) = </span><span class="sc">{</span>cs<span class="sc">:.3f}</span><span class="ss">   corr(long-range factor) = </span><span class="sc">{</span>cl<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="12_factorial_kriging_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>At lag 0.30 km: corr(short-range factor) = 0.172   corr(long-range factor) = 0.353</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="step-5-filtering-the-nugget-a-denoised-cd-map" class="level2">
+<h2 class="anchored" data-anchor-id="step-5-filtering-the-nugget-a-denoised-cd-map">11. Step 5: Filtering the Nugget: a Denoised Cd Map</h2>
+<p><code>factor='denoised'</code> estimates Z with the nugget’s noise spike removed from the target covariance, while keeping the sum=1 (mean-preserving) constraint – so the result stays directly comparable to raw Cd, in the same units. (A separate <code>factor='signal'</code> gives the <em>pure, zero-mean</em> structured fluctuation in the strict Matheron sense – useful for factor analysis, not for a like-for-like comparison with Z; see Section 4.)</p>
+<div id="6392e3e8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:20:58.282801Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:20:58.282533Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:21:01.240256Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:21:01.239144Z&quot;}}" data-execution_count="7">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>denoised_at_data <span class="op">=</span> fk.extract(coords, factor<span class="op">=</span><span class="st">"denoised"</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>denoised_grid <span class="op">=</span> fk.extract(grid_pts, factor<span class="op">=</span><span class="st">"denoised"</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="fl">5.6</span>))</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].scatter(cd, denoised_at_data, s<span class="op">=</span><span class="dv">25</span>, alpha<span class="op">=</span><span class="fl">0.6</span>, edgecolor<span class="op">=</span><span class="st">"k"</span>, linewidth<span class="op">=</span><span class="fl">0.2</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>lims <span class="op">=</span> [<span class="dv">0</span>, <span class="bu">max</span>(cd.<span class="bu">max</span>(), denoised_at_data.<span class="bu">max</span>())]</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(lims, lims, <span class="st">"r--"</span>, lw<span class="op">=</span><span class="fl">1.2</span>, label<span class="op">=</span><span class="st">"1:1 (no filtering)"</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"raw Cd (= factor='total', exact at data)"</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"Cd with nugget filtered out (factor='denoised')"</span>)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"Nugget filtering at sample locations"</span>)</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend()</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>sc <span class="op">=</span> axes[<span class="dv">1</span>].scatter(</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    grid[<span class="st">"Xloc"</span>], grid[<span class="st">"Yloc"</span>], c<span class="op">=</span>denoised_grid,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    cmap<span class="op">=</span><span class="st">"viridis"</span>, s<span class="op">=</span><span class="dv">8</span>, marker<span class="op">=</span><span class="st">"."</span>,</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].scatter(coords[:, <span class="dv">0</span>], coords[:, <span class="dv">1</span>], s<span class="op">=</span><span class="dv">12</span>, facecolors<span class="op">=</span><span class="st">"none"</span>,</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>                edgecolors<span class="op">=</span><span class="st">"k"</span>, linewidths<span class="op">=</span><span class="fl">0.4</span>)</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>plt.colorbar(sc, ax<span class="op">=</span>axes[<span class="dv">1</span>], label<span class="op">=</span><span class="st">"Cd (mg/kg)"</span>, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_aspect(<span class="st">"equal"</span>)</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"X (km)"</span>)<span class="op">;</span> axes[<span class="dv">1</span>].set_ylabel(<span class="st">"Y (km)"</span>)</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Denoised Cd on jura_grid.csv"</span>)</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"std(raw Cd) = </span><span class="sc">{</span>cd<span class="sc">.</span>std()<span class="sc">:.3f}</span><span class="ss">   std(denoised Cd at same points) = </span><span class="sc">{</span>denoised_at_data<span class="sc">.</span>std()<span class="sc">:.3f}</span><span class="ss">   "</span></span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"mean(raw) = </span><span class="sc">{</span>cd<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">   mean(denoised) = </span><span class="sc">{</span>denoised_at_data<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"denoised grid min/mean/max : </span><span class="sc">{</span>np<span class="sc">.</span>nanmin(denoised_grid)<span class="sc">:.3f}</span><span class="ss"> / "</span></span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>np<span class="sc">.</span>nanmean(denoised_grid)<span class="sc">:.3f}</span><span class="ss"> / </span><span class="sc">{</span>np<span class="sc">.</span>nanmax(denoised_grid)<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="12_factorial_kriging_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>std(raw Cd) = 0.858   std(denoised Cd at same points) = 0.378   mean(raw) = 1.288   mean(denoised) = 1.289
+denoised grid min/mean/max : 0.440 / 1.320 / 2.426</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="cpu-vs-gpu-factorial-kriging-timing" class="level2">
+<h2 class="anchored" data-anchor-id="cpu-vs-gpu-factorial-kriging-timing">12. CPU vs GPU Factorial Kriging Timing</h2>
+<p>The 359-sample Jura survey is too small for a GPU comparison: the batched factorial-kriging solve is a stack of tiny <span class="math inline">\((k+1)\times(k+1)\)</span> systems, and host→device copies dominate. Here we <strong>simulate a Jura-like Cd field</strong> with Sequential Gaussian Simulation (<code>pygstat.sgsim</code>) so that <span class="math inline">\(n_{\mathrm{train}} &gt; 5{,}000\)</span>, then time <strong>k-nearest-neighbor</strong> factorial kriging (<code>search_radius=None</code>) on <strong>CPU</strong> (<code>use_gpu=False</code>) versus <strong>GPU</strong> (<code>use_gpu=True</code>).</p>
+<p>Simulation recipe (conditioned on the real 359 samples):</p>
+<ol type="1">
+<li>Draw <span class="math inline">\(n_{\mathrm{train}} = 8{,}000\)</span> random locations in the Jura bounding box.</li>
+<li>Simulate <span class="math inline">\(\log(\mathrm{Cd})\)</span> with <code>sgsim</code> (exponential variogram, practical range 1.2 km, conditioned on <code>data/jura_data.csv</code>) and back-transform with <span class="math inline">\(\exp(\cdot)\)</span>.</li>
+<li>Draw a separate prediction set (no values needed — factorial kriging only needs coordinates plus the training data).</li>
+</ol>
+<p>Unlike global ordinary kriging, the GPU work scales with <strong><span class="math inline">\(n_{\mathrm{pred}}\)</span></strong> (one stacked solve of shape <code>(n_pred, k+1, k+1)</code> per <code>extract</code> call), not <span class="math inline">\(n_{\mathrm{train}}^3\)</span>. Training size is therefore held at 8{,}000 and we vary <span class="math inline">\(n_{\mathrm{pred}}\)</span>. Nested-variogram parameters are the <strong>fitted Jura model from §7</strong>, so fitting <span class="math inline">\(\gamma\)</span> is <strong>not</strong> in the times. Each timing is <code>fit</code> plus the mapping workload of §9: <code>extract(factor="total", return_variance=True)</code>, <code>extract(factor=1)</code>, and <code>extract(factor=2)</code>, with <code>max_neighbors=30</code>.</p>
+<p>Each timing is the <strong>median</strong> of three <code>fit</code> + <code>extract</code> calls after a short GPU warmup so CUDA kernel compilation is not counted. If CuPy cannot run a kernel here, the GPU column is skipped.</p>
+<div id="cpu-gpu-fk-timing-code" class="cell" data-execution_count="12">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>N_REPEATS <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>N_TRAIN <span class="op">=</span> <span class="dv">8000</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>PRED_SIZES <span class="op">=</span> [<span class="dv">500</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="dv">4000</span>, <span class="dv">8000</span>]</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>N_PRED_MAX <span class="op">=</span> <span class="bu">max</span>(PRED_SIZES)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>N_NEIGHBORS <span class="op">=</span> <span class="dv">30</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>rng_sim <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>pad <span class="op">=</span> <span class="fl">0.15</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>xmin, xmax <span class="op">=</span> <span class="bu">float</span>(coords[:, <span class="dv">0</span>].<span class="bu">min</span>()) <span class="op">-</span> pad, <span class="bu">float</span>(coords[:, <span class="dv">0</span>].<span class="bu">max</span>()) <span class="op">+</span> pad</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>ymin, ymax <span class="op">=</span> <span class="bu">float</span>(coords[:, <span class="dv">1</span>].<span class="bu">min</span>()) <span class="op">-</span> pad, <span class="bu">float</span>(coords[:, <span class="dv">1</span>].<span class="bu">max</span>()) <span class="op">+</span> pad</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>xy_train_all <span class="op">=</span> rng_sim.uniform([xmin, ymin], [xmax, ymax], size<span class="op">=</span>(N_TRAIN, <span class="dv">2</span>))</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>xy_pred_all <span class="op">=</span> rng_sim.uniform([xmin, ymin], [xmax, ymax], size<span class="op">=</span>(N_PRED_MAX, <span class="dv">2</span>))</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>df_cond <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"x"</span>: coords[:, <span class="dv">0</span>],</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"y"</span>: coords[:, <span class="dv">1</span>],</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"log_cd"</span>: np.log(cd),</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>log_cd_var <span class="op">=</span> <span class="bu">float</span>(np.var(np.log(cd)))</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>vario_sgs <span class="op">=</span> [<span class="dv">0</span>, <span class="fl">0.05</span> <span class="op">*</span> log_cd_var, <span class="fl">1.2</span>, <span class="fl">1.2</span>, log_cd_var, <span class="st">"exponential"</span>]</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Simulating </span><span class="sc">{</span>N_TRAIN<span class="sc">:,}</span><span class="ss"> Jura-like Cd locations with sgsim"</span>)</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  conditioning : </span><span class="sc">{</span><span class="bu">len</span>(cd)<span class="sc">}</span><span class="ss"> samples from data/jura_data.csv"</span>)</span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  vario        : azimuth=0, nugget=</span><span class="sc">{</span>vario_sgs[<span class="dv">1</span>]<span class="sc">:.3f}</span><span class="ss">, range=1.2 km, exponential, log(Cd)"</span>)</span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>t_sim0 <span class="op">=</span> time.perf_counter()</span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>sims <span class="op">=</span> sgsim(</span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>    xy_train_all, df_cond, <span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"log_cd"</span>,</span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>    num_points<span class="op">=</span><span class="dv">12</span>, vario<span class="op">=</span>vario_sgs, radius<span class="op">=</span><span class="fl">2.5</span>,</span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>    kriging_type<span class="op">=</span><span class="st">"ordinary"</span>, nsim<span class="op">=</span><span class="dv">1</span>, itrans<span class="op">=</span><span class="va">False</span>, seed<span class="op">=</span><span class="dv">42</span>, quiet<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>cd_sim <span class="op">=</span> np.exp(np.asarray(sims[<span class="dv">0</span>], dtype<span class="op">=</span><span class="bu">float</span>))</span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  sgsim wall   : </span><span class="sc">{</span>time<span class="sc">.</span>perf_counter() <span class="op">-</span> t_sim0<span class="sc">:.1f}</span><span class="ss"> s  (not included in FactorialKriging times)"</span>)</span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  simulated Cd : [</span><span class="sc">{</span>cd_sim<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.2f}</span><span class="ss">, </span><span class="sc">{</span>cd_sim<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2f}</span><span class="ss">] mg/kg"</span></span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"  (Jura observed [</span><span class="sc">{</span>cd<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.2f}</span><span class="ss">, </span><span class="sc">{</span>cd<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2f}</span><span class="ss">])"</span>)</span>
+<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _extract_workload(fk, xy_pred):</span>
+<span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a>    z_tot, var <span class="op">=</span> fk.extract(xy_pred, factor<span class="op">=</span><span class="st">"total"</span>, return_variance<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb15-43"><a href="#cb15-43" aria-hidden="true" tabindex="-1"></a>    z1 <span class="op">=</span> fk.extract(xy_pred, factor<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb15-44"><a href="#cb15-44" aria-hidden="true" tabindex="-1"></a>    z2 <span class="op">=</span> fk.extract(xy_pred, factor<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb15-45"><a href="#cb15-45" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> z_tot, var, z1, z2</span>
+<span id="cb15-46"><a href="#cb15-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-47"><a href="#cb15-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-48"><a href="#cb15-48" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _time_fk(xy_train, z_train, xy_pred, use_gpu, repeats<span class="op">=</span>N_REPEATS, warmup<span class="op">=</span><span class="va">True</span>):</span>
+<span id="cb15-49"><a href="#cb15-49" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Median wall time of FactorialKriging.fit + extract (k-NN, search_radius=None)."""</span></span>
+<span id="cb15-50"><a href="#cb15-50" aria-hidden="true" tabindex="-1"></a>    kw <span class="op">=</span> <span class="bu">dict</span>(</span>
+<span id="cb15-51"><a href="#cb15-51" aria-hidden="true" tabindex="-1"></a>        nugget<span class="op">=</span>nugget,</span>
+<span id="cb15-52"><a href="#cb15-52" aria-hidden="true" tabindex="-1"></a>        structures<span class="op">=</span>structures,</span>
+<span id="cb15-53"><a href="#cb15-53" aria-hidden="true" tabindex="-1"></a>        max_neighbors<span class="op">=</span>N_NEIGHBORS,</span>
+<span id="cb15-54"><a href="#cb15-54" aria-hidden="true" tabindex="-1"></a>        search_radius<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb15-55"><a href="#cb15-55" aria-hidden="true" tabindex="-1"></a>        use_gpu<span class="op">=</span>use_gpu,</span>
+<span id="cb15-56"><a href="#cb15-56" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb15-57"><a href="#cb15-57" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> warmup:</span>
+<span id="cb15-58"><a href="#cb15-58" aria-hidden="true" tabindex="-1"></a>        k_tr <span class="op">=</span> <span class="bu">min</span>(<span class="dv">40</span>, <span class="bu">len</span>(xy_train))</span>
+<span id="cb15-59"><a href="#cb15-59" aria-hidden="true" tabindex="-1"></a>        k_pr <span class="op">=</span> <span class="bu">min</span>(<span class="dv">40</span>, <span class="bu">len</span>(xy_pred))</span>
+<span id="cb15-60"><a href="#cb15-60" aria-hidden="true" tabindex="-1"></a>        fk_w <span class="op">=</span> FactorialKriging(<span class="op">**</span>kw)</span>
+<span id="cb15-61"><a href="#cb15-61" aria-hidden="true" tabindex="-1"></a>        fk_w.fit(xy_train[:k_tr], z_train[:k_tr])</span>
+<span id="cb15-62"><a href="#cb15-62" aria-hidden="true" tabindex="-1"></a>        _extract_workload(fk_w, xy_pred[:k_pr])</span>
+<span id="cb15-63"><a href="#cb15-63" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> use_gpu:</span>
+<span id="cb15-64"><a href="#cb15-64" aria-hidden="true" tabindex="-1"></a>            <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb15-65"><a href="#cb15-65" aria-hidden="true" tabindex="-1"></a>            cp.cuda.Device(<span class="dv">0</span>).synchronize()</span>
+<span id="cb15-66"><a href="#cb15-66" aria-hidden="true" tabindex="-1"></a>    times <span class="op">=</span> []</span>
+<span id="cb15-67"><a href="#cb15-67" aria-hidden="true" tabindex="-1"></a>    last <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb15-68"><a href="#cb15-68" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(repeats):</span>
+<span id="cb15-69"><a href="#cb15-69" aria-hidden="true" tabindex="-1"></a>        t0 <span class="op">=</span> time.perf_counter()</span>
+<span id="cb15-70"><a href="#cb15-70" aria-hidden="true" tabindex="-1"></a>        fk <span class="op">=</span> FactorialKriging(<span class="op">**</span>kw)</span>
+<span id="cb15-71"><a href="#cb15-71" aria-hidden="true" tabindex="-1"></a>        fk.fit(xy_train, z_train)</span>
+<span id="cb15-72"><a href="#cb15-72" aria-hidden="true" tabindex="-1"></a>        last <span class="op">=</span> _extract_workload(fk, xy_pred)</span>
+<span id="cb15-73"><a href="#cb15-73" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> use_gpu:</span>
+<span id="cb15-74"><a href="#cb15-74" aria-hidden="true" tabindex="-1"></a>            <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb15-75"><a href="#cb15-75" aria-hidden="true" tabindex="-1"></a>            cp.cuda.Device(<span class="dv">0</span>).synchronize()</span>
+<span id="cb15-76"><a href="#cb15-76" aria-hidden="true" tabindex="-1"></a>        times.append(time.perf_counter() <span class="op">-</span> t0)</span>
+<span id="cb15-77"><a href="#cb15-77" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.median(times)), last</span>
+<span id="cb15-78"><a href="#cb15-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-79"><a href="#cb15-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-80"><a href="#cb15-80" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"GPU usable : </span><span class="sc">{</span>USE_GPU<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb15-81"><a href="#cb15-81" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Repeats    : </span><span class="sc">{</span>N_REPEATS<span class="sc">}</span><span class="ss">  (median wall time of FactorialKriging fit + extract, k-NN)"</span>)</span>
+<span id="cb15-82"><a href="#cb15-82" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"n_train    : </span><span class="sc">{</span>N_TRAIN<span class="sc">}</span><span class="ss">  (sgsim Jura-like Cd)"</span>)</span>
+<span id="cb15-83"><a href="#cb15-83" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"n_pred     : </span><span class="sc">{</span>PRED_SIZES<span class="sc">}</span><span class="ss">  (random locations in the Jura bbox)"</span>)</span>
+<span id="cb15-84"><a href="#cb15-84" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"neighbors  : max_neighbors=</span><span class="sc">{</span>N_NEIGHBORS<span class="sc">}</span><span class="ss">; nested model from §7 (359 Jura samples)"</span>)</span>
+<span id="cb15-85"><a href="#cb15-85" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb15-86"><a href="#cb15-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-87"><a href="#cb15-87" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb15-88"><a href="#cb15-88" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n_pred <span class="kw">in</span> PRED_SIZES:</span>
+<span id="cb15-89"><a href="#cb15-89" aria-hidden="true" tabindex="-1"></a>    xy_pr <span class="op">=</span> xy_pred_all[:n_pred]</span>
+<span id="cb15-90"><a href="#cb15-90" aria-hidden="true" tabindex="-1"></a>    cpu_t, pred_cpu <span class="op">=</span> _time_fk(xy_train_all, cd_sim, xy_pr, use_gpu<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb15-91"><a href="#cb15-91" aria-hidden="true" tabindex="-1"></a>    row <span class="op">=</span> {</span>
+<span id="cb15-92"><a href="#cb15-92" aria-hidden="true" tabindex="-1"></a>        <span class="st">"dataset"</span>: <span class="st">"Jura (sgsim)"</span>,</span>
+<span id="cb15-93"><a href="#cb15-93" aria-hidden="true" tabindex="-1"></a>        <span class="st">"n_train"</span>: N_TRAIN,</span>
+<span id="cb15-94"><a href="#cb15-94" aria-hidden="true" tabindex="-1"></a>        <span class="st">"n_pred"</span>: n_pred,</span>
+<span id="cb15-95"><a href="#cb15-95" aria-hidden="true" tabindex="-1"></a>        <span class="st">"CPU (s)"</span>: cpu_t,</span>
+<span id="cb15-96"><a href="#cb15-96" aria-hidden="true" tabindex="-1"></a>        <span class="st">"GPU (s)"</span>: np.nan,</span>
+<span id="cb15-97"><a href="#cb15-97" aria-hidden="true" tabindex="-1"></a>        <span class="st">"speedup"</span>: np.nan,</span>
+<span id="cb15-98"><a href="#cb15-98" aria-hidden="true" tabindex="-1"></a>        <span class="st">"match"</span>: <span class="st">"—"</span>,</span>
+<span id="cb15-99"><a href="#cb15-99" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb15-100"><a href="#cb15-100" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> USE_GPU:</span>
+<span id="cb15-101"><a href="#cb15-101" aria-hidden="true" tabindex="-1"></a>        gpu_t, pred_gpu <span class="op">=</span> _time_fk(xy_train_all, cd_sim, xy_pr, use_gpu<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb15-102"><a href="#cb15-102" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"GPU (s)"</span>] <span class="op">=</span> gpu_t</span>
+<span id="cb15-103"><a href="#cb15-103" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"speedup"</span>] <span class="op">=</span> cpu_t <span class="op">/</span> gpu_t</span>
+<span id="cb15-104"><a href="#cb15-104" aria-hidden="true" tabindex="-1"></a>        match <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb15-105"><a href="#cb15-105" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(pred_cpu, pred_gpu):</span>
+<span id="cb15-106"><a href="#cb15-106" aria-hidden="true" tabindex="-1"></a>            match <span class="op">=</span> match <span class="kw">and</span> <span class="bu">bool</span>(np.allclose(a, b, rtol<span class="op">=</span><span class="fl">1e-4</span>, atol<span class="op">=</span><span class="fl">1e-4</span>, equal_nan<span class="op">=</span><span class="va">True</span>))</span>
+<span id="cb15-107"><a href="#cb15-107" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"match"</span>] <span class="op">=</span> match</span>
+<span id="cb15-108"><a href="#cb15-108" aria-hidden="true" tabindex="-1"></a>        <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb15-109"><a href="#cb15-109" aria-hidden="true" tabindex="-1"></a>        cp.get_default_memory_pool().free_all_blocks()</span>
+<span id="cb15-110"><a href="#cb15-110" aria-hidden="true" tabindex="-1"></a>    rows.append(row)</span>
+<span id="cb15-111"><a href="#cb15-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-112"><a href="#cb15-112" aria-hidden="true" tabindex="-1"></a>df_bench <span class="op">=</span> pd.DataFrame(rows)</span>
+<span id="cb15-113"><a href="#cb15-113" aria-hidden="true" tabindex="-1"></a>df_show <span class="op">=</span> df_bench.copy()</span>
+<span id="cb15-114"><a href="#cb15-114" aria-hidden="true" tabindex="-1"></a>df_show[<span class="st">"CPU (ms)"</span>] <span class="op">=</span> (df_show[<span class="st">"CPU (s)"</span>] <span class="op">*</span> <span class="dv">1000</span>).<span class="bu">round</span>(<span class="dv">1</span>)</span>
+<span id="cb15-115"><a href="#cb15-115" aria-hidden="true" tabindex="-1"></a>df_show[<span class="st">"GPU (ms)"</span>] <span class="op">=</span> (df_show[<span class="st">"GPU (s)"</span>] <span class="op">*</span> <span class="dv">1000</span>).<span class="bu">round</span>(<span class="dv">1</span>)</span>
+<span id="cb15-116"><a href="#cb15-116" aria-hidden="true" tabindex="-1"></a>df_show[<span class="st">"speedup"</span>] <span class="op">=</span> df_show[<span class="st">"speedup"</span>].<span class="bu">map</span>(</span>
+<span id="cb15-117"><a href="#cb15-117" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> x: <span class="st">"—"</span> <span class="cf">if</span> pd.isna(x) <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span>x<span class="sc">:.2f}</span><span class="ss">×"</span></span>
+<span id="cb15-118"><a href="#cb15-118" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-119"><a href="#cb15-119" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_show[[<span class="st">"dataset"</span>, <span class="st">"n_train"</span>, <span class="st">"n_pred"</span>, <span class="st">"CPU (ms)"</span>, <span class="st">"GPU (ms)"</span>, <span class="st">"speedup"</span>, <span class="st">"match"</span>]].to_string(index<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb15-120"><a href="#cb15-120" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb15-121"><a href="#cb15-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-122"><a href="#cb15-122" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="fl">4.2</span>))</span>
+<span id="cb15-123"><a href="#cb15-123" aria-hidden="true" tabindex="-1"></a>n_vals <span class="op">=</span> df_bench[<span class="st">"n_pred"</span>].to_numpy()</span>
+<span id="cb15-124"><a href="#cb15-124" aria-hidden="true" tabindex="-1"></a>cpu_ms <span class="op">=</span> df_bench[<span class="st">"CPU (s)"</span>].to_numpy() <span class="op">*</span> <span class="dv">1000</span></span>
+<span id="cb15-125"><a href="#cb15-125" aria-hidden="true" tabindex="-1"></a>gpu_ms <span class="op">=</span> df_bench[<span class="st">"GPU (s)"</span>].to_numpy() <span class="op">*</span> <span class="dv">1000</span></span>
+<span id="cb15-126"><a href="#cb15-126" aria-hidden="true" tabindex="-1"></a>labels <span class="op">=</span> [<span class="bu">str</span>(<span class="bu">int</span>(n)) <span class="cf">for</span> n <span class="kw">in</span> n_vals]</span>
+<span id="cb15-127"><a href="#cb15-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-128"><a href="#cb15-128" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.arange(<span class="bu">len</span>(n_vals))</span>
+<span id="cb15-129"><a href="#cb15-129" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> <span class="fl">0.36</span></span>
+<span id="cb15-130"><a href="#cb15-130" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].bar(x <span class="op">-</span> w <span class="op">/</span> <span class="dv">2</span>, cpu_ms, w, label<span class="op">=</span><span class="st">"CPU (NumPy)"</span>, color<span class="op">=</span><span class="st">"steelblue"</span>)</span>
+<span id="cb15-131"><a href="#cb15-131" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> USE_GPU <span class="kw">and</span> np.isfinite(gpu_ms).<span class="bu">all</span>():</span>
+<span id="cb15-132"><a href="#cb15-132" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">0</span>].bar(x <span class="op">+</span> w <span class="op">/</span> <span class="dv">2</span>, gpu_ms, w, label<span class="op">=</span><span class="st">"GPU (CuPy)"</span>, color<span class="op">=</span><span class="st">"darkorange"</span>)</span>
+<span id="cb15-133"><a href="#cb15-133" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xticks(x)</span>
+<span id="cb15-134"><a href="#cb15-134" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xticklabels(labels, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb15-135"><a href="#cb15-135" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="vs">r"Number of prediction points </span><span class="dv">$</span><span class="vs">n_{</span><span class="dv">\m</span><span class="vs">athrm{pred}}</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb15-136"><a href="#cb15-136" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"Median time (ms)"</span>)</span>
+<span id="cb15-137"><a href="#cb15-137" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"FactorialKriging.extract — CPU vs GPU"</span>)</span>
+<span id="cb15-138"><a href="#cb15-138" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend()</span>
+<span id="cb15-139"><a href="#cb15-139" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_yscale(<span class="st">"log"</span>)</span>
+<span id="cb15-140"><a href="#cb15-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-141"><a href="#cb15-141" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> USE_GPU:</span>
+<span id="cb15-142"><a href="#cb15-142" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].plot(n_vals, df_bench[<span class="st">"speedup"</span>], <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"darkgreen"</span>, lw<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb15-143"><a href="#cb15-143" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].axhline(<span class="fl">1.0</span>, color<span class="op">=</span><span class="st">"grey"</span>, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb15-144"><a href="#cb15-144" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_xlabel(<span class="vs">r"Number of prediction points </span><span class="dv">$</span><span class="vs">n_{</span><span class="dv">\m</span><span class="vs">athrm{pred}}</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb15-145"><a href="#cb15-145" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_ylabel(<span class="st">"Speedup (CPU time / GPU time)"</span>)</span>
+<span id="cb15-146"><a href="#cb15-146" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_title(<span class="st">"GPU speedup vs prediction size"</span>)</span>
+<span id="cb15-147"><a href="#cb15-147" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb15-148"><a href="#cb15-148" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb15-149"><a href="#cb15-149" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].text(</span>
+<span id="cb15-150"><a href="#cb15-150" aria-hidden="true" tabindex="-1"></a>        <span class="fl">0.5</span>, <span class="fl">0.5</span>,</span>
+<span id="cb15-151"><a href="#cb15-151" aria-hidden="true" tabindex="-1"></a>        <span class="st">"GPU not usable in this environment</span><span class="ch">\n</span><span class="st">CPU-only timings shown"</span>,</span>
+<span id="cb15-152"><a href="#cb15-152" aria-hidden="true" tabindex="-1"></a>        ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>, transform<span class="op">=</span>axes[<span class="dv">1</span>].transAxes,</span>
+<span id="cb15-153"><a href="#cb15-153" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb15-154"><a href="#cb15-154" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_axis_off()</span>
+<span id="cb15-155"><a href="#cb15-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-156"><a href="#cb15-156" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb15-157"><a href="#cb15-157" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simulating 8,000 Jura-like Cd locations with sgsim
+  conditioning : 359 samples from data/jura_data.csv
+  vario        : azimuth=0, nugget=0.023, range=1.2 km, exponential, log(Cd)
+  sgsim wall   : 57.9 s  (not included in FactorialKriging times)
+  simulated Cd : [0.13, 9.91] mg/kg  (Jura observed [0.14, 5.13])
+
+GPU usable : True
+Repeats    : 3  (median wall time of FactorialKriging fit + extract, k-NN)
+n_train    : 8000  (sgsim Jura-like Cd)
+n_pred     : [500, 1000, 2000, 4000, 8000]  (random locations in the Jura bbox)
+neighbors  : max_neighbors=30; nested model from §7 (359 Jura samples)
+
+     dataset  n_train  n_pred  CPU (ms)  GPU (ms) speedup  match
+Jura (sgsim)     8000     500     172.4      25.7   6.71×   True
+Jura (sgsim)     8000    1000     306.6      33.4   9.19×   True
+Jura (sgsim)     8000    2000     612.3      53.9  11.36×   True
+Jura (sgsim)     8000    4000    1331.8      99.7  13.36×   True
+Jura (sgsim)     8000    8000    2785.1     187.1  14.88×   True
+</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="12_factorial_kriging_files/figure-html/cell-9-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Total, short-range, and long-range extracts (and the total kriging variance) from the two backends should <strong>match</strong> (<code>match = True</code>). The GPU speedup comes from the batched <span class="math inline">\((n_{\mathrm{pred}}, k+1, k+1)\)</span> factorial-kriging solve, not from SGS (simulation is CPU sequential and is excluded from the times). Small <span class="math inline">\(n_{\mathrm{pred}}\)</span> can show little GPU gain because kernel-launch overhead dominates; as the prediction set grows the stacked solve keeps the GPU several times faster. Use <code>use_gpu=USE_GPU</code> with <code>search_radius=None</code> so the same cells run on a laptop CPU or a CUDA workstation without edits.</p>
+<hr>
+</section>
+<section id="summary-and-conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="summary-and-conclusions">13. Summary and Conclusions</h2>
+<ul>
+<li><strong><code>pygstat.factorial_kriging</code></strong> implements Matheron’s Factorial Kriging Analysis: <code>fit_nested_variogram</code> fits a nugget + nested structures to data, and <code>FactorialKriging.extract(factor=...)</code> estimates any single structure (or sum of structures) using the <em>same</em> kriging matrix as ordinary kriging, only changing the right-hand side and the unbiasedness constraint (0 instead of 1).</li>
+<li>On Jura’s Cd variogram (nugget-dominated, with a short-range structure at ~0.5 km and a longer-range structure at ~1.5 km), the two extracted factor maps on <code>jura_grid.csv</code> behave exactly as theory predicts: the short-range map decorrelates over a much shorter distance than the long-range map (confirmed quantitatively via lag autocorrelation), and both sum linearly (<code>extract([1,2]) == extract(1)+extract(2)</code> to machine precision) while <code>extract('total')</code> alone reproduces the exact ordinary-kriging estimate of Cd.</li>
+<li><code>factor='signal'</code> (everything but the nugget) gives a <strong>denoised</strong> map – a practical, direct use of factorial kriging as a spatial filter.</li>
+<li>An important caveat, worth remembering: summing <em>all</em> individually-extracted factors (nugget + every structure) does <strong>not</strong> reconstruct <code>extract('total')</code> exactly – it reconstructs <span class="math inline">\(Z\)</span> minus OK’s own locally-varying mean estimate. Use <code>factor='total'</code> whenever you actually want <span class="math inline">\(Z(x_0)\)</span> back.</li>
+<li><strong>CPU / GPU.</strong> k-NN factorial kriging (<code>search_radius=None</code>, <code>use_gpu=USE_GPU</code>) batches every prediction point’s <span class="math inline">\((k+1)\times(k+1)\)</span> system into one stacked solve. On an SGS-simulated Jura-like Cd field (<span class="math inline">\(n_{\mathrm{train}}=8{,}000\)</span>) the GPU is several times faster than CPU as <span class="math inline">\(n_{\mathrm{pred}}\)</span> grows; the 359-sample Jura survey itself is too small for that path to pay off.</li>
+</ul>
+<hr>
+</section>
+<section id="resources" class="level2">
+<h2 class="anchored" data-anchor-id="resources">14. Resources</h2>
+<section id="key-papers" class="level3">
+<h3 class="anchored" data-anchor-id="key-papers">Key papers</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Paper</th>
+<th>Contribution</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Matheron, G. (1982). <em>Pour une analyse krigeante des données régionalisées</em>. Note N-732, Centre de Géostatistique, Fontainebleau.</td>
+<td>Introduced factorial kriging</td>
+</tr>
+<tr class="even">
+<td>Sandjivy, L. (1984). The factorial kriging analysis of regionalized data: its application to geochemical prospecting. In <em>Geostatistics for Natural Resources Characterization</em>, Reidel.</td>
+<td>The geochemical-prospecting application this notebook follows</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="textbooks" class="level3">
+<h3 class="anchored" data-anchor-id="textbooks">Textbooks</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Reference</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Chilès, J.-P. &amp; Delfiner, P. (2012). <em>Geostatistics: Modeling Spatial Uncertainty</em> (2nd ed.), Ch. 5. Wiley.</td>
+<td>Rigorous treatment, including the “factors don’t sum to OK” subtlety</td>
+</tr>
+<tr class="even">
+<td>Goovaerts, P. (1997). <em>Geostatistics for Natural Resources Evaluation</em>, Ch. 6. Oxford University Press.</td>
+<td>Accessible worked examples</td>
+</tr>
+<tr class="odd">
+<td>Wackernagel, H. (2003). <em>Multivariate Geostatistics</em> (3rd ed.). Springer.</td>
+<td>The multivariate extension (regionalized factor analysis)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="in-this-library" class="level3">
+<h3 class="anchored" data-anchor-id="in-this-library">In this library</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Object</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>pygstat.factorial_kriging.FactorialKriging</code></td>
+<td>Extract any structure (or sum of structures) of a nested variogram model (<code>use_gpu</code> for k-NN)</td>
+</tr>
+<tr class="even">
+<td><code>pygstat.factorial_kriging.fit_nested_variogram</code></td>
+<td>Fit a nugget + nested sum of structures to data</td>
+</tr>
+<tr class="odd">
+<td><code>tests/test_factorial_kriging_jura.py</code></td>
+<td>The automated test suite validating this module</td>
+</tr>
+<tr class="even">
+<td><code>tests/test_factorial_kriging_gpu.py</code></td>
+<td>Batched k-NN / CPU–GPU dispatch tests</td>
+</tr>
+</tbody>
+</table>
+
+
+</section>
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/zia207\.github\.io\/pygstat\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../Tutorial/09_soft_kriging.html" class="pagination-link" aria-label="Soft Kriging">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Soft Kriging</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../Tutorial/13_krigingST.html" class="pagination-link" aria-label="Spatio-Temporal OK">
+        <span class="nav-page-text">Spatio-Temporal OK</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© CC-By Zia Ahmed, Upatta Analytics, 2026</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>This page is built with <a href="https://quarto.org/">Quarto</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

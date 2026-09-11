@@ -1,0 +1,2587 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>17.3 Spatio-Temporal Poisson Kriging with PyGStat – PyGStat</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../Tutorial/18_sgsim.html" rel="next">
+<link href="../Tutorial/17_02_poisson_cokriging.html" rel="prev">
+<link href="../Image/pygstat_logo_light.svg" rel="icon" type="image/svg+xml">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f1aadacce99040138bbb613f9330654f.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-bf6de5ccb156a65fc439966d4053cafd.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-c3ddef8e9936373b1ee063945a43a984.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-bf6de5ccb156a65fc439966d4053cafd.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../Image/pygstat_logo_light.svg" alt="" class="navbar-logo light-content">
+    <img src="../Image/pygstat_logo_light.svg" alt="" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">PyGStat</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../index.html" aria-current="page"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-getting-started" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Getting Started</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-getting-started">    
+        <li>
+    <a class="dropdown-item" href="../Tutorial/00_getting_started.html">
+ <span class="dropdown-text">Getting Started</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../install.html">
+ <span class="dropdown-text">PyGStat Installation</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-tutorial" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Tutorial</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-tutorial">    
+        <li class="dropdown-header">Core Interpolation</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/01_variogram_modeling.html">
+ <span class="dropdown-text">Variogram Modeling</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/02_simple_kriging.html">
+ <span class="dropdown-text">Simple Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/03_ordinary_kriging.html">
+ <span class="dropdown-text">Ordinary Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/04_universal_kriging.html">
+ <span class="dropdown-text">Universal Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/05_cokriging.html">
+ <span class="dropdown-text">Cokriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/08_kriging_3d.html">
+ <span class="dropdown-text">3-D Kriging (KT3D)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Regression Kriging</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_01_regression_kriging_scikit_learn.html">
+ <span class="dropdown-text">scikit-learn</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_02_regression_kriging_H20.html">
+ <span class="dropdown-text">H2O AutoML</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_03_regression_kriging_pytorch.html">
+ <span class="dropdown-text">PyTorch MLP</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_04_regression_krigingDNN_TF.html">
+ <span class="dropdown-text">TensorFlow / Keras</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/06_05_regression_kriging_gnn.html">
+ <span class="dropdown-text">Graph Neural Nets</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Indicators, Structure, and Space–Time</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/07_indicator_kriging.html">
+ <span class="dropdown-text">Indicator Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/10_disjunctive_kriging.html">
+ <span class="dropdown-text">Disjunctive Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/11_empirical_bayesian_kriging.html">
+ <span class="dropdown-text">Empirical Bayesian Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/09_soft_kriging.html">
+ <span class="dropdown-text">Soft Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/12_factorial_kriging.html">
+ <span class="dropdown-text">Factorial Kriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/13_krigingST.html">
+ <span class="dropdown-text">Spatio-Temporal OK</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/14_kriging_CNNLSTM.html">
+ <span class="dropdown-text">ConvLSTM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/15_kriging_STGNN.html">
+ <span class="dropdown-text">STGNN (TGCN / DCRNN)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/16_kriging_STGTN.html">
+ <span class="dropdown-text">STGTN (STTN / GMAN)</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Poisson Kriging</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_01_poisson_Kriging_ata_atp.html">
+ <span class="dropdown-text">Area-to-Area / Area-to-Point</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_02_poisson_cokriging.html">
+ <span class="dropdown-text">Poisson Cokriging</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/17_03_poisson_kriging_ST.html">
+ <span class="dropdown-text">Spatio-Temporal Poisson</span></a>
+  </li>  
+        <li><hr class="dropdown-divider"></li>
+        <li class="dropdown-header">Simulation</li>
+        <li>
+    <a class="dropdown-item" href="../Tutorial/18_sgsim.html">
+ <span class="dropdown-text">SGSIM</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../Tutorial/19_sisim.html">
+ <span class="dropdown-text">SISIM</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://sites.google.com/view/r-data-sci-env/home"> <i class="bi bi-house" role="img" aria-label="Upatta Analytics">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://pypi.org/project/pygstat/"> <i class="bi bi-box" role="img" aria-label="PyPI">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/zia207/pygstat"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/zia-ahmed207"> <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="mailto:zia207@gmail.com"> <i class="bi bi-envelope" role="img" aria-label="Email">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../Tutorial/17_01_poisson_Kriging_ata_atp.html"><strong>Poisson Kriging</strong></a></li><li class="breadcrumb-item"><a href="../Tutorial/17_03_poisson_kriging_ST.html">Spatio-Temporal Poisson</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../Tutorial/17_01_poisson_Kriging_ata_atp.html"><strong>Poisson Kriging</strong></a></li><li class="breadcrumb-item"><a href="../Tutorial/17_03_poisson_kriging_ST.html">Spatio-Temporal Poisson</a></li></ol></nav>
+      <h1 class="title">17.3 Spatio-Temporal Poisson Kriging with PyGStat</h1>
+                      </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-center sidebar-header">
+      <a href="../index.html" class="sidebar-logo-link">
+      <img src="../Image/pygstat_logo_light.svg" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="../Image/pygstat_logo_light.svg" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Package Overview</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Core Interpolation</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/01_variogram_modeling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Variogram Modeling</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/02_simple_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Simple Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/03_ordinary_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Ordinary Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/04_universal_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Universal Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/05_cokriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cokriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/08_kriging_3d.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">3-D Kriging (KT3D)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Regression Kriging</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_01_regression_kriging_scikit_learn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">scikit-learn</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_02_regression_kriging_H20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">H2O AutoML</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_03_regression_kriging_pytorch.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PyTorch MLP</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_04_regression_krigingDNN_TF.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TensorFlow / Keras</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/06_05_regression_kriging_gnn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Graph Neural Nets</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Indicators, Structure, and Space–Time</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/07_indicator_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Indicator Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/10_disjunctive_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Disjunctive Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/11_empirical_bayesian_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Empirical Bayesian Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/09_soft_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Soft Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/12_factorial_kriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Factorial Kriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/13_krigingST.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spatio-Temporal OK</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/14_kriging_CNNLSTM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ConvLSTM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/15_kriging_STGNN.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">STGNN (TGCN / DCRNN)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/16_kriging_STGTN.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">STGTN (STTN / GMAN)</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Poisson Kriging</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_01_poisson_Kriging_ata_atp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Area-to-Area / Area-to-Point</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_02_poisson_cokriging.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Poisson Cokriging</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/17_03_poisson_kriging_ST.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Spatio-Temporal Poisson</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text"><strong>Simulation</strong></span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/18_sgsim.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">SGSIM</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../Tutorial/19_sisim.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">SISIM</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On This Page</h2>
+   
+  <ul>
+  <li><a href="#table-of-contents" id="toc-table-of-contents" class="nav-link active" data-scroll-target="#table-of-contents">Table of Contents</a></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview">1. Overview</a></li>
+  <li><a href="#theory---why-poisson-kriging" id="toc-theory---why-poisson-kriging" class="nav-link" data-scroll-target="#theory---why-poisson-kriging">2. Theory - Why Poisson Kriging</a></li>
+  <li><a href="#theory---ordinary-kriging-with-a-poisson-reliability-term" id="toc-theory---ordinary-kriging-with-a-poisson-reliability-term" class="nav-link" data-scroll-target="#theory---ordinary-kriging-with-a-poisson-reliability-term">3. Theory - Ordinary Kriging with a Poisson Reliability Term</a></li>
+  <li><a href="#theory---space-time-covariance" id="toc-theory---space-time-covariance" class="nav-link" data-scroll-target="#theory---space-time-covariance">4. Theory - Space-Time Covariance</a></li>
+  <li><a href="#theory---spatio-temporal-poisson-kriging" id="toc-theory---spatio-temporal-poisson-kriging" class="nav-link" data-scroll-target="#theory---spatio-temporal-poisson-kriging">5. Theory - Spatio-Temporal Poisson Kriging</a></li>
+  <li><a href="#python-setup" id="toc-python-setup" class="nav-link" data-scroll-target="#python-setup">6. Python Setup</a>
+  <ul>
+  <li><a href="#cpu-and-gpu" id="toc-cpu-and-gpu" class="nav-link" data-scroll-target="#cpu-and-gpu">6.1 CPU and GPU</a></li>
+  </ul></li>
+  <li><a href="#load-the-atlantic-lbc-panel" id="toc-load-the-atlantic-lbc-panel" class="nav-link" data-scroll-target="#load-the-atlantic-lbc-panel">7. Load the Atlantic LBC Panel</a></li>
+  <li><a href="#exploratory-maps" id="toc-exploratory-maps" class="nav-link" data-scroll-target="#exploratory-maps">8. Exploratory Maps</a></li>
+  <li><a href="#train-test-split" id="toc-train-test-split" class="nav-link" data-scroll-target="#train-test-split">9. Train / Test Split</a></li>
+  <li><a href="#empirical-semivariogram-and-space-time-model-fit" id="toc-empirical-semivariogram-and-space-time-model-fit" class="nav-link" data-scroll-target="#empirical-semivariogram-and-space-time-model-fit">10. Empirical Semivariogram and Space-Time Model Fit</a></li>
+  <li><a href="#fit-spatio-temporal-poisson-kriging" id="toc-fit-spatio-temporal-poisson-kriging" class="nav-link" data-scroll-target="#fit-spatio-temporal-poisson-kriging">11. Fit Spatio-Temporal Poisson Kriging</a></li>
+  <li><a href="#validation-on-held-out-counties" id="toc-validation-on-held-out-counties" class="nav-link" data-scroll-target="#validation-on-held-out-counties">12. Validation on Held-Out Counties</a></li>
+  <li><a href="#leave-one-out-sanity-check" id="toc-leave-one-out-sanity-check" class="nav-link" data-scroll-target="#leave-one-out-sanity-check">13. Leave-One-Out Sanity Check</a></li>
+  <li><a href="#forecast-beyond-the-observed-range" id="toc-forecast-beyond-the-observed-range" class="nav-link" data-scroll-target="#forecast-beyond-the-observed-range">14. Forecast Beyond the Observed Range</a></li>
+  <li><a href="#error-handling-checks" id="toc-error-handling-checks" class="nav-link" data-scroll-target="#error-handling-checks">15. Error-Handling Checks</a></li>
+  <li><a href="#cpu-vs-gpu-poisson-kriging-timing" id="toc-cpu-vs-gpu-poisson-kriging-timing" class="nav-link" data-scroll-target="#cpu-vs-gpu-poisson-kriging-timing">16. CPU vs GPU Poisson Kriging Timing</a></li>
+  <li><a href="#summary-and-conclusions" id="toc-summary-and-conclusions" class="nav-link" data-scroll-target="#summary-and-conclusions">17. Summary and Conclusions</a></li>
+  <li><a href="#resources" id="toc-resources" class="nav-link" data-scroll-target="#resources">18. Resources</a>
+  <ul>
+  <li><a href="#textbooks" id="toc-textbooks" class="nav-link" data-scroll-target="#textbooks">Textbooks</a></li>
+  <li><a href="#key-papers" id="toc-key-papers" class="nav-link" data-scroll-target="#key-papers">Key papers</a></li>
+  <li><a href="#in-this-library" id="toc-in-this-library" class="nav-link" data-scroll-target="#in-this-library">In this library</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+
+<p><strong>Dataset:</strong> North-Atlantic-seaboard US county lung/bronchus cancer (LBC) mortality panel (<code>data/lbc_atlantic.csv</code>, 666 counties × 1998–2012) + polygons (<code>data/COUNTY_ATLANTIC.shp</code>) + population (<code>data/lbc_rate.csv</code>) <strong>Target:</strong> Age-adjusted LBC mortality rate (per 100,000) <strong>Library:</strong> <code>pygstat.STPoisson_kriging</code> — space-time Poisson kriging with a metric ST covariance (Goovaerts, 2006; Pebesma, 2012)</p>
+<hr>
+<section id="table-of-contents" class="level2">
+<h2 class="anchored" data-anchor-id="table-of-contents">Table of Contents</h2>
+<ol type="1">
+<li><a href="#1-overview">Overview</a></li>
+<li><a href="#2-theory--why-poisson-kriging">Theory - Why Poisson Kriging</a></li>
+<li><a href="#3-theory--ordinary-kriging-with-a-poisson-reliability-term">Theory - Ordinary Kriging with a Poisson Reliability Term</a></li>
+<li><a href="#4-theory--space-time-covariance">Theory - Space-Time Covariance</a></li>
+<li><a href="#5-theory--spatio-temporal-poisson-kriging">Theory - Spatio-Temporal Poisson Kriging</a></li>
+<li><a href="#6-python-setup">Python Setup</a></li>
+<li><a href="#7-load-the-atlantic-lbc-panel">Load the Atlantic LBC Panel</a></li>
+<li><a href="#8-exploratory-maps">Exploratory Maps</a></li>
+<li><a href="#9-train--test-split">Train / Test Split</a></li>
+<li><a href="#10-empirical-semivariogram-and-space-time-model-fit">Empirical Semivariogram and Space-Time Model Fit</a></li>
+<li><a href="#11-fit-spatio-temporal-poisson-kriging">Fit Spatio-Temporal Poisson Kriging</a></li>
+<li><a href="#12-validation-on-held-out-counties">Validation on Held-Out Counties</a></li>
+<li><a href="#13-leave-one-out-sanity-check">Leave-One-Out Sanity Check</a></li>
+<li><a href="#14-forecast-beyond-the-observed-range">Forecast Beyond the Observed Range</a></li>
+<li><a href="#15-error-handling-checks">Error-Handling Checks</a></li>
+<li><a href="#16-cpu-vs-gpu-poisson-kriging-timing">CPU vs GPU Poisson Kriging Timing</a></li>
+<li><a href="#17-summary-and-conclusions">Summary and Conclusions</a></li>
+<li><a href="#18-resources">Resources</a></li>
+</ol>
+<hr>
+</section>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">1. Overview</h2>
+<p><strong>Spatio-temporal Poisson kriging</strong> extends Goovaerts’ Poisson kriging from a single map of areal rates to a <em>panel</em>: the same counties observed every year. Each observation is an area-year <span class="math inline">\((v_i, t_i)\)</span> with a rate <span class="math inline">\(z(v_i,t_i)\)</span> and a population <span class="math inline">\(n(v_i)\)</span>. The estimator is still a Best Linear Unbiased Estimator of the latent risk <span class="math inline">\(R\)</span>, but the covariance now depends on <strong>both</strong> a spatial lag and a temporal lag, and the Poisson reliability term still down-weights small-population counties.</p>
+<p><code>pygstat.STPoissonKriging</code> combines the population-reliability diagonal of <code>PoissonKriging</code> with the space-time covariance engine of <code>pygstat.krige_st</code> (a Python port of gstat’s <code>krigeST</code>). This notebook tests it on lung/bronchus cancer mortality along the North Atlantic seaboard, 1998–2012, then times the k-NN batched solve on the <strong>national</strong> LBC panel.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>What we do</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Data</td>
+<td>666 counties × 15 years of LBC rates; one population figure per county</td>
+</tr>
+<tr class="even">
+<td>Split</td>
+<td>Hold out 60 counties entirely (~9%); train on the remaining 606</td>
+</tr>
+<tr class="odd">
+<td>Variogram</td>
+<td>Empirical space-time semivariogram; fit a <strong>metric</strong> ST model</td>
+</tr>
+<tr class="even">
+<td>ST Poisson kriging</td>
+<td>Fit <code>STPoissonKriging</code>; predict with a local neighbourhood</td>
+</tr>
+<tr class="odd">
+<td>Validation</td>
+<td>Predict every held-out county-year vs a naive-mean baseline</td>
+</tr>
+<tr class="even">
+<td>Forecast</td>
+<td>Predict 2013 (one year past the observed window)</td>
+</tr>
+<tr class="odd">
+<td>CPU / GPU</td>
+<td>Time <code>STPoissonKriging.predict</code> on national LBC + <code>US_COUNTY.shp</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="theory---why-poisson-kriging" class="level2">
+<h2 class="anchored" data-anchor-id="theory---why-poisson-kriging">2. Theory - Why Poisson Kriging</h2>
+<p>Each county’s mortality rate is computed from a count over a population at risk,</p>
+<p><span class="math display">\[
+z(\mathbf u_i) = B\,\frac{d(\mathbf u_i)}{n(\mathbf u_i)}, \qquad
+d(\mathbf u_i)\sim\mathrm{Poisson}\!\big(n(\mathbf u_i)\,R(\mathbf u_i)\big),
+\]</span></p>
+<p>where <span class="math inline">\(d\)</span> is the observed count, <span class="math inline">\(n\)</span> the population at risk, <span class="math inline">\(R\)</span> the underlying (latent) risk, and <span class="math inline">\(B\)</span> a rate base (e.g.&nbsp;<span class="math inline">\(100{,}000\)</span>). Because a Poisson count has <span class="math inline">\(\mathrm{Var}(d)=\mathbb E[d]\)</span>, the rate itself is heteroscedastic:</p>
+<p><span class="math display">\[
+\mathrm{Var}\big(z(\mathbf u_i)\big) \;\approx\; B\,\frac{m^\ast}{n(\mathbf u_i)},
+\qquad
+m^\ast=\frac{\sum_i d(\mathbf u_i)}{\sum_i n(\mathbf u_i)}
+      =\frac{\sum_i n(\mathbf u_i)\,z(\mathbf u_i)/B}{\sum_i n(\mathbf u_i)}.
+\]</span></p>
+<p>A county with a small population has a far noisier rate than one with a large population, even if their <em>true</em> underlying risk is identical. Kriging the raw rate ignores this and lets small, noisy counties distort the map. <strong>Poisson kriging</strong> (Goovaerts, 2006) corrects for this by folding <span class="math inline">\(\mathrm{Var}(z(\mathbf u_i))\)</span> into the kriging system itself, as a population-dependent term on the diagonal.</p>
+<hr>
+</section>
+<section id="theory---ordinary-kriging-with-a-poisson-reliability-term" class="level2">
+<h2 class="anchored" data-anchor-id="theory---ordinary-kriging-with-a-poisson-reliability-term">3. Theory - Ordinary Kriging with a Poisson Reliability Term</h2>
+<p>The risk estimator is linear, <span class="math inline">\(\hat R(\mathbf u_0,t_0)=\sum_i\lambda_i\,z(\mathbf u_i,t_i)\)</span>, with the usual unbiasedness constraint <span class="math inline">\(\sum_i\lambda_i=1\)</span>. The weights solve</p>
+<p><span class="math display">\[
+\sum_{j=1}^{N}\lambda_j\Big[C\big((\mathbf u_i,t_i)-(\mathbf u_j,t_j)\big)
+     +\delta_{ij}\,B\,\frac{m^\ast}{n(\mathbf u_i)}\Big] + \mu
+     = C\big((\mathbf u_i,t_i)-(\mathbf u_0,t_0)\big), \quad i=1,\dots,N,
+\]</span></p>
+<p>or, in matrix form with Lagrange multiplier <span class="math inline">\(\mu\)</span>,</p>
+<p><span class="math display">\[
+\begin{bmatrix} \mathbf V + B\,\mathrm{diag}\!\left(\dfrac{m^\ast}{n_i}\right) &amp; \mathbf 1 \\[4pt]
+                 \mathbf 1^\top &amp; 0 \end{bmatrix}
+\begin{bmatrix} \boldsymbol\lambda \\ \mu \end{bmatrix}
+=
+\begin{bmatrix} \mathbf v_0 \\ 1 \end{bmatrix},
+\]</span></p>
+<p>with prediction <span class="math inline">\(\hat R=\boldsymbol\lambda^\top\mathbf z\)</span> and kriging variance <span class="math inline">\(\sigma^2 = C(0) - \boldsymbol\lambda^\top\mathbf v_0 - \mu\)</span>. This is exactly <code>pygstat.poisson_kriging.PoissonKriging</code>, restricted to areas observed once (no time dimension).</p>
+<hr>
+</section>
+<section id="theory---space-time-covariance" class="level2">
+<h2 class="anchored" data-anchor-id="theory---space-time-covariance">4. Theory - Space-Time Covariance</h2>
+<p>An area-year panel (the same 666 counties, each observed every year from 1998–2012) needs <span class="math inline">\(C\)</span> as a function of <em>both</em> a spatial lag <span class="math inline">\(h_s=\lVert\mathbf u_i-\mathbf u_j\rVert\)</span> and a temporal lag <span class="math inline">\(h_t=|t_i-t_j|\)</span>. This notebook uses the <strong>metric</strong> space-time model (Pebesma, 2012), the simplest choice when there is no strong prior for separate spatial/temporal structure: space and time are folded into one joint (anisotropic) distance</p>
+<p><span class="math display">\[
+h_{st} = \sqrt{h_s^2 + (a\,h_t)^2},
+\]</span></p>
+<p>where <span class="math inline">\(a\)</span> (<code>stAni</code>, units of space per unit time, e.g.&nbsp;meters/year) makes space and time commensurable, and a single ordinary variogram/covariance model <span class="math inline">\(C(h_{st})\)</span> is fit to it. <code>pygstat.st_variogram_models</code> also implements <code>separable</code>, <code>productSum</code>, and <code>sumMetric</code> space-time models for cases with distinct spatial/temporal structure.</p>
+<p>The empirical semivariogram is the Matheron estimator, binned jointly by spatial and temporal lag:</p>
+<p><span class="math display">\[
+\hat\gamma(h_s,h_t) = \frac{1}{2\,|N(h_s,h_t)|}
+   \sum_{(i,a),(j,b)\,\in\,N(h_s,h_t)}
+   \big(z(\mathbf u_i,t_a)-z(\mathbf u_j,t_b)\big)^2,
+\]</span></p>
+<p>where <span class="math inline">\(N(h_s,h_t)\)</span> collects area-year pairs whose spatial distance falls in the <span class="math inline">\(h_s\)</span> bin and whose time difference equals <span class="math inline">\(h_t\)</span>.</p>
+<hr>
+</section>
+<section id="theory---spatio-temporal-poisson-kriging" class="level2">
+<h2 class="anchored" data-anchor-id="theory---spatio-temporal-poisson-kriging">5. Theory - Spatio-Temporal Poisson Kriging</h2>
+<p><code>STPoissonKriging</code> combines Sections 3 and 4: the kriging system of Section 3, but with <span class="math inline">\(C\)</span> the fitted space-time covariance of Section 4 (via <code>pygstat.krige_st.cov_fn_st</code>), evaluated on a local neighbourhood of the <code>number_of_neighbors</code> nearest area-years in a scaled <span class="math inline">\((x, y, a\cdot t)\)</span> space. It reduces to <code>PoissonKriging</code> when every area has one time stamp, and to plain space-time ordinary kriging when every population is equal.</p>
+<hr>
+</section>
+<section id="python-setup" class="level2">
+<h2 class="anchored" data-anchor-id="python-setup">6. Python Setup</h2>
+<section id="cpu-and-gpu" class="level3">
+<h3 class="anchored" data-anchor-id="cpu-and-gpu">6.1 CPU and GPU</h3>
+<p><code>STPoissonKriging.predict</code> solves a local space-time Poisson-kriging system at every prediction point. Every point has the same neighbor count <span class="math inline">\(k\)</span>, so pygstat stacks the systems into one <code>(n_{\mathrm{pred}}, k+1, k+1)</code> batched <code>xp.linalg.solve</code> — NumPy on CPU, CuPy on GPU. Pass <code>use_gpu='auto'|True|False</code> to the constructor.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 51%">
+<col style="width: 48%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Argument / method</th>
+<th>What it controls</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>use_gpu</code></td>
+<td>Batched k-NN ST Poisson-kriging solve (NumPy or CuPy).</td>
+</tr>
+<tr class="even">
+<td><code>predict</code></td>
+<td>k-NN stacked solve; GPU when <code>use_gpu</code> is true.</td>
+</tr>
+<tr class="odd">
+<td><code>predict_id</code></td>
+<td>Leave-one-out of a single area-year; stays on <strong>CPU</strong>.</td>
+</tr>
+</tbody>
+</table>
+<p><code>use_gpu</code> is:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 38%">
+<col style="width: 61%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Value</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>'auto'</code> (default)</td>
+<td>GPU when CuPy can run a kernel on this card. Falls back to CPU otherwise.</td>
+</tr>
+<tr class="even">
+<td><code>True</code></td>
+<td>Force GPU. Warns and falls back to CPU if CuPy is missing or cannot run a kernel.</td>
+</tr>
+<tr class="odd">
+<td><code>False</code></td>
+<td>Always CPU (NumPy/SciPy).</td>
+</tr>
+</tbody>
+</table>
+<p>This notebook probes the GPU once with <code>cupy_gpu_usable()</code> and stores the result in <code>USE_GPU</code>. The Atlantic maps in §7–15 use <code>use_gpu='auto'</code>. <strong>§16</strong> times CPU vs GPU on the <strong>national LBC panel</strong> (<code>LBC_1998_2012_USA.csv</code> joined to <code>US_COUNTY.shp</code>).</p>
+<p>Install CuPy with <code>pip install pygstat[gpu]</code> (CUDA 11) or <code>pip install cupy-cuda12x</code> for CUDA 12.</p>
+<div id="d098f406" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:31.919565Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:31.918850Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:39.428489Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:39.427080Z&quot;}}" data-execution_count="1">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>matplotlib inline</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys, os, warnings</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>sys.path.insert(<span class="dv">0</span>, os.path.abspath(<span class="st">"../src"</span>))</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> geopandas <span class="im">as</span> gpd</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pygstat</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat <span class="im">import</span> STPoissonKriging, empirical_st_variogram, fit_metric_st_variogram</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat.st_variogram_models <span class="im">import</span> vgm, vgm_st, variogram_line</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pygstat.utils.backend <span class="im">import</span> CUPY_AVAILABLE, cupy_gpu_usable</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"pygstat version:"</span>, pygstat.__version__)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># ── ST Poisson k-NN batched solve: CPU / GPU dispatch (CuPy) ───────────────────</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"># cupy_gpu_usable() runs a real kernel (not just `import cupy`). Older cards can</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># import CuPy and still fail at compile time; those stay on CPU.</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>USE_GPU <span class="op">=</span> cupy_gpu_usable()</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> USE_GPU:</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"CuPy            : </span><span class="sc">{</span>cp<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        name <span class="op">=</span> cp.cuda.runtime.getDeviceProperties(<span class="dv">0</span>)[<span class="st">"name"</span>]</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(name, <span class="bu">bytes</span>):</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>            name <span class="op">=</span> name.decode()</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"GPU (CuPy)      : </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span>:</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"GPU (CuPy)      : available"</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Backend         : GPU (CuPy) — STPoissonKriging k-NN batched solve on GPU"</span>)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> CUPY_AVAILABLE:</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>        <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"CuPy            : </span><span class="sc">{</span>cp<span class="sc">.</span>__version__<span class="sc">}</span><span class="ss"> (installed, but cannot run a kernel on this GPU/CUDA setup)"</span>)</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"CuPy            : not installed  (pip install pygstat[gpu]  or  cupy-cuda12x)"</span>)</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Backend         : CPU (NumPy)"</span>)</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"use_gpu         : </span><span class="sc">{</span>USE_GPU<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="co"># --- running test log, rendered as a styled summary table at the end ---</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>RESULTS <span class="op">=</span> []</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> record(test, status, details<span class="op">=</span><span class="st">""</span>):</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    RESULTS.append({<span class="st">"Test"</span>: test, <span class="st">"Status"</span>: status, <span class="st">"Details"</span>: details})</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"[</span><span class="sc">{</span>status<span class="sc">}</span><span class="ss">] </span><span class="sc">{</span>test<span class="sc">}</span><span class="ss"> -- </span><span class="sc">{</span>details<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>pygstat version: 0.1.0
+CuPy            : 14.2.0
+GPU (CuPy)      : NVIDIA GeForce RTX 2080 Ti
+Backend         : GPU (CuPy) — STPoissonKriging k-NN batched solve on GPU
+use_gpu         : True</code></pre>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="load-the-atlantic-lbc-panel" class="level2">
+<h2 class="anchored" data-anchor-id="load-the-atlantic-lbc-panel">7. Load the Atlantic LBC Panel</h2>
+<ul>
+<li><code>data/lbc_atlantic.csv</code> — wide panel, one row per county (<code>FIPS</code>), one column per year 1998–2012, age-adjusted lung/bronchus cancer mortality rate per 100,000.</li>
+<li><code>data/COUNTY_ATLANTIC.shp</code> (+ <code>.dbf</code>/<code>.shx</code>/<code>.prj</code>) — the 666 county polygons, with <code>FIPS</code> and projected centroid attributes <code>x</code>, <code>y</code> (Albers Equal Area, meters).</li>
+<li><code>data/lbc_rate.csv</code> — supplies each county’s <strong>population</strong> (<code>pop</code>), which <code>COUNTY_ATLANTIC.shp</code> does not carry.</li>
+</ul>
+<p><strong>Population caveat.</strong> <code>lbc_rate.csv</code> gives one population figure per county (its approximate population over the study period), not a year-by-year series. True Poisson kriging needs population <em>at the time of each count</em>; lacking that, population is treated as constant across 1998–2012 for every county — a limitation of the available data, not of the method.</p>
+<div id="6b321da9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:39.431418Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:39.430973Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:39.462055Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:39.460713Z&quot;}}" data-execution_count="2">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>atlantic <span class="op">=</span> pd.read_csv(<span class="st">"../data/lbc_atlantic.csv"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>year_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> atlantic.columns <span class="cf">if</span> c <span class="op">!=</span> <span class="st">"FIPS"</span>]</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>ok <span class="op">=</span> (atlantic.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="dv">666</span>) <span class="kw">and</span> (<span class="kw">not</span> atlantic.isna().<span class="bu">any</span>().<span class="bu">any</span>())</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>record(<span class="st">"Load lbc_atlantic.csv (wide rate panel)"</span>, <span class="st">"PASS"</span> <span class="cf">if</span> ok <span class="cf">else</span> <span class="st">"FAIL"</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>       <span class="ss">f"shape=</span><span class="sc">{</span>atlantic<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">, years=</span><span class="sc">{</span>year_cols[<span class="dv">0</span>]<span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>year_cols[<span class="op">-</span><span class="dv">1</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>atlantic.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Load lbc_atlantic.csv (wide rate panel) -- shape=(666, 16), years=1998-2012</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="2">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">FIPS</th>
+<th data-quarto-table-cell-role="th">1998</th>
+<th data-quarto-table-cell-role="th">1999</th>
+<th data-quarto-table-cell-role="th">2000</th>
+<th data-quarto-table-cell-role="th">2001</th>
+<th data-quarto-table-cell-role="th">2002</th>
+<th data-quarto-table-cell-role="th">2003</th>
+<th data-quarto-table-cell-role="th">2004</th>
+<th data-quarto-table-cell-role="th">2005</th>
+<th data-quarto-table-cell-role="th">2006</th>
+<th data-quarto-table-cell-role="th">2007</th>
+<th data-quarto-table-cell-role="th">2008</th>
+<th data-quarto-table-cell-role="th">2009</th>
+<th data-quarto-table-cell-role="th">2010</th>
+<th data-quarto-table-cell-role="th">2011</th>
+<th data-quarto-table-cell-role="th">2012</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>13111</td>
+<td>73.093158</td>
+<td>73.340521</td>
+<td>74.998020</td>
+<td>74.670522</td>
+<td>74.792901</td>
+<td>74.630005</td>
+<td>73.067522</td>
+<td>73.197047</td>
+<td>72.328557</td>
+<td>69.507780</td>
+<td>69.635923</td>
+<td>68.906045</td>
+<td>68.280212</td>
+<td>68.506526</td>
+<td>69.105148</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>42115</td>
+<td>61.739041</td>
+<td>62.442799</td>
+<td>62.570395</td>
+<td>62.075383</td>
+<td>62.222949</td>
+<td>60.757341</td>
+<td>58.974677</td>
+<td>58.865642</td>
+<td>58.402923</td>
+<td>57.813455</td>
+<td>57.975761</td>
+<td>54.991348</td>
+<td>54.868356</td>
+<td>55.036873</td>
+<td>54.039593</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>42075</td>
+<td>62.616826</td>
+<td>63.269599</td>
+<td>63.503806</td>
+<td>62.786999</td>
+<td>62.229980</td>
+<td>63.073503</td>
+<td>61.781815</td>
+<td>61.573635</td>
+<td>60.254389</td>
+<td>58.860604</td>
+<td>59.363198</td>
+<td>58.047576</td>
+<td>58.057350</td>
+<td>58.075406</td>
+<td>56.655123</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>51683</td>
+<td>75.722528</td>
+<td>73.114699</td>
+<td>74.560122</td>
+<td>70.685068</td>
+<td>68.871166</td>
+<td>66.457912</td>
+<td>62.219449</td>
+<td>60.894387</td>
+<td>58.516792</td>
+<td>57.475568</td>
+<td>55.636156</td>
+<td>52.695484</td>
+<td>50.575438</td>
+<td>48.580099</td>
+<td>47.475127</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>36057</td>
+<td>61.922597</td>
+<td>62.743832</td>
+<td>62.516029</td>
+<td>63.280348</td>
+<td>62.323007</td>
+<td>62.009105</td>
+<td>60.043889</td>
+<td>59.994602</td>
+<td>59.748146</td>
+<td>58.062513</td>
+<td>56.766709</td>
+<td>55.660304</td>
+<td>54.818243</td>
+<td>54.210314</td>
+<td>54.119502</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="83bfe82b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:39.464651Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:39.464361Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:39.691459Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:39.690091Z&quot;}}" data-execution_count="3">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>counties <span class="op">=</span> gpd.read_file(<span class="st">"../data/COUNTY_ATLANTIC.shp"</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>counties[<span class="st">"FIPS"</span>] <span class="op">=</span> counties[<span class="st">"FIPS"</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>ok <span class="op">=</span> (<span class="bu">len</span>(counties) <span class="op">==</span> <span class="dv">666</span>) <span class="kw">and</span> (<span class="bu">set</span>(counties[<span class="st">"FIPS"</span>]) <span class="op">==</span> <span class="bu">set</span>(atlantic[<span class="st">"FIPS"</span>]))</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>record(<span class="st">"Load COUNTY_ATLANTIC.shp county polygons"</span>, <span class="st">"PASS"</span> <span class="cf">if</span> ok <span class="cf">else</span> <span class="st">"FAIL"</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>       <span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(counties)<span class="sc">}</span><span class="ss"> polygons, FIPS match=</span><span class="sc">{</span><span class="bu">set</span>(counties[<span class="st">'FIPS'</span>])<span class="op">==</span><span class="bu">set</span>(atlantic[<span class="st">'FIPS'</span>])<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>counties[[<span class="st">"FIPS"</span>, <span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"STATE"</span>, <span class="st">"COUNTY"</span>]].head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Load COUNTY_ATLANTIC.shp county polygons -- 666 polygons, FIPS match=True</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="3">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">FIPS</th>
+<th data-quarto-table-cell-role="th">x</th>
+<th data-quarto-table-cell-role="th">y</th>
+<th data-quarto-table-cell-role="th">STATE</th>
+<th data-quarto-table-cell-role="th">COUNTY</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>13111</td>
+<td>1056523.936</td>
+<td>1376613.190</td>
+<td>Georgia</td>
+<td>Fannin County</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>42115</td>
+<td>1653442.064</td>
+<td>2267301.476</td>
+<td>Pennsylvania</td>
+<td>Susquehanna County</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>42075</td>
+<td>1633708.275</td>
+<td>2096683.059</td>
+<td>Pennsylvania</td>
+<td>Lebanon County</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>51683</td>
+<td>1584048.852</td>
+<td>1901443.401</td>
+<td>Virginia</td>
+<td>Manassas city</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>36057</td>
+<td>1735811.102</td>
+<td>2409536.493</td>
+<td>New York</td>
+<td>Montgomery County</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="6526346a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:39.693926Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:39.693660Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:39.707822Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:39.706700Z&quot;}}" data-execution_count="4">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>rate_meta <span class="op">=</span> pd.read_csv(<span class="st">"../data/lbc_rate.csv"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>counties_pop <span class="op">=</span> counties.merge(rate_meta[[<span class="st">"FIPS"</span>, <span class="st">"pop"</span>]], on<span class="op">=</span><span class="st">"FIPS"</span>, how<span class="op">=</span><span class="st">"left"</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>ok <span class="op">=</span> counties_pop[<span class="st">"pop"</span>].notna().<span class="bu">all</span>() <span class="kw">and</span> (counties_pop[<span class="st">"pop"</span>] <span class="op">&gt;</span> <span class="dv">0</span>).<span class="bu">all</span>()</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>record(<span class="st">"Merge per-county population from lbc_rate.csv"</span>, <span class="st">"PASS"</span> <span class="cf">if</span> ok <span class="cf">else</span> <span class="st">"FAIL"</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>       <span class="ss">f"pop range=(</span><span class="sc">{</span>counties_pop[<span class="st">'pop'</span>]<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.0f}</span><span class="ss">, </span><span class="sc">{</span>counties_pop[<span class="st">'pop'</span>]<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.0f}</span><span class="ss">)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Merge per-county population from lbc_rate.csv -- pop range=(3075, 2153528)</code></pre>
+</div>
+</div>
+<div id="bf2ab704" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:39.710652Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:39.710401Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:39.741295Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:39.739881Z&quot;}}" data-execution_count="5">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">long</span> <span class="op">=</span> atlantic.melt(id_vars<span class="op">=</span><span class="st">"FIPS"</span>, value_vars<span class="op">=</span>year_cols, var_name<span class="op">=</span><span class="st">"year"</span>, value_name<span class="op">=</span><span class="st">"rate"</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="bu">long</span>[<span class="st">"year"</span>] <span class="op">=</span> <span class="bu">long</span>[<span class="st">"year"</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">long</span> <span class="op">=</span> <span class="bu">long</span>.merge(counties_pop[[<span class="st">"FIPS"</span>, <span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"pop"</span>]], on<span class="op">=</span><span class="st">"FIPS"</span>, how<span class="op">=</span><span class="st">"left"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="bu">long</span> <span class="op">=</span> <span class="bu">long</span>.sort_values([<span class="st">"FIPS"</span>, <span class="st">"year"</span>]).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>ok <span class="op">=</span> (<span class="bu">long</span>.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="dv">666</span> <span class="op">*</span> <span class="dv">15</span>) <span class="kw">and</span> (<span class="kw">not</span> <span class="bu">long</span>.isna().<span class="bu">any</span>().<span class="bu">any</span>())</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>record(<span class="st">"Build long area-year panel"</span>, <span class="st">"PASS"</span> <span class="cf">if</span> ok <span class="cf">else</span> <span class="st">"FAIL"</span>, <span class="ss">f"shape=</span><span class="sc">{</span><span class="bu">long</span><span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="bu">long</span>.head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Build long area-year panel -- shape=(9990, 6)</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="5">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">FIPS</th>
+<th data-quarto-table-cell-role="th">year</th>
+<th data-quarto-table-cell-role="th">rate</th>
+<th data-quarto-table-cell-role="th">x</th>
+<th data-quarto-table-cell-role="th">y</th>
+<th data-quarto-table-cell-role="th">pop</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>10001</td>
+<td>1998</td>
+<td>77.531300</td>
+<td>1737530.538</td>
+<td>1972072.594</td>
+<td>272234.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>10001</td>
+<td>1999</td>
+<td>79.687342</td>
+<td>1737530.538</td>
+<td>1972072.594</td>
+<td>272234.0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>10001</td>
+<td>2000</td>
+<td>77.296116</td>
+<td>1737530.538</td>
+<td>1972072.594</td>
+<td>272234.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>10001</td>
+<td>2001</td>
+<td>79.104085</td>
+<td>1737530.538</td>
+<td>1972072.594</td>
+<td>272234.0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>10001</td>
+<td>2002</td>
+<td>77.125457</td>
+<td>1737530.538</td>
+<td>1972072.594</td>
+<td>272234.0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="exploratory-maps" class="level2">
+<h2 class="anchored" data-anchor-id="exploratory-maps">8. Exploratory Maps</h2>
+<div id="360c4ee4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:39.744300Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:39.744025Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:40.649078Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:40.648085Z&quot;}}" data-execution_count="6">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>mean_rate <span class="op">=</span> <span class="bu">long</span>.groupby(<span class="st">"FIPS"</span>)[<span class="st">"rate"</span>].mean().rename(<span class="st">"mean_rate"</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>map_df <span class="op">=</span> counties_pop.merge(mean_rate, on<span class="op">=</span><span class="st">"FIPS"</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>map_df.plot(<span class="st">"mean_rate"</span>, cmap<span class="op">=</span><span class="st">"RdBu_r"</span>, legend<span class="op">=</span><span class="va">True</span>, ax<span class="op">=</span>ax[<span class="dv">0</span>], edgecolor<span class="op">=</span><span class="st">"k"</span>, linewidth<span class="op">=</span><span class="fl">0.2</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>            legend_kwds<span class="op">=</span>{<span class="st">"label"</span>: <span class="st">"rate / 100k"</span>, <span class="st">"shrink"</span>: <span class="fl">.7</span>})</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_title(<span class="st">"Mean LBC rate, 1998-2012"</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>map_df.plot(<span class="st">"pop"</span>, cmap<span class="op">=</span><span class="st">"viridis"</span>, legend<span class="op">=</span><span class="va">True</span>, ax<span class="op">=</span>ax[<span class="dv">1</span>], edgecolor<span class="op">=</span><span class="st">"k"</span>, linewidth<span class="op">=</span><span class="fl">0.2</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>            legend_kwds<span class="op">=</span>{<span class="st">"label"</span>: <span class="st">"population"</span>, <span class="st">"shrink"</span>: <span class="fl">.7</span>})</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_title(<span class="st">"County population"</span>)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> a <span class="kw">in</span> ax:</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    a.set_axis_off()</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="17_03_poisson_kriging_ST_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="63030d04" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:40.652329Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:40.652115Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:40.889105Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:40.888142Z&quot;}}" data-execution_count="7">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">4</span>))</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>sample_fips <span class="op">=</span> <span class="bu">long</span>[<span class="st">"FIPS"</span>].drop_duplicates().sample(<span class="dv">6</span>, random_state<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> fips <span class="kw">in</span> sample_fips:</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    sub <span class="op">=</span> <span class="bu">long</span>[<span class="bu">long</span>[<span class="st">"FIPS"</span>] <span class="op">==</span> fips].sort_values(<span class="st">"year"</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    ax.plot(sub[<span class="st">"year"</span>], sub[<span class="st">"rate"</span>], marker<span class="op">=</span><span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">3</span>, label<span class="op">=</span><span class="bu">str</span>(fips))</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"year"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"rate / 100,000"</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"LBC rate time series, 6 random counties"</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">7</span>, ncol<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="17_03_poisson_kriging_ST_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="train-test-split" class="level2">
+<h2 class="anchored" data-anchor-id="train-test-split">9. Train / Test Split</h2>
+<p>To validate genuine spatial-temporal <em>extrapolation</em>, 60 counties (~9%) are held out <strong>entirely</strong> — none of their years are seen during training — and predicted purely from their space-time neighbours among the remaining 606 counties.</p>
+<div id="1740d6e1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:40.892317Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:40.891922Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:40.900532Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:40.899731Z&quot;}}" data-execution_count="8">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">0</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>fips_all <span class="op">=</span> <span class="bu">long</span>[<span class="st">"FIPS"</span>].unique()</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>test_fips <span class="op">=</span> rng.choice(fips_all, size<span class="op">=</span><span class="dv">60</span>, replace<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>is_test <span class="op">=</span> <span class="bu">long</span>[<span class="st">"FIPS"</span>].isin(test_fips)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>train <span class="op">=</span> <span class="bu">long</span>.loc[<span class="op">~</span>is_test].reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>test <span class="op">=</span> <span class="bu">long</span>.loc[is_test].reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"train: </span><span class="sc">{</span>train[<span class="st">'FIPS'</span>]<span class="sc">.</span>nunique()<span class="sc">}</span><span class="ss"> counties, </span><span class="sc">{</span><span class="bu">len</span>(train)<span class="sc">}</span><span class="ss"> rows"</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"test:  </span><span class="sc">{</span>test[<span class="st">'FIPS'</span>]<span class="sc">.</span>nunique()<span class="sc">}</span><span class="ss"> counties (held out), </span><span class="sc">{</span><span class="bu">len</span>(test)<span class="sc">}</span><span class="ss"> rows"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>train: 606 counties, 9090 rows
+test:  60 counties (held out), 900 rows</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="empirical-semivariogram-and-space-time-model-fit" class="level2">
+<h2 class="anchored" data-anchor-id="empirical-semivariogram-and-space-time-model-fit">10. Empirical Semivariogram and Space-Time Model Fit</h2>
+<p><code>empirical_st_variogram</code> needs a <em>complete</em> area × time matrix (every county observed every year); this holds for the training panel since whole counties — not scattered county-years — were held out.</p>
+<div id="924e612b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:40.903239Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:40.903032Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:41.232467Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:41.231532Z&quot;}}" data-execution_count="9">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>train_wide <span class="op">=</span> train.pivot(index<span class="op">=</span><span class="st">"FIPS"</span>, columns<span class="op">=</span><span class="st">"year"</span>, values<span class="op">=</span><span class="st">"rate"</span>).sort_index()</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>train_coords <span class="op">=</span> (train[[<span class="st">"FIPS"</span>, <span class="st">"x"</span>, <span class="st">"y"</span>]].drop_duplicates(<span class="st">"FIPS"</span>).set_index(<span class="st">"FIPS"</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>                 .loc[train_wide.index][[<span class="st">"x"</span>, <span class="st">"y"</span>]].to_numpy())</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>years <span class="op">=</span> np.sort(train[<span class="st">"year"</span>].unique()).astype(<span class="bu">float</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>emp <span class="op">=</span> empirical_st_variogram(train_coords, years, train_wide.to_numpy(), n_space_bins<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>ok <span class="op">=</span> (<span class="bu">len</span>(emp[<span class="st">"dist"</span>]) <span class="op">&gt;</span> <span class="dv">0</span>) <span class="kw">and</span> np.<span class="bu">all</span>(np.isfinite(emp[<span class="st">"gamma"</span>])) <span class="kw">and</span> np.<span class="bu">all</span>(emp[<span class="st">"gamma"</span>] <span class="op">&gt;=</span> <span class="dv">0</span>)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>record(<span class="st">"Empirical space-time variogram estimation"</span>, <span class="st">"PASS"</span> <span class="cf">if</span> ok <span class="cf">else</span> <span class="st">"FAIL"</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>       <span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(emp[<span class="st">'dist'</span>])<span class="sc">}</span><span class="ss"> (space-bin, time-lag) cells from </span><span class="sc">{</span>emp[<span class="st">'np'</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.0f}</span><span class="ss"> pairs"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Empirical space-time variogram estimation -- 180 (space-bin, time-lag) cells from 34713630 pairs</code></pre>
+</div>
+</div>
+<div id="cce4764f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:41.234592Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:41.234349Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:41.326201Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:41.323960Z&quot;}}" data-execution_count="10">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>fitted_model <span class="op">=</span> fit_metric_st_variogram(emp)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>joint <span class="op">=</span> fitted_model[<span class="st">"joint"</span>]</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>nugget, sill, prange <span class="op">=</span> joint[<span class="dv">0</span>][<span class="st">"psill"</span>], joint[<span class="dv">1</span>][<span class="st">"psill"</span>], joint[<span class="dv">1</span>][<span class="st">"range"</span>]</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>st_ani <span class="op">=</span> fitted_model[<span class="st">"stAni"</span>]</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>ok <span class="op">=</span> (nugget <span class="op">&gt;=</span> <span class="dv">0</span>) <span class="kw">and</span> (sill <span class="op">&gt;</span> <span class="dv">0</span>) <span class="kw">and</span> (prange <span class="op">&gt;</span> <span class="dv">0</span>) <span class="kw">and</span> (st_ani <span class="op">&gt;</span> <span class="dv">0</span>) <span class="kw">and</span> np.isfinite(fitted_model[<span class="st">"MSE"</span>])</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>record(<span class="st">"Fit 'metric' space-time variogram model"</span>, <span class="st">"PASS"</span> <span class="cf">if</span> ok <span class="cf">else</span> <span class="st">"FAIL"</span>,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>       <span class="ss">f"nugget=</span><span class="sc">{</span>nugget<span class="sc">:.2f}</span><span class="ss"> sill=</span><span class="sc">{</span>sill<span class="sc">:.2f}</span><span class="ss"> range=</span><span class="sc">{</span>prange<span class="sc">:.0f}</span><span class="ss">m stAni=</span><span class="sc">{</span>st_ani<span class="sc">:.0f}</span><span class="ss">m/yr "</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>       <span class="ss">f"MSE=</span><span class="sc">{</span>fitted_model[<span class="st">'MSE'</span>]<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Fit 'metric' space-time variogram model -- nugget=79.61 sill=124.60 range=575681m stAni=53938m/yr MSE=217.667</code></pre>
+</div>
+</div>
+<div id="584bc431" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:41.329265Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:41.328997Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:41.586525Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:41.585309Z&quot;}}" data-execution_count="11">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">4</span>))</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>show_lags <span class="op">=</span> <span class="bu">sorted</span>(<span class="bu">set</span>(emp[<span class="st">"timelag"</span>]))[:<span class="dv">5</span>]</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> plt.cm.viridis(np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, <span class="bu">len</span>(show_lags)))</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>h <span class="op">=</span> np.linspace(<span class="dv">0</span>, emp[<span class="st">"dist"</span>].<span class="bu">max</span>(), <span class="dv">100</span>)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> lag, c <span class="kw">in</span> <span class="bu">zip</span>(show_lags, colors):</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> emp[<span class="st">"timelag"</span>] <span class="op">==</span> lag</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    ax.scatter(emp[<span class="st">"dist"</span>][m], emp[<span class="st">"gamma"</span>][m], s<span class="op">=</span><span class="dv">15</span>, color<span class="op">=</span>c, label<span class="op">=</span><span class="ss">f"lag=</span><span class="sc">{</span>lag<span class="sc">:.0f}</span><span class="ss">yr"</span>)</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    hh <span class="op">=</span> np.sqrt(h <span class="op">**</span> <span class="dv">2</span> <span class="op">+</span> (st_ani <span class="op">*</span> lag) <span class="op">**</span> <span class="dv">2</span>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    ax.plot(h, variogram_line(fitted_model[<span class="st">"joint"</span>], hh, covariance<span class="op">=</span><span class="va">False</span>), <span class="st">"--"</span>, color<span class="op">=</span>c)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"spatial lag (m)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"semivariance"</span>)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Empirical (points) vs fitted metric model (dashed)"</span>)</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">7</span>)</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="17_03_poisson_kriging_ST_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="fit-spatio-temporal-poisson-kriging" class="level2">
+<h2 class="anchored" data-anchor-id="fit-spatio-temporal-poisson-kriging">11. Fit Spatio-Temporal Poisson Kriging</h2>
+<div id="10e237e8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:41.589205Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:41.588977Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:41.599451Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:41.598445Z&quot;}}" data-execution_count="12">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>stpk <span class="op">=</span> STPoissonKriging(fitted_model).fit(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    coords<span class="op">=</span>train[[<span class="st">"x"</span>, <span class="st">"y"</span>]].to_numpy(),</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    times<span class="op">=</span>train[<span class="st">"year"</span>].to_numpy(<span class="bu">float</span>),</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    values<span class="op">=</span>train[<span class="st">"rate"</span>].to_numpy(),</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    populations<span class="op">=</span>train[<span class="st">"pop"</span>].to_numpy(),</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    ids<span class="op">=</span>train[<span class="st">"FIPS"</span>].to_numpy(),</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>ok <span class="op">=</span> stpk.rate_base <span class="op">==</span> <span class="dv">100000</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>record(<span class="st">"Fit STPoissonKriging (auto-detected rate_base)"</span>, <span class="st">"PASS"</span> <span class="cf">if</span> ok <span class="cf">else</span> <span class="st">"FAIL"</span>,</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>       <span class="ss">f"rate_base=</span><span class="sc">{</span>stpk<span class="sc">.</span>rate_base<span class="sc">:.0f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Fit STPoissonKriging (auto-detected rate_base) -- rate_base=100000</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="validation-on-held-out-counties" class="level2">
+<h2 class="anchored" data-anchor-id="validation-on-held-out-counties">12. Validation on Held-Out Counties</h2>
+<p>Predict every county-year of the 60 held-out counties from their nearest space-time neighbours among the 606 training counties, and compare against a naive baseline (the overall training mean rate, i.e.&nbsp;no spatial or temporal information at all).</p>
+<div id="092a61a7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:41.603008Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:41.602745Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:41.872365Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:41.871331Z&quot;}}" data-execution_count="13">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>zhat, sig <span class="op">=</span> stpk.predict(test[[<span class="st">"x"</span>, <span class="st">"y"</span>]].to_numpy(), test[<span class="st">"year"</span>].to_numpy(<span class="bu">float</span>),</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>                          number_of_neighbors<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>test <span class="op">=</span> test.assign(zhat<span class="op">=</span>zhat, sig<span class="op">=</span>sig)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>resid <span class="op">=</span> test[<span class="st">"rate"</span>] <span class="op">-</span> test[<span class="st">"zhat"</span>]</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>rmse <span class="op">=</span> <span class="bu">float</span>(np.sqrt(np.mean(resid <span class="op">**</span> <span class="dv">2</span>)))</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>mae <span class="op">=</span> <span class="bu">float</span>(np.mean(np.<span class="bu">abs</span>(resid)))</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>r2 <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> <span class="bu">float</span>(np.<span class="bu">sum</span>(resid <span class="op">**</span> <span class="dv">2</span>)) <span class="op">/</span> <span class="bu">float</span>(np.<span class="bu">sum</span>((test[<span class="st">"rate"</span>] <span class="op">-</span> test[<span class="st">"rate"</span>].mean()) <span class="op">**</span> <span class="dv">2</span>))</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>baseline_rmse <span class="op">=</span> <span class="bu">float</span>(np.sqrt(np.mean((test[<span class="st">"rate"</span>] <span class="op">-</span> train[<span class="st">"rate"</span>].mean()) <span class="op">**</span> <span class="dv">2</span>)))</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>ok <span class="op">=</span> rmse <span class="op">&lt;</span> baseline_rmse</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>record(<span class="st">"Held-out county prediction accuracy (60 counties)"</span>, <span class="st">"PASS"</span> <span class="cf">if</span> ok <span class="cf">else</span> <span class="st">"FAIL"</span>,</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>       <span class="ss">f"RMSE=</span><span class="sc">{</span>rmse<span class="sc">:.2f}</span><span class="ss"> vs naive-mean RMSE=</span><span class="sc">{</span>baseline_rmse<span class="sc">:.2f}</span><span class="ss">, R2=</span><span class="sc">{</span>r2<span class="sc">:.3f}</span><span class="ss">, "</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>       <span class="ss">f"mean kriging sd=</span><span class="sc">{</span>test[<span class="st">'sig'</span>]<span class="sc">.</span>mean()<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"RMSE=</span><span class="sc">{</span>rmse<span class="sc">:.3f}</span><span class="ss">  MAE=</span><span class="sc">{</span>mae<span class="sc">:.3f}</span><span class="ss">  R2=</span><span class="sc">{</span>r2<span class="sc">:.3f}</span><span class="ss">  naive-mean RMSE=</span><span class="sc">{</span>baseline_rmse<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Held-out county prediction accuracy (60 counties) -- RMSE=8.55 vs naive-mean RMSE=13.46, R2=0.596, mean kriging sd=9.78
+RMSE=8.553  MAE=6.849  R2=0.596  naive-mean RMSE=13.457</code></pre>
+</div>
+</div>
+<div id="5e68a889" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:41.875287Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:41.875041Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:42.072762Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:42.071640Z&quot;}}" data-execution_count="14">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">5</span>))</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>ax.scatter(test[<span class="st">"rate"</span>], test[<span class="st">"zhat"</span>], s<span class="op">=</span><span class="dv">10</span>, alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>lims <span class="op">=</span> [<span class="bu">min</span>(test[<span class="st">"rate"</span>].<span class="bu">min</span>(), test[<span class="st">"zhat"</span>].<span class="bu">min</span>()), <span class="bu">max</span>(test[<span class="st">"rate"</span>].<span class="bu">max</span>(), test[<span class="st">"zhat"</span>].<span class="bu">max</span>())]</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>ax.plot(lims, lims, <span class="st">"r--"</span>, linewidth<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Observed rate (per 100,000)"</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"ST Poisson Kriging prediction"</span>)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="ss">f"Held-out counties (RMSE=</span><span class="sc">{</span>rmse<span class="sc">:.2f}</span><span class="ss">)"</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="17_03_poisson_kriging_ST_files/figure-html/cell-15-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="ed46d636" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:42.075332Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:42.075087Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:42.506271Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:42.505230Z&quot;}}" data-execution_count="15">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>snap <span class="op">=</span> test[test[<span class="st">"year"</span>] <span class="op">==</span> <span class="dv">2012</span>].merge(counties[[<span class="st">"FIPS"</span>, <span class="st">"geometry"</span>]], on<span class="op">=</span><span class="st">"FIPS"</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>snap <span class="op">=</span> gpd.GeoDataFrame(snap, geometry<span class="op">=</span><span class="st">"geometry"</span>, crs<span class="op">=</span>counties.crs)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    vmin, vmax <span class="op">=</span> snap[[<span class="st">"rate"</span>, <span class="st">"zhat"</span>]].<span class="bu">min</span>().<span class="bu">min</span>(), snap[[<span class="st">"rate"</span>, <span class="st">"zhat"</span>]].<span class="bu">max</span>().<span class="bu">max</span>()</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    fig, ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    snap.plot(<span class="st">"rate"</span>, ax<span class="op">=</span>ax[<span class="dv">0</span>], legend<span class="op">=</span><span class="va">True</span>, vmin<span class="op">=</span>vmin, vmax<span class="op">=</span>vmax, cmap<span class="op">=</span><span class="st">"RdBu_r"</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>              edgecolor<span class="op">=</span><span class="st">"k"</span>, linewidth<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">0</span>].set_title(<span class="st">"Observed, 2012"</span>)<span class="op">;</span> ax[<span class="dv">0</span>].set_axis_off()</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    snap.plot(<span class="st">"zhat"</span>, ax<span class="op">=</span>ax[<span class="dv">1</span>], legend<span class="op">=</span><span class="va">True</span>, vmin<span class="op">=</span>vmin, vmax<span class="op">=</span>vmax, cmap<span class="op">=</span><span class="st">"RdBu_r"</span>,</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>              edgecolor<span class="op">=</span><span class="st">"k"</span>, linewidth<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    ax[<span class="dv">1</span>].set_title(<span class="st">"ST Poisson Kriging, 2012"</span>)<span class="op">;</span> ax[<span class="dv">1</span>].set_axis_off()</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    plt.tight_layout()</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    plt.show()</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    record(<span class="st">"Choropleth map: observed vs predicted (held-out, 2012)"</span>, <span class="st">"PASS"</span>,</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>           <span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(snap)<span class="sc">}</span><span class="ss"> counties mapped"</span>)</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>    record(<span class="st">"Choropleth map: observed vs predicted (held-out, 2012)"</span>, <span class="st">"BLOCKED"</span>, <span class="bu">str</span>(e))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="17_03_poisson_kriging_ST_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Choropleth map: observed vs predicted (held-out, 2012) -- 60 counties mapped</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="leave-one-out-sanity-check" class="level2">
+<h2 class="anchored" data-anchor-id="leave-one-out-sanity-check">13. Leave-One-Out Sanity Check</h2>
+<p>Ten random <em>training</em> area-years, each re-predicted with itself excluded from its own neighbour search — a basic sanity check that predictions track observed values without exactly reproducing them (they should be shrunk toward the local space-time mean, not copied).</p>
+<div id="6f998d63" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:42.509164Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:42.508917Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:42.533714Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:42.532870Z&quot;}}" data-execution_count="16">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>sample <span class="op">=</span> train.sample(<span class="dv">10</span>, random_state<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>loo <span class="op">=</span> pd.DataFrame([stpk.predict_id(row[<span class="st">"FIPS"</span>], row[<span class="st">"year"</span>], number_of_neighbors<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>                     <span class="cf">for</span> _, row <span class="kw">in</span> sample.iterrows()])</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>loo[<span class="st">"observed"</span>] <span class="op">=</span> sample[<span class="st">"rate"</span>].to_numpy()</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>ok <span class="op">=</span> np.isfinite(loo[<span class="st">"zhat"</span>]).<span class="bu">all</span>() <span class="kw">and</span> (loo[<span class="st">"sig"</span>].fillna(<span class="dv">0</span>) <span class="op">&gt;=</span> <span class="dv">0</span>).<span class="bu">all</span>()</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>record(<span class="st">"Leave-one-out sanity check (10 training area-years)"</span>, <span class="st">"PASS"</span> <span class="cf">if</span> ok <span class="cf">else</span> <span class="st">"FAIL"</span>,</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>       <span class="ss">f"mean|zhat-observed|=</span><span class="sc">{</span>np<span class="sc">.</span>mean(np.<span class="bu">abs</span>(loo[<span class="st">'zhat'</span>]<span class="op">-</span>loo[<span class="st">'observed'</span>]))<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>loo[[<span class="st">"id"</span>, <span class="st">"year"</span>, <span class="st">"observed"</span>, <span class="st">"zhat"</span>, <span class="st">"sig"</span>]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Leave-one-out sanity check (10 training area-years) -- mean|zhat-observed|=5.84</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="16">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">id</th>
+<th data-quarto-table-cell-role="th">year</th>
+<th data-quarto-table-cell-role="th">observed</th>
+<th data-quarto-table-cell-role="th">zhat</th>
+<th data-quarto-table-cell-role="th">sig</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>13033.0</td>
+<td>2009.0</td>
+<td>78.010072</td>
+<td>73.443756</td>
+<td>9.658588</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>36085.0</td>
+<td>2008.0</td>
+<td>53.816414</td>
+<td>44.483592</td>
+<td>9.652530</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>13023.0</td>
+<td>2002.0</td>
+<td>88.713051</td>
+<td>74.796863</td>
+<td>9.614405</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>37197.0</td>
+<td>2011.0</td>
+<td>67.353474</td>
+<td>67.344757</td>
+<td>9.788954</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>13181.0</td>
+<td>2003.0</td>
+<td>78.440312</td>
+<td>72.865224</td>
+<td>9.787427</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>13061.0</td>
+<td>2007.0</td>
+<td>65.153307</td>
+<td>76.995327</td>
+<td>9.795494</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>45089.0</td>
+<td>2012.0</td>
+<td>71.256596</td>
+<td>68.008491</td>
+<td>9.942256</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>37031.0</td>
+<td>2011.0</td>
+<td>69.517268</td>
+<td>65.657153</td>
+<td>10.160801</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">8</th>
+<td>10005.0</td>
+<td>2006.0</td>
+<td>68.024194</td>
+<td>70.850971</td>
+<td>9.813167</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">9</th>
+<td>13119.0</td>
+<td>2009.0</td>
+<td>71.449173</td>
+<td>68.271225</td>
+<td>9.682998</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="forecast-beyond-the-observed-range" class="level2">
+<h2 class="anchored" data-anchor-id="forecast-beyond-the-observed-range">14. Forecast Beyond the Observed Range</h2>
+<p>Predicting a year past the observed 1998–2012 window is pure temporal extrapolation using the fitted space-time covariance — the space-time analogue of kriging a location past the edge of a spatial survey.</p>
+<div id="8be8a90f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:42.536806Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:42.536541Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:42.554569Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:42.553286Z&quot;}}" data-execution_count="17">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>demo_fips <span class="op">=</span> train[<span class="st">"FIPS"</span>].drop_duplicates().sample(<span class="dv">3</span>, random_state<span class="op">=</span><span class="dv">0</span>).to_numpy()</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>demo_coords <span class="op">=</span> (train[[<span class="st">"FIPS"</span>, <span class="st">"x"</span>, <span class="st">"y"</span>]].drop_duplicates(<span class="st">"FIPS"</span>).set_index(<span class="st">"FIPS"</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>               .loc[demo_fips][[<span class="st">"x"</span>, <span class="st">"y"</span>]].to_numpy())</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>fzhat, fsig <span class="op">=</span> stpk.predict(demo_coords, np.full(<span class="dv">3</span>, <span class="fl">2013.0</span>), number_of_neighbors<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>ok <span class="op">=</span> np.<span class="bu">all</span>(np.isfinite(fzhat)) <span class="kw">and</span> np.<span class="bu">all</span>(fzhat <span class="op">&gt;</span> <span class="dv">0</span>) <span class="kw">and</span> np.<span class="bu">all</span>(fzhat <span class="op">&lt;</span> <span class="dv">3</span> <span class="op">*</span> <span class="bu">long</span>[<span class="st">"rate"</span>].<span class="bu">max</span>())</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>record(<span class="st">"Forecast beyond observed range (2013)"</span>, <span class="st">"PASS"</span> <span class="cf">if</span> ok <span class="cf">else</span> <span class="st">"FAIL"</span>,</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>       <span class="ss">f"predictions=</span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">round</span>(fzhat, <span class="dv">2</span>)<span class="sc">.</span>tolist()<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> fips, zh, sg <span class="kw">in</span> <span class="bu">zip</span>(demo_fips, fzhat, fsig):</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    last_obs <span class="op">=</span> train.loc[train[<span class="st">"FIPS"</span>] <span class="op">==</span> fips].sort_values(<span class="st">"year"</span>).iloc[<span class="op">-</span><span class="dv">1</span>][<span class="st">"rate"</span>]</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"FIPS </span><span class="sc">{</span>fips<span class="sc">}</span><span class="ss">: 2012 observed=</span><span class="sc">{</span>last_obs<span class="sc">:.2f}</span><span class="ss">  -&gt;  2013 forecast=</span><span class="sc">{</span>zh<span class="sc">:.2f}</span><span class="ss"> +/- </span><span class="sc">{</span>sg<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Forecast beyond observed range (2013) -- predictions=[85.66, 63.84, 63.8]
+FIPS 54043: 2012 observed=102.89  -&gt;  2013 forecast=85.66 +/- 10.36
+FIPS 13121: 2012 observed=46.79  -&gt;  2013 forecast=63.84 +/- 10.26
+FIPS 51570: 2012 observed=63.75  -&gt;  2013 forecast=63.80 +/- 10.16</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="error-handling-checks" class="level2">
+<h2 class="anchored" data-anchor-id="error-handling-checks">15. Error-Handling Checks</h2>
+<p><code>STPoissonKriging</code> should fail loudly, not silently, on bad inputs.</p>
+<div id="aea5df87" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:42.557821Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:42.557504Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:42.563048Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:42.561802Z&quot;}}" data-execution_count="18">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    stpk.predict_id(<span class="dv">999999</span>, <span class="dv">2000</span>)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    record(<span class="st">"Error handling: unknown (id, time) in predict_id"</span>, <span class="st">"FAIL"</span>, <span class="st">"no exception raised"</span>)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">ValueError</span> <span class="im">as</span> e:</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    record(<span class="st">"Error handling: unknown (id, time) in predict_id"</span>, <span class="st">"PASS"</span>, <span class="bu">str</span>(e))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Error handling: unknown (id, time) in predict_id -- (id=999999, time=2000) not found in the fitted data</code></pre>
+</div>
+</div>
+<div id="a4903d7c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:42.565283Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:42.565058Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:42.572570Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:42.571102Z&quot;}}" data-execution_count="19">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    bad_pop <span class="op">=</span> train[<span class="st">"pop"</span>].to_numpy().copy()</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    bad_pop[<span class="dv">0</span>] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    STPoissonKriging(fitted_model).fit(train[[<span class="st">"x"</span>, <span class="st">"y"</span>]].to_numpy(), train[<span class="st">"year"</span>].to_numpy(<span class="bu">float</span>),</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>                                        train[<span class="st">"rate"</span>].to_numpy(), bad_pop,</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>                                        ids<span class="op">=</span>train[<span class="st">"FIPS"</span>].to_numpy())</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    record(<span class="st">"Error handling: non-positive population in fit()"</span>, <span class="st">"FAIL"</span>, <span class="st">"no exception raised"</span>)</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">ValueError</span> <span class="im">as</span> e:</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>    record(<span class="st">"Error handling: non-positive population in fit()"</span>, <span class="st">"PASS"</span>, <span class="bu">str</span>(e))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Error handling: non-positive population in fit() -- populations must be strictly positive</code></pre>
+</div>
+</div>
+<div id="f03614c4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-09T04:27:42.575377Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-09T04:27:42.575118Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-09T04:27:42.580525Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-09T04:27:42.579321Z&quot;}}" data-execution_count="20">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    stpk.predict(np.array([[<span class="fl">0.0</span>, <span class="fl">0.0</span>]]), np.array([<span class="fl">2005.0</span>]), number_of_neighbors<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    record(<span class="st">"Error handling: too few neighbors raises ValueError"</span>, <span class="st">"FAIL"</span>, <span class="st">"no exception raised"</span>)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">ValueError</span> <span class="im">as</span> e:</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>    record(<span class="st">"Error handling: too few neighbors raises ValueError"</span>, <span class="st">"PASS"</span>, <span class="bu">str</span>(e))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[PASS] Error handling: too few neighbors raises ValueError -- Not enough space-time neighbors to build a kriging system (got 1); increase number_of_neighbors or check the data.</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="cpu-vs-gpu-poisson-kriging-timing" class="level2">
+<h2 class="anchored" data-anchor-id="cpu-vs-gpu-poisson-kriging-timing">16. CPU vs GPU Poisson Kriging Timing</h2>
+<p>The 666-county Atlantic application is too small for a GPU comparison: host→device copies dominate a stack of modest <span class="math inline">\((k+1)\times(k+1)\)</span> systems. Here we time <strong>k-nearest-neighbor</strong> space-time Poisson kriging (<code>STPoissonKriging.predict</code>) on <strong>CPU</strong> (<code>use_gpu=False</code>) versus <strong>GPU</strong> (<code>use_gpu=True</code>) using the <strong>national</strong> lung/bronchus cancer mortality panel.</p>
+<p>Data:</p>
+<ol type="1">
+<li>Join <code>data/LBC_1998_2012_USA.csv</code> (3,107 counties × years 1998–2012) to <code>data/US_COUNTY.shp</code> on <code>FIPS</code>. Coordinates are NAD 1983 Albers metres (same CRS as the polygons).</li>
+<li>The LBC CSV has no population column, and <code>US_COUNTY.shp</code> does not carry one either. County population is joined from <code>data/usa_diabetes_data.csv</code> (<code>POP_Total</code>) and treated as <strong>constant across years</strong> — the same proxy used for Atlantic <code>lbc_rate.pop</code>. <code>rate_base=100000</code>.</li>
+<li>Hold a metric ST model fixed (Atlantic-scale exponential parameters). Fitting <span class="math inline">\(\gamma\)</span> is <strong>not</strong> in the times. Draw a separate prediction set in the county bounding box × 1998–2012.</li>
+</ol>
+<p>The k-NN GPU work scales with <strong><span class="math inline">\(n_{\mathrm{pred}}\)</span></strong> (one stacked solve of shape <code>(n_pred, k+1, k+1)</code>). Training size is therefore held at all 46,605 county-years and we vary <span class="math inline">\(n_{\mathrm{pred}}\)</span>. Neighborhood size is <span class="math inline">\(k=16\)</span>.</p>
+<p>Each timing is the <strong>median</strong> of three <code>fit</code>+<code>predict</code> calls after a short GPU warmup so CUDA kernel compilation is not counted. If CuPy cannot run a kernel here, the GPU column is skipped. <code>predict_id</code> (leave-one-out) is not timed: that path is not a fixed-<span class="math inline">\(k\)</span> stack.</p>
+<div id="cpu-gpu-stpk-timing-code" class="cell" data-execution_count="16">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>N_REPEATS <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>PRED_SIZES <span class="op">=</span> [<span class="dv">500</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="dv">4000</span>, <span class="dv">8000</span>]</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>N_PRED_MAX <span class="op">=</span> <span class="bu">max</span>(PRED_SIZES)</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>K <span class="op">=</span> <span class="dv">16</span></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>RATE_BASE <span class="op">=</span> <span class="fl">100000.0</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>df_lbc <span class="op">=</span> pd.read_csv(<span class="st">"../data/LBC_1998_2012_USA.csv"</span>)</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>gdf_cty <span class="op">=</span> gpd.read_file(<span class="st">"../data/US_COUNTY.shp"</span>)</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>df_pop <span class="op">=</span> pd.read_csv(<span class="st">"../data/usa_diabetes_data.csv"</span>)[[<span class="st">"FIPS"</span>, <span class="st">"POP_Total"</span>]]</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>df_lbc[<span class="st">"FIPS"</span>] <span class="op">=</span> df_lbc[<span class="st">"FIPS"</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>gdf_cty[<span class="st">"FIPS"</span>] <span class="op">=</span> gdf_cty[<span class="st">"FIPS"</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>df_pop[<span class="st">"FIPS"</span>] <span class="op">=</span> df_pop[<span class="st">"FIPS"</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>joined <span class="op">=</span> gdf_cty.merge(df_lbc, on<span class="op">=</span><span class="st">"FIPS"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>joined <span class="op">=</span> joined.merge(df_pop, on<span class="op">=</span><span class="st">"FIPS"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>joined <span class="op">=</span> joined.dropna(subset<span class="op">=</span>[<span class="st">"LBC_MORTALITY_RATE"</span>, <span class="st">"POP_Total"</span>, <span class="st">"X"</span>, <span class="st">"Y"</span>, <span class="st">"Year"</span>])</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>joined <span class="op">=</span> joined[joined[<span class="st">"POP_Total"</span>] <span class="op">&gt;</span> <span class="dv">0</span>].copy()</span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>xy_train <span class="op">=</span> joined[[<span class="st">"X"</span>, <span class="st">"Y"</span>]].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a>t_train <span class="op">=</span> joined[<span class="st">"Year"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a>z_train <span class="op">=</span> joined[<span class="st">"LBC_MORTALITY_RATE"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a>pop_train <span class="op">=</span> joined[<span class="st">"POP_Total"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a>n_train <span class="op">=</span> <span class="bu">len</span>(xy_train)</span>
+<span id="cb37-27"><a href="#cb37-27" aria-hidden="true" tabindex="-1"></a>n_counties <span class="op">=</span> joined[<span class="st">"FIPS"</span>].nunique()</span>
+<span id="cb37-28"><a href="#cb37-28" aria-hidden="true" tabindex="-1"></a>n_years <span class="op">=</span> joined[<span class="st">"Year"</span>].nunique()</span>
+<span id="cb37-29"><a href="#cb37-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-30"><a href="#cb37-30" aria-hidden="true" tabindex="-1"></a>xmin, ymin, xmax, ymax <span class="op">=</span> gdf_cty.total_bounds</span>
+<span id="cb37-31"><a href="#cb37-31" aria-hidden="true" tabindex="-1"></a>rng_sim <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
+<span id="cb37-32"><a href="#cb37-32" aria-hidden="true" tabindex="-1"></a>xy_pred_all <span class="op">=</span> rng_sim.uniform([xmin, ymin], [xmax, ymax], size<span class="op">=</span>(N_PRED_MAX, <span class="dv">2</span>))</span>
+<span id="cb37-33"><a href="#cb37-33" aria-hidden="true" tabindex="-1"></a>t_pred_all <span class="op">=</span> rng_sim.uniform(<span class="fl">1998.0</span>, <span class="fl">2012.0</span>, size<span class="op">=</span>N_PRED_MAX)</span>
+<span id="cb37-34"><a href="#cb37-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-35"><a href="#cb37-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Hold ST model fixed (Atlantic-scale metric params); fitting is not timed.</span></span>
+<span id="cb37-36"><a href="#cb37-36" aria-hidden="true" tabindex="-1"></a>st_model <span class="op">=</span> vgm_st(</span>
+<span id="cb37-37"><a href="#cb37-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"metric"</span>,</span>
+<span id="cb37-38"><a href="#cb37-38" aria-hidden="true" tabindex="-1"></a>    joint<span class="op">=</span>vgm(psill<span class="op">=</span><span class="fl">124.60</span>, model<span class="op">=</span><span class="st">"exponential"</span>, range_<span class="op">=</span><span class="fl">575681.0</span>, nugget<span class="op">=</span><span class="fl">79.61</span>),</span>
+<span id="cb37-39"><a href="#cb37-39" aria-hidden="true" tabindex="-1"></a>    st_ani<span class="op">=</span><span class="fl">53938.0</span>,</span>
+<span id="cb37-40"><a href="#cb37-40" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb37-41"><a href="#cb37-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-42"><a href="#cb37-42" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"USA county LBC mortality (k-NN ST Poisson kriging)"</span>)</span>
+<span id="cb37-43"><a href="#cb37-43" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  counties   : </span><span class="sc">{</span>n_counties<span class="sc">:,}</span><span class="ss"> joined on FIPS "</span></span>
+<span id="cb37-44"><a href="#cb37-44" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"(LBC_1998_2012_USA.csv + US_COUNTY.shp + usa_diabetes POP_Total)"</span>)</span>
+<span id="cb37-45"><a href="#cb37-45" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  area-years : </span><span class="sc">{</span>n_train<span class="sc">:,}</span><span class="ss">  (</span><span class="sc">{</span>n_counties<span class="sc">}</span><span class="ss"> × </span><span class="sc">{</span>n_years<span class="sc">}</span><span class="ss"> years)"</span>)</span>
+<span id="cb37-46"><a href="#cb37-46" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  LBC rate   : [</span><span class="sc">{</span>z_train<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.1f}</span><span class="ss">, </span><span class="sc">{</span>z_train<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.1f}</span><span class="ss">] per 100,000"</span>)</span>
+<span id="cb37-47"><a href="#cb37-47" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"  ST model   : metric Exp  nugget=79.61  sill=124.60  range=575681 m  stAni=53938 m/yr"</span>)</span>
+<span id="cb37-48"><a href="#cb37-48" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"  CRS        : NAD 1983 Albers (metres)"</span>)</span>
+<span id="cb37-49"><a href="#cb37-49" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb37-50"><a href="#cb37-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-51"><a href="#cb37-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-52"><a href="#cb37-52" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _time_stpk(xy_pr, t_pr, use_gpu, repeats<span class="op">=</span>N_REPEATS, warmup<span class="op">=</span><span class="va">True</span>):</span>
+<span id="cb37-53"><a href="#cb37-53" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Median wall time of STPoissonKriging.fit + predict (k-NN)."""</span></span>
+<span id="cb37-54"><a href="#cb37-54" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _run():</span>
+<span id="cb37-55"><a href="#cb37-55" aria-hidden="true" tabindex="-1"></a>        stpk <span class="op">=</span> STPoissonKriging(st_model, rate_base<span class="op">=</span>RATE_BASE, use_gpu<span class="op">=</span>use_gpu).fit(</span>
+<span id="cb37-56"><a href="#cb37-56" aria-hidden="true" tabindex="-1"></a>            xy_train, t_train, z_train, pop_train,</span>
+<span id="cb37-57"><a href="#cb37-57" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb37-58"><a href="#cb37-58" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> stpk.predict(xy_pr, t_pr, number_of_neighbors<span class="op">=</span>K)</span>
+<span id="cb37-59"><a href="#cb37-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-60"><a href="#cb37-60" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> warmup:</span>
+<span id="cb37-61"><a href="#cb37-61" aria-hidden="true" tabindex="-1"></a>        k_pr <span class="op">=</span> <span class="bu">min</span>(<span class="dv">40</span>, <span class="bu">len</span>(xy_pr))</span>
+<span id="cb37-62"><a href="#cb37-62" aria-hidden="true" tabindex="-1"></a>        STPoissonKriging(st_model, rate_base<span class="op">=</span>RATE_BASE, use_gpu<span class="op">=</span>use_gpu).fit(</span>
+<span id="cb37-63"><a href="#cb37-63" aria-hidden="true" tabindex="-1"></a>            xy_train, t_train, z_train, pop_train,</span>
+<span id="cb37-64"><a href="#cb37-64" aria-hidden="true" tabindex="-1"></a>        ).predict(xy_pred_all[:k_pr], t_pred_all[:k_pr], number_of_neighbors<span class="op">=</span>K)</span>
+<span id="cb37-65"><a href="#cb37-65" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> use_gpu:</span>
+<span id="cb37-66"><a href="#cb37-66" aria-hidden="true" tabindex="-1"></a>            <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb37-67"><a href="#cb37-67" aria-hidden="true" tabindex="-1"></a>            cp.cuda.Device(<span class="dv">0</span>).synchronize()</span>
+<span id="cb37-68"><a href="#cb37-68" aria-hidden="true" tabindex="-1"></a>    times <span class="op">=</span> []</span>
+<span id="cb37-69"><a href="#cb37-69" aria-hidden="true" tabindex="-1"></a>    last <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb37-70"><a href="#cb37-70" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(repeats):</span>
+<span id="cb37-71"><a href="#cb37-71" aria-hidden="true" tabindex="-1"></a>        t0 <span class="op">=</span> time.perf_counter()</span>
+<span id="cb37-72"><a href="#cb37-72" aria-hidden="true" tabindex="-1"></a>        last <span class="op">=</span> _run()</span>
+<span id="cb37-73"><a href="#cb37-73" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> use_gpu:</span>
+<span id="cb37-74"><a href="#cb37-74" aria-hidden="true" tabindex="-1"></a>            <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb37-75"><a href="#cb37-75" aria-hidden="true" tabindex="-1"></a>            cp.cuda.Device(<span class="dv">0</span>).synchronize()</span>
+<span id="cb37-76"><a href="#cb37-76" aria-hidden="true" tabindex="-1"></a>        times.append(time.perf_counter() <span class="op">-</span> t0)</span>
+<span id="cb37-77"><a href="#cb37-77" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.median(times)), last</span>
+<span id="cb37-78"><a href="#cb37-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-79"><a href="#cb37-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-80"><a href="#cb37-80" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"GPU usable : </span><span class="sc">{</span>USE_GPU<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb37-81"><a href="#cb37-81" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Repeats    : </span><span class="sc">{</span>N_REPEATS<span class="sc">}</span><span class="ss">  (median wall time of fit+predict, k-NN)"</span>)</span>
+<span id="cb37-82"><a href="#cb37-82" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"n_train    : </span><span class="sc">{</span>n_train<span class="sc">}</span><span class="ss">  (USA LBC county-years)"</span>)</span>
+<span id="cb37-83"><a href="#cb37-83" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"n_pred     : </span><span class="sc">{</span>PRED_SIZES<span class="sc">}</span><span class="ss">  (random (x,y,t) in the US_COUNTY bbox × 1998–2012)"</span>)</span>
+<span id="cb37-84"><a href="#cb37-84" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"neighbors  : </span><span class="sc">{</span>K<span class="sc">}</span><span class="ss">; rate_base=</span><span class="sc">{</span>RATE_BASE<span class="sc">:.0f}</span><span class="ss">"</span>)</span>
+<span id="cb37-85"><a href="#cb37-85" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb37-86"><a href="#cb37-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-87"><a href="#cb37-87" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb37-88"><a href="#cb37-88" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n_pred <span class="kw">in</span> PRED_SIZES:</span>
+<span id="cb37-89"><a href="#cb37-89" aria-hidden="true" tabindex="-1"></a>    xy_pr <span class="op">=</span> xy_pred_all[:n_pred]</span>
+<span id="cb37-90"><a href="#cb37-90" aria-hidden="true" tabindex="-1"></a>    t_pr <span class="op">=</span> t_pred_all[:n_pred]</span>
+<span id="cb37-91"><a href="#cb37-91" aria-hidden="true" tabindex="-1"></a>    cpu_t, pred_cpu <span class="op">=</span> _time_stpk(xy_pr, t_pr, use_gpu<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb37-92"><a href="#cb37-92" aria-hidden="true" tabindex="-1"></a>    row <span class="op">=</span> {</span>
+<span id="cb37-93"><a href="#cb37-93" aria-hidden="true" tabindex="-1"></a>        <span class="st">"dataset"</span>: <span class="st">"USA LBC"</span>,</span>
+<span id="cb37-94"><a href="#cb37-94" aria-hidden="true" tabindex="-1"></a>        <span class="st">"n_train"</span>: n_train,</span>
+<span id="cb37-95"><a href="#cb37-95" aria-hidden="true" tabindex="-1"></a>        <span class="st">"n_pred"</span>: n_pred,</span>
+<span id="cb37-96"><a href="#cb37-96" aria-hidden="true" tabindex="-1"></a>        <span class="st">"CPU (s)"</span>: cpu_t,</span>
+<span id="cb37-97"><a href="#cb37-97" aria-hidden="true" tabindex="-1"></a>        <span class="st">"GPU (s)"</span>: np.nan,</span>
+<span id="cb37-98"><a href="#cb37-98" aria-hidden="true" tabindex="-1"></a>        <span class="st">"speedup"</span>: np.nan,</span>
+<span id="cb37-99"><a href="#cb37-99" aria-hidden="true" tabindex="-1"></a>        <span class="st">"match"</span>: <span class="st">"—"</span>,</span>
+<span id="cb37-100"><a href="#cb37-100" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb37-101"><a href="#cb37-101" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> USE_GPU:</span>
+<span id="cb37-102"><a href="#cb37-102" aria-hidden="true" tabindex="-1"></a>        gpu_t, pred_gpu <span class="op">=</span> _time_stpk(xy_pr, t_pr, use_gpu<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb37-103"><a href="#cb37-103" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"GPU (s)"</span>] <span class="op">=</span> gpu_t</span>
+<span id="cb37-104"><a href="#cb37-104" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"speedup"</span>] <span class="op">=</span> cpu_t <span class="op">/</span> gpu_t</span>
+<span id="cb37-105"><a href="#cb37-105" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"match"</span>] <span class="op">=</span> <span class="bu">bool</span>(</span>
+<span id="cb37-106"><a href="#cb37-106" aria-hidden="true" tabindex="-1"></a>            np.allclose(pred_cpu[<span class="dv">0</span>], pred_gpu[<span class="dv">0</span>], rtol<span class="op">=</span><span class="fl">1e-4</span>, atol<span class="op">=</span><span class="fl">1e-4</span>)</span>
+<span id="cb37-107"><a href="#cb37-107" aria-hidden="true" tabindex="-1"></a>            <span class="kw">and</span> np.allclose(pred_cpu[<span class="dv">1</span>], pred_gpu[<span class="dv">1</span>], rtol<span class="op">=</span><span class="fl">1e-4</span>, atol<span class="op">=</span><span class="fl">1e-4</span>, equal_nan<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb37-108"><a href="#cb37-108" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb37-109"><a href="#cb37-109" aria-hidden="true" tabindex="-1"></a>        <span class="im">import</span> cupy <span class="im">as</span> cp</span>
+<span id="cb37-110"><a href="#cb37-110" aria-hidden="true" tabindex="-1"></a>        cp.get_default_memory_pool().free_all_blocks()</span>
+<span id="cb37-111"><a href="#cb37-111" aria-hidden="true" tabindex="-1"></a>    rows.append(row)</span>
+<span id="cb37-112"><a href="#cb37-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-113"><a href="#cb37-113" aria-hidden="true" tabindex="-1"></a>df_bench <span class="op">=</span> pd.DataFrame(rows)</span>
+<span id="cb37-114"><a href="#cb37-114" aria-hidden="true" tabindex="-1"></a>df_show <span class="op">=</span> df_bench.copy()</span>
+<span id="cb37-115"><a href="#cb37-115" aria-hidden="true" tabindex="-1"></a>df_show[<span class="st">"CPU (ms)"</span>] <span class="op">=</span> (df_show[<span class="st">"CPU (s)"</span>] <span class="op">*</span> <span class="dv">1000</span>).<span class="bu">round</span>(<span class="dv">1</span>)</span>
+<span id="cb37-116"><a href="#cb37-116" aria-hidden="true" tabindex="-1"></a>df_show[<span class="st">"GPU (ms)"</span>] <span class="op">=</span> (df_show[<span class="st">"GPU (s)"</span>] <span class="op">*</span> <span class="dv">1000</span>).<span class="bu">round</span>(<span class="dv">1</span>)</span>
+<span id="cb37-117"><a href="#cb37-117" aria-hidden="true" tabindex="-1"></a>df_show[<span class="st">"speedup"</span>] <span class="op">=</span> df_show[<span class="st">"speedup"</span>].<span class="bu">map</span>(</span>
+<span id="cb37-118"><a href="#cb37-118" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> x: <span class="st">"—"</span> <span class="cf">if</span> pd.isna(x) <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span>x<span class="sc">:.2f}</span><span class="ss">×"</span></span>
+<span id="cb37-119"><a href="#cb37-119" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb37-120"><a href="#cb37-120" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df_show[[<span class="st">"dataset"</span>, <span class="st">"n_train"</span>, <span class="st">"n_pred"</span>, <span class="st">"CPU (ms)"</span>, <span class="st">"GPU (ms)"</span>, <span class="st">"speedup"</span>, <span class="st">"match"</span>]].to_string(index<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb37-121"><a href="#cb37-121" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb37-122"><a href="#cb37-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-123"><a href="#cb37-123" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="fl">4.2</span>))</span>
+<span id="cb37-124"><a href="#cb37-124" aria-hidden="true" tabindex="-1"></a>n_vals <span class="op">=</span> df_bench[<span class="st">"n_pred"</span>].to_numpy()</span>
+<span id="cb37-125"><a href="#cb37-125" aria-hidden="true" tabindex="-1"></a>cpu_ms <span class="op">=</span> df_bench[<span class="st">"CPU (s)"</span>].to_numpy() <span class="op">*</span> <span class="dv">1000</span></span>
+<span id="cb37-126"><a href="#cb37-126" aria-hidden="true" tabindex="-1"></a>gpu_ms <span class="op">=</span> df_bench[<span class="st">"GPU (s)"</span>].to_numpy() <span class="op">*</span> <span class="dv">1000</span></span>
+<span id="cb37-127"><a href="#cb37-127" aria-hidden="true" tabindex="-1"></a>labels <span class="op">=</span> [<span class="bu">str</span>(<span class="bu">int</span>(n)) <span class="cf">for</span> n <span class="kw">in</span> n_vals]</span>
+<span id="cb37-128"><a href="#cb37-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-129"><a href="#cb37-129" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.arange(<span class="bu">len</span>(n_vals))</span>
+<span id="cb37-130"><a href="#cb37-130" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> <span class="fl">0.36</span></span>
+<span id="cb37-131"><a href="#cb37-131" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].bar(x <span class="op">-</span> w <span class="op">/</span> <span class="dv">2</span>, cpu_ms, w, label<span class="op">=</span><span class="st">"CPU (NumPy)"</span>, color<span class="op">=</span><span class="st">"steelblue"</span>)</span>
+<span id="cb37-132"><a href="#cb37-132" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> USE_GPU <span class="kw">and</span> np.isfinite(gpu_ms).<span class="bu">all</span>():</span>
+<span id="cb37-133"><a href="#cb37-133" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">0</span>].bar(x <span class="op">+</span> w <span class="op">/</span> <span class="dv">2</span>, gpu_ms, w, label<span class="op">=</span><span class="st">"GPU (CuPy)"</span>, color<span class="op">=</span><span class="st">"darkorange"</span>)</span>
+<span id="cb37-134"><a href="#cb37-134" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xticks(x)</span>
+<span id="cb37-135"><a href="#cb37-135" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xticklabels(labels, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb37-136"><a href="#cb37-136" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="vs">r"Number of prediction points </span><span class="dv">$</span><span class="vs">n_{</span><span class="dv">\m</span><span class="vs">athrm{pred}}</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb37-137"><a href="#cb37-137" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"Median time (ms)"</span>)</span>
+<span id="cb37-138"><a href="#cb37-138" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"STPoissonKriging.predict (k-NN) — CPU vs GPU"</span>)</span>
+<span id="cb37-139"><a href="#cb37-139" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend()</span>
+<span id="cb37-140"><a href="#cb37-140" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_yscale(<span class="st">"log"</span>)</span>
+<span id="cb37-141"><a href="#cb37-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-142"><a href="#cb37-142" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> USE_GPU:</span>
+<span id="cb37-143"><a href="#cb37-143" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].plot(n_vals, df_bench[<span class="st">"speedup"</span>], <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"darkgreen"</span>, lw<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb37-144"><a href="#cb37-144" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].axhline(<span class="fl">1.0</span>, color<span class="op">=</span><span class="st">"grey"</span>, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb37-145"><a href="#cb37-145" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_xlabel(<span class="vs">r"Number of prediction points </span><span class="dv">$</span><span class="vs">n_{</span><span class="dv">\m</span><span class="vs">athrm{pred}}</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb37-146"><a href="#cb37-146" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_ylabel(<span class="st">"Speedup (CPU time / GPU time)"</span>)</span>
+<span id="cb37-147"><a href="#cb37-147" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_title(<span class="st">"GPU speedup vs prediction size"</span>)</span>
+<span id="cb37-148"><a href="#cb37-148" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb37-149"><a href="#cb37-149" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb37-150"><a href="#cb37-150" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].text(</span>
+<span id="cb37-151"><a href="#cb37-151" aria-hidden="true" tabindex="-1"></a>        <span class="fl">0.5</span>, <span class="fl">0.5</span>,</span>
+<span id="cb37-152"><a href="#cb37-152" aria-hidden="true" tabindex="-1"></a>        <span class="st">"GPU not usable in this environment</span><span class="ch">\n</span><span class="st">CPU-only timings shown"</span>,</span>
+<span id="cb37-153"><a href="#cb37-153" aria-hidden="true" tabindex="-1"></a>        ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>, transform<span class="op">=</span>axes[<span class="dv">1</span>].transAxes,</span>
+<span id="cb37-154"><a href="#cb37-154" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb37-155"><a href="#cb37-155" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].set_axis_off()</span>
+<span id="cb37-156"><a href="#cb37-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-157"><a href="#cb37-157" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb37-158"><a href="#cb37-158" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>USA county LBC mortality (k-NN ST Poisson kriging)
+  counties   : 3,107 joined on FIPS (LBC_1998_2012_USA.csv + US_COUNTY.shp + usa_diabetes POP_Total)
+  area-years : 46,605  (3107 × 15 years)
+  LBC rate   : [11.2, 223.6] per 100,000
+  ST model   : metric Exp  nugget=79.61  sill=124.60  range=575681 m  stAni=53938 m/yr
+  CRS        : NAD 1983 Albers (metres)
+
+GPU usable : True
+Repeats    : 3  (median wall time of fit+predict, k-NN)
+n_train    : 46605  (USA LBC county-years)
+n_pred     : [500, 1000, 2000, 4000, 8000]  (random (x,y,t) in the US_COUNTY bbox × 1998–2012)
+neighbors  : 16; rate_base=100000
+
+dataset  n_train  n_pred  CPU (ms)  GPU (ms) speedup  match
+USA LBC    46605     500      21.2      17.9   1.19×   True
+USA LBC    46605    1000      37.4      19.0   1.97×   True
+USA LBC    46605    2000      63.3      23.9   2.65×   True
+USA LBC    46605    4000     112.2      34.6   3.25×   True
+USA LBC    46605    8000     223.8      57.2   3.91×   True
+</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="17_03_poisson_kriging_ST_files/figure-html/cell-22-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Predictions and kriging standard errors from the two backends should <strong>match</strong> (<code>match = True</code>). The GPU speedup comes from the batched <span class="math inline">\((n_{\mathrm{pred}}, k+1, k+1)\)</span> space-time Poisson-kriging solve, not from the county join or the ST variogram (those run once on CPU and are excluded from the times). Small <span class="math inline">\(n_{\mathrm{pred}}\)</span> can show little GPU gain because kernel-launch overhead dominates; as the prediction set grows the stacked solve keeps the GPU several times faster. Use <code>use_gpu=USE_GPU</code> so the same cells run on a laptop CPU or a CUDA workstation without edits. <code>predict_id</code> stays on CPU.</p>
+<hr>
+</section>
+<section id="summary-and-conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="summary-and-conclusions">17. Summary and Conclusions</h2>
+<ul>
+<li><strong>Spatio-temporal Poisson kriging</strong> estimates areal-rate risk in a county-year panel by combining a metric space-time covariance with Goovaerts’ population-reliability diagonal.</li>
+<li><strong><code>pygstat.STPoissonKriging</code></strong> is that estimator: local neighbourhood ordinary kriging in scaled <span class="math inline">\((x,y,a\cdot t)\)</span> space, reducing to <code>PoissonKriging</code> when there is no time dimension.</li>
+<li>On <strong>Atlantic LBC mortality</strong> (666 counties × 1998–2012), a metric ST model is fit to the empirical space-time semivariogram. Held-out counties are predicted from neighbours they never contributed to training.</li>
+<li>Leave-one-out checks confirm predictions track observed rates without copying them. Forecasting 2013 is a pure temporal extrapolation using the same covariance.</li>
+<li>Error handling raises <code>ValueError</code> on unknown ids, non-positive population, and too few neighbours.</li>
+<li><strong>CPU / GPU.</strong> k-NN ST Poisson kriging (<code>STPoissonKriging.predict</code>, <code>use_gpu=USE_GPU</code>) was timed on <strong>USA county LBC mortality</strong> (3,107 counties × 15 years joined to <code>US_COUNTY.shp</code>). The GPU batched <code>(n_pred, k+1, k+1)</code> solve is the accelerated step; <code>predict_id</code> stays on CPU.</li>
+</ul>
+<hr>
+</section>
+<section id="resources" class="level2">
+<h2 class="anchored" data-anchor-id="resources">18. Resources</h2>
+<section id="textbooks" class="level3">
+<h3 class="anchored" data-anchor-id="textbooks">Textbooks</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Reference</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Goovaerts, P. (1997). <em>Geostatistics for Natural Resources Evaluation</em>. Oxford University Press.</td>
+<td>Poisson rates, ordinary kriging</td>
+</tr>
+<tr class="even">
+<td>Cressie, N. &amp; Wikle, C.K. (2011). <em>Statistics for Spatio-Temporal Data</em>. Wiley.</td>
+<td>Space-time covariance models</td>
+</tr>
+<tr class="odd">
+<td>Chilès, J.-P. &amp; Delfiner, P. (2012). <em>Geostatistics: Modeling Spatial Uncertainty</em> (2nd ed.). Wiley.</td>
+<td>Metric and product-sum ST models</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="key-papers" class="level3">
+<h3 class="anchored" data-anchor-id="key-papers">Key papers</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Paper</th>
+<th>Contribution</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Goovaerts, P. (2006). Geostatistical analysis of disease data. <em>Int. J. Health Geographics</em> 5:52.</td>
+<td>Poisson kriging of areal rates</td>
+</tr>
+<tr class="even">
+<td>Pebesma, E. (2012). spacetime: Spatio-Temporal Data in R. <em>Journal of Statistical Software</em> 51(7).</td>
+<td><code>krigeST</code> algorithm and this Atlantic dataset</td>
+</tr>
+<tr class="odd">
+<td>Bilonick, R.A. (1985). The space-time distribution of sulfate deposition. <em>Atmospheric Environment</em> 19, 1829–1845.</td>
+<td>Metric space-time variogram</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="in-this-library" class="level3">
+<h3 class="anchored" data-anchor-id="in-this-library">In this library</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Object</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>pygstat.STPoissonKriging</code></td>
+<td>space-time Poisson kriging of areal rates</td>
+</tr>
+<tr class="even">
+<td><code>STPoissonKriging(..., use_gpu=...)</code></td>
+<td>batched k-NN ST Poisson solve (CPU / GPU)</td>
+</tr>
+<tr class="odd">
+<td><code>pygstat.empirical_st_variogram</code></td>
+<td>empirical space-time semivariogram</td>
+</tr>
+<tr class="even">
+<td><code>pygstat.fit_metric_st_variogram</code></td>
+<td>metric ST model fit</td>
+</tr>
+<tr class="odd">
+<td><code>pygstat.PoissonKriging</code></td>
+<td>spatial-only Poisson kriging (Tutorial 17.1)</td>
+</tr>
+<tr class="even">
+<td><code>pygstat.STKriging</code></td>
+<td>space-time ordinary kriging of point data (Tutorial 13)</td>
+</tr>
+</tbody>
+</table>
+
+
+</section>
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/zia207\.github\.io\/pygstat\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../Tutorial/17_02_poisson_cokriging.html" class="pagination-link" aria-label="Poisson Cokriging">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Poisson Cokriging</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../Tutorial/18_sgsim.html" class="pagination-link" aria-label="SGSIM">
+        <span class="nav-page-text">SGSIM</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© CC-By Zia Ahmed, Upatta Analytics, 2026</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    </div>
+    <div class="nav-footer-right">
+<p>This page is built with <a href="https://quarto.org/">Quarto</a>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

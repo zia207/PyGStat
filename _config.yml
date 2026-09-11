@@ -1,0 +1,49 @@
+# GitHub Pages (Jekyll) — pygstat
+# Enable at: Settings → Pages → Deploy from a branch → main → /docs
+# Site URL: https://zia207.github.io/pygstat/
+
+title: pygstat
+tagline: GPU-accelerated geostatistics for Python
+description: >-
+  Fit variograms, interpolate with kriging, smooth areal rates with Poisson
+  kriging, run sequential simulation, and map uncertainty — on CPU or GPU.
+lang: en
+timezone: UTC
+
+url: https://zia207.github.io
+baseurl: /pygstat
+
+author:
+  name: Zia Ahmed
+  email: zia207@gmail.com
+  affiliation: Upatta Analytic
+
+version: 0.1.0
+python: ">= 3.8"
+license: MIT
+
+repository: zia207/pygstat
+pypi: https://pypi.org/project/pygstat/
+github: https://github.com/zia207/pygstat
+issues: https://github.com/zia207/pygstat/issues
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  hard_wrap: false
+
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - vendor
+
+include:
+  - Tutorial
+  - kriging-workbench.html
+  - assets

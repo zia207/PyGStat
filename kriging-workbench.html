@@ -1,0 +1,1044 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kriging Workbench</title>
+<style>
+  :root{
+    --ink:#1b1e27; --panel:#eef0f4; --card:#ffffff; --line:#dce0e7;
+    --line2:#c7cdd8; --mut:#697086; --mut2:#9aa1b2; --acc:#33415c; --acc2:#25304a;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--panel);color:var(--ink);font-family:var(--sans);
+    font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 20px 40px}
+  header{margin-bottom:14px}
+  h1{font-size:20px;font-weight:600;letter-spacing:-.01em;margin:0 0 3px}
+  .sub{color:var(--mut);font-size:13px;max-width:74ch}
+
+  /* ---- toolbar: tabs + global run control ---- */
+  .toolbar{position:sticky;top:0;z-index:20;background:var(--panel);
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:10px 0;margin-bottom:16px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+  .tabbar{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;padding:3px}
+  .tabbar button{font:inherit;font-size:12.5px;font-weight:500;padding:7px 13px;border:0;
+    border-radius:7px;background:transparent;color:var(--mut);cursor:pointer;transition:background .12s,color .12s}
+  .tabbar button:hover{color:var(--ink)}
+  .tabbar button.on{background:var(--acc);color:#fff}
+  .runbar{display:flex;align-items:center;gap:10px}
+  .runbar .hint{font-size:11.5px;color:var(--mut2);white-space:nowrap}
+  .runbar .btn{padding:8px 18px;white-space:nowrap}
+
+  .layout{display:grid;grid-template-columns:264px 1fr;gap:16px;align-items:start}
+  @media(max-width:880px){.layout{grid-template-columns:1fr}}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  @media(max-width:760px){.two-col{grid-template-columns:1fr}}
+  .stack{display:flex;flex-direction:column;gap:16px}
+
+  .tabpanel{display:none}
+  .tabpanel.active{display:block}
+
+  .rail{display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .card h2{font-size:12px;font-weight:600;color:var(--mut);margin:0 0 12px;
+    display:flex;align-items:center;justify-content:space-between}
+  .ctl{margin-bottom:14px}
+  .ctl:last-child{margin-bottom:0}
+  .ctl label{display:flex;justify-content:space-between;align-items:baseline;
+    font-size:13px;margin-bottom:6px}
+  .ctl label .val{font-family:var(--mono);font-size:12px;color:var(--acc);font-weight:600}
+  input[type=range]{width:100%;accent-color:var(--acc);height:18px;cursor:pointer}
+  select,input[type=number]{width:100%;font:inherit;font-size:13px;padding:7px 9px;
+    border:1px solid var(--line2);border-radius:8px;background:var(--card);color:var(--ink)}
+  select{cursor:pointer}
+  .seg{display:flex;gap:0;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+  .seg button{flex:1;font:inherit;font-size:12px;padding:7px 4px;border:0;
+    background:var(--card);color:var(--mut);cursor:pointer;border-right:1px solid var(--line2)}
+  .seg button:last-child{border-right:0}
+  .seg button.on{background:var(--acc);color:#fff}
+  .row{display:flex;gap:8px}
+  .btn{flex:1;font:inherit;font-size:12.5px;padding:8px 6px;border:1px solid var(--line2);
+    border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer;transition:background .12s}
+  .btn:hover{background:var(--panel)}
+  .btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+  .btn.primary:hover{background:var(--acc2)}
+  .hint{font-size:11.5px;color:var(--mut2);line-height:1.45;margin-top:2px}
+  .note{font-size:12px;color:var(--mut);line-height:1.55}
+  .note b{color:var(--ink)}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-family:var(--mono);
+    font-size:12px;margin-top:8px}
+  .kv .k{color:var(--mut)}
+  .kv .v{text-align:right;font-weight:600}
+  [data-only]{display:none}
+  .checks{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line2);
+    border-radius:8px;padding:4px;background:var(--card)}
+  .checkitem{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 6px;
+    border-radius:6px;cursor:pointer}
+  .checkitem:hover{background:var(--panel)}
+  .checkitem input{accent-color:var(--acc);width:15px;height:15px;cursor:pointer}
+  .checkitem.disabled{opacity:.4;pointer-events:none}
+
+  .stat-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:4px}
+  .stat-table th,.stat-table td{padding:5px 6px;text-align:right;border-bottom:1px solid var(--line)}
+  .stat-table th:first-child,.stat-table td:first-child{text-align:left;color:var(--mut);font-family:var(--sans)}
+  .stat-table thead th{color:var(--mut);font-weight:600;font-family:var(--sans);font-size:11px}
+
+  .maptitle{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 10px}
+  .maptitle b{font-size:13px;font-weight:600}
+  .maptitle span{font-size:11.5px;color:var(--mut)}
+  .maps{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:620px){.maps{grid-template-columns:1fr}}
+  .canvas-hold{position:relative;width:100%;aspect-ratio:1/1;border-radius:8px;overflow:hidden;
+    border:1px solid var(--line);background:#0d1017}
+  .canvas-hold canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #predCv,#probCv{cursor:crosshair}
+  .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#aeb6c8;font-size:13px;text-align:center;padding:20px;pointer-events:none}
+  .cbar{display:flex;align-items:center;gap:8px;margin-top:9px;font-family:var(--mono);
+    font-size:11px;color:var(--mut)}
+  .cbar .strip{flex:1;height:10px;border-radius:3px;border:1px solid var(--line)}
+
+  .readout{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-family:var(--mono);font-size:12.5px}
+  .readout .k{color:var(--mut)}
+  .readout .v{text-align:right;font-weight:600}
+
+  .chart-hold{position:relative;width:100%;height:220px}
+  .chart-hold canvas{position:absolute;inset:0;width:100%;height:100%}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--mut)}
+  .legend i{display:inline-block;width:22px;height:0;vertical-align:middle;margin-right:6px}
+  .swatch-line{border-top:2px solid var(--acc)}
+  .swatch-dot::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
+    background:var(--mut);margin-right:6px;vertical-align:middle}
+</style>
+<div class="wrap">
+  <header>
+    <h1>Kriging workbench</h1>
+    <div class="sub">Five kriging methods, one real dataset. 155 soil samples and a 3103-cell
+      prediction grid from the Meuse river floodplain (Stein, NL) &mdash; the classic teaching
+      dataset from Burrough &amp; McDonnell, distributed with R's <code>sp</code>/<code>gstat</code>
+      packages. Heavy-metal concentrations are modeled in log10 space (they are strongly
+      right-skewed). Work through the tabs left to right: pick a variable, look at it, shape a
+      variogram, krige it, then turn the result into an exceedance-probability map.</div>
+  </header>
+
+  <div class="toolbar">
+    <div class="tabbar" id="tabbar">
+      <button data-tab="variable" class="on">1&nbsp;&middot;&nbsp;Variable</button>
+      <button data-tab="exploratory">2&nbsp;&middot;&nbsp;Exploratory</button>
+      <button data-tab="variogram">3&nbsp;&middot;&nbsp;Variogram</button>
+      <button data-tab="kriging">4&nbsp;&middot;&nbsp;Kriging</button>
+      <button data-tab="probability">5&nbsp;&middot;&nbsp;Probability</button>
+    </div>
+    <div class="runbar">
+      <span class="hint" id="runHint">Up to date.</span>
+      <button class="btn primary" id="runBtn">Run</button>
+    </div>
+  </div>
+
+  <!-- ============ 1. VARIABLE ============ -->
+  <div class="tabpanel active" data-tab="variable">
+    <div class="two-col">
+      <div class="card">
+        <h2>Variable</h2>
+        <div class="ctl">
+          <label for="primary">Primary metal (log10)</label>
+          <select id="primary">
+            <option value="zinc" selected>Zinc</option>
+            <option value="lead">Lead</option>
+            <option value="copper">Copper</option>
+            <option value="cadmium">Cadmium</option>
+          </select>
+        </div>
+        <div class="ctl" data-only="ck">
+          <label>Co-variables (secondary, log10)</label>
+          <div class="checks" id="covarChecks">
+            <label class="checkitem"><input type="checkbox" value="cadmium"> Cadmium</label>
+            <label class="checkitem"><input type="checkbox" value="copper" checked> Copper</label>
+            <label class="checkitem"><input type="checkbox" value="lead"> Lead</label>
+            <label class="checkitem"><input type="checkbox" value="zinc"> Zinc</label>
+          </div>
+          <div class="hint">Pick 1&ndash;3 secondary metals (always known at all 155 sites) to
+            help predict the sparsely-sampled primary metal. With more than one, this becomes a
+            true multivariate cokriging under a linear model of coregionalization: every
+            variable pair shares the same spatial correlation shape, scaled by the sill and the
+            pairwise correlation actually measured in the data.</div>
+        </div>
+        <div class="ctl" data-only="ck">
+          <label>Primary coverage <span class="val" id="covVal">40%</span></label>
+          <input type="range" id="coverage" min="0.1" max="1" value="0.4" step="0.05">
+          <div class="hint">Fraction of the 155 sites where the (expensive) primary metal is
+            "known" in this demo; the co-variables are always known everywhere. At 100%
+            coverage, cokriging has nothing left to add over ordinary kriging &mdash; a real,
+            textbook result for co-located sampling. Only used by the CK method (set on the
+            Kriging tab).</div>
+        </div>
+        <div class="hint" style="margin-top:2px">Method (SK / OK / UK / RK / CK) is chosen on
+          the <b>Kriging</b> tab &mdash; it acts on whichever variable(s) you pick here.</div>
+      </div>
+      <div class="card" id="dataCard">
+        <h2>Dataset</h2>
+        <div class="note">
+          <b>Meuse river floodplain</b>, Stein, the Netherlands &mdash; heavy-metal concentrations
+          in the top soil, sampled on a floodplain of the river Meuse. A benchmark dataset in
+          geostatistics (Burrough &amp; McDonnell, 1998; <code>sp</code>/<code>gstat</code> R
+          packages).
+        </div>
+        <div class="kv">
+          <div class="k">samples</div><div class="v">155</div>
+          <div class="k">used (active method)</div><div class="v" id="dNUsed">155</div>
+          <div class="k">grid cells</div><div class="v">3103</div>
+          <div class="k">cell size</div><div class="v">40 &times; 40 m</div>
+          <div class="k">covariates available</div><div class="v">dist (to river)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 2. EXPLORATORY ============ -->
+  <div class="tabpanel" data-tab="exploratory">
+    <div class="stack">
+      <div class="two-col">
+        <div class="card">
+          <div class="maptitle"><b>Summary statistics</b><span id="expTitle">Zinc</span></div>
+          <table class="stat-table">
+            <thead><tr><th></th><th>raw (mg/kg)</th><th>log10</th></tr></thead>
+            <tbody>
+              <tr><td>n</td><td id="stN">155</td><td></td></tr>
+              <tr><td>min</td><td id="stMinR">&ndash;</td><td id="stMinL">&ndash;</td></tr>
+              <tr><td>max</td><td id="stMaxR">&ndash;</td><td id="stMaxL">&ndash;</td></tr>
+              <tr><td>mean</td><td id="stMeanR">&ndash;</td><td id="stMeanL">&ndash;</td></tr>
+              <tr><td>median</td><td id="stMedR">&ndash;</td><td id="stMedL">&ndash;</td></tr>
+              <tr><td>std dev</td><td id="stSdR">&ndash;</td><td id="stSdL">&ndash;</td></tr>
+              <tr><td>skewness</td><td id="stSkR">&ndash;</td><td id="stSkL">&ndash;</td></tr>
+            </tbody>
+          </table>
+          <div class="hint" style="margin-top:9px">Raw concentrations are strongly right-skewed
+            (skewness well above 1); log10 brings them close to symmetric, which is why every
+            method on the Kriging tab works in log10 space.</div>
+        </div>
+        <div class="card">
+          <div class="maptitle"><b>Histogram</b><span>raw concentration, mg/kg</span></div>
+          <div class="chart-hold"><canvas id="histCv" width="460" height="220"></canvas></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="maptitle"><b>Spatial posting</b><span>bubble size &amp; color = concentration</span></div>
+          <div class="canvas-hold"><canvas id="postCv" width="380" height="380"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="maptitle"><b>Trend check</b><span>log10(metal) vs. distance to river</span></div>
+          <div class="chart-hold"><canvas id="scatterCv" width="460" height="220"></canvas></div>
+          <div class="hint" style="margin-top:9px">A non-trivial correlation here is what
+            Universal Kriging (UK) and Regression Kriging (RK) exploit on the Kriging tab by
+            using <code>dist</code> as a drift term / trend predictor.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 3. VARIOGRAM ============ -->
+  <div class="tabpanel" data-tab="variogram">
+    <div class="layout">
+      <div class="rail">
+        <div class="card">
+          <h2>Variogram model</h2>
+          <div class="ctl">
+            <label for="model">Shape</label>
+            <select id="model">
+              <option value="spherical">Spherical</option>
+              <option value="exponential">Exponential</option>
+              <option value="gaussian">Gaussian</option>
+            </select>
+          </div>
+          <div class="ctl">
+            <label>Range (m) <span class="val" id="rangeVal">800</span></label>
+            <input type="range" id="range" min="50" max="3000" value="800" step="10">
+            <div class="hint">Distance at which points stop informing each other.</div>
+          </div>
+          <div class="ctl">
+            <label>Nugget <span class="val" id="nugVal">0.08</span></label>
+            <input type="range" id="nugget" min="0" max="0.9" value="0.08" step="0.01">
+            <div class="hint">Noise floor at zero distance, as a fraction of the sill.</div>
+          </div>
+          <div class="hint">The curve below updates as you drag; it only feeds into the
+            prediction/probability maps once you click <b>Run</b>.</div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="maptitle"><b>Variogram</b><span>model curve vs. empirical semivariance of the active sample series</span></div>
+          <div class="chart-hold" style="height:260px"><canvas id="vgCv" width="760" height="260"></canvas></div>
+          <div class="legend">
+            <span><i class="swatch-line"></i>fitted model</span>
+            <span class="swatch-dot">binned empirical semivariance</span>
+            <span>dashed guides mark nugget, sill and range</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 4. KRIGING ============ -->
+  <div class="tabpanel" data-tab="kriging">
+    <div class="layout">
+      <div class="rail">
+        <div class="card">
+          <h2>Kriging method</h2>
+          <div class="seg" id="methodSeg">
+            <button data-m="sk">SK</button>
+            <button data-m="ok" class="on">OK</button>
+            <button data-m="uk">UK</button>
+            <button data-m="rk">RK</button>
+            <button data-m="ck">CK</button>
+          </div>
+          <div class="hint" id="methodHint" style="margin-top:10px"></div>
+        </div>
+        <div class="card" data-only="sk">
+          <h2>Simple-kriging mean</h2>
+          <div class="ctl">
+            <label>Mean override <span class="val" id="skMeanVal">auto</span></label>
+            <input type="range" id="skMean" min="0" max="1" value="0" step="0.01">
+            <div class="hint">0 = use the sample mean of log10(primary); slide to override it.</div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Reading at cursor</h2>
+          <div class="readout">
+            <div class="k">x, y</div><div class="v" id="rXY">&mdash;</div>
+            <div class="k">&#380;&#770; (mg/kg)</div><div class="v" id="rZ">&mdash;</div>
+            <div class="k">~68% range</div><div class="v" id="rRange">&mdash;</div>
+            <div class="k">log10 &#380;&#770; &plusmn; &sigma;</div><div class="v" id="rSE">&mdash;</div>
+          </div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="maps">
+          <div class="card">
+            <div class="maptitle"><b>Prediction</b><span id="predUnit">&#380;&#770;(s), mg/kg</span></div>
+            <div class="canvas-hold">
+              <canvas id="predCv" width="380" height="380"></canvas>
+              <div class="empty" id="predEmpty" style="display:none">Singular system &mdash; widen the range or raise the nugget</div>
+            </div>
+            <div class="cbar"><span id="pLo">&ndash;</span><div class="strip" id="pStrip"></div><span id="pHi">&ndash;</span></div>
+          </div>
+          <div class="card">
+            <div class="maptitle"><b>Uncertainty</b><span>kriging std error &sigma;(s), log10 units</span></div>
+            <div class="canvas-hold">
+              <canvas id="varCv" width="380" height="380"></canvas>
+            </div>
+            <div class="cbar"><span>0</span><div class="strip" id="vStrip"></div><span id="vHi">&ndash;</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 5. PROBABILITY ============ -->
+  <div class="tabpanel" data-tab="probability">
+    <div class="layout">
+      <div class="rail">
+        <div class="card">
+          <h2>Exceedance threshold</h2>
+          <div class="ctl">
+            <label>Cutoff <span class="val" id="threshVal">&ndash;</span> mg/kg</label>
+            <input type="range" id="threshold" min="0" max="100" value="50" step="1">
+            <div class="hint">P(Z(s) &gt; cutoff) at every grid cell, from the last <b>Run</b>'s
+              kriged mean and variance, assuming the log10-transformed value is conditionally
+              Gaussian.</div>
+          </div>
+          <div class="kv">
+            <div class="k">cells &ge; 50% risk</div><div class="v" id="probFrac">&ndash;</div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Reading at cursor</h2>
+          <div class="readout">
+            <div class="k">x, y</div><div class="v" id="probXY">&mdash;</div>
+            <div class="k">P(exceed)</div><div class="v" id="probAtCursor">&mdash;</div>
+          </div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="maptitle"><b>Exceedance probability</b><span>P(primary metal &gt; cutoff)</span></div>
+          <div class="canvas-hold">
+            <canvas id="probCv" width="380" height="380"></canvas>
+            <div class="empty" id="probEmpty" style="display:none">No kriging solution yet &mdash; go to the Kriging tab and click Run</div>
+          </div>
+          <div class="cbar"><span>0%</span><div class="strip" id="probStrip"></div><span>100%</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= embedded data ================= */
+// Meuse river floodplain data (Netherlands). Columns: x, y, log10(cadmium), log10(copper), log10(lead), log10(zinc), dist
+const SAMPLES=[
+[181072,333611,1.0682,1.9294,2.4757,3.0095,0.00136],[181025,333558,0.9345,1.9085,2.4425,3.0573,0.01222],[181165,333537,0.8129,1.8325,2.2989,2.8062,0.10303],[181298,333484,0.415,1.9085,2.0645,2.4099,0.19009],[181307,333330,0.4472,1.6812,2.0682,2.4298,0.27709],[181390,333260,0.4771,1.7853,2.1367,2.4487,0.36407],[181165,333370,0.5051,1.4914,2.1206,2.5391,0.19009],[181027,333363,0.4472,1.4624,2.1761,2.6085,0.09215],[181060,333231,0.3802,1.5682,2.1239,2.5403,0.18461],[181232,333168,0.2041,1.3802,1.9031,2.2625,0.3097],[181191,333115,0.1461,1.3979,1.9345,2.2765,0.31512],[181032,333031,0.2553,1.3979,1.9868,2.3997,0.22812],[180874,333339,1.0492,1.9685,2.4548,3.0398,0.0],[180969,333252,0.3979,1.4914,2.2625,2.7024,0.11393],[181011,333161,0.301,1.4314,2.1139,2.5132,0.16834],[180830,333246,0.9777,1.9345,2.3802,3.0137,0.0],[180763,333104,0.8451,1.8692,2.1239,2.7825,0.01222],[180694,332972,0.8513,1.8388,2.1703,2.8519,0.01222],[180625,332847,0.9395,1.8388,2.316,2.8663,0.0],[180555,332707,1.1106,1.9777,2.4533,3.022,0.0],[180642,332708,0.7404,1.7243,2.2878,2.828,0.07035],[180704,332717,0.4472,1.5441,2.0899,2.6042,0.09751],[180704,332664,0.4624,1.5441,2.0414,2.5353,0.11393],[181153,332925,0.2304,1.3802,1.9294,2.3385,0.34232],[181147,332823,0.1461,1.415,1.8751,2.301,0.3858],[181167,332778,0.1761,1.3424,1.8808,2.2878,0.42929],[181008,332777,0.1139,1.4314,1.8633,2.316,0.31512],[180973,332687,0.1139,1.3802,1.8261,2.2553,0.32057],[180916,332753,0.2553,1.3424,1.9395,2.3802,0.24986],[181352,332946,0.1761,1.3222,1.8129,2.2553,0.48906],[181133,332570,0.1139,1.4624,1.8921,2.3181,0.47278],[180878,332489,0.1139,1.3222,1.8062,2.2967,0.28796],[180829,332450,0.3222,1.4314,1.8865,2.3979,0.27162],[180954,332399,0.0792,1.415,1.9031,2.2833,0.38581],[180956,332318,0.2041,1.4314,1.9138,2.3284,0.41842],[180710,332330,0.4771,1.5051,1.9868,2.5065,0.24447],[180632,332445,0.7634,1.699,2.2201,2.7551,0.13571],[180530,332538,0.8976,1.8261,2.3365,2.9206,0.0485],[180478,332578,0.9085,1.8865,2.3404,2.9571,0.0],[180383,332476,1.1492,2.0334,2.6075,3.1626,0.00136],[180494,332330,0.3802,1.5051,2.0086,2.4742,0.13571],[180561,332193,0.0792,1.3222,1.6812,2.2227,0.26622],[180451,332175,0.2304,1.3424,1.8129,2.2455,0.21184],[180410,332031,0.1139,1.3222,1.7924,2.4116,0.32057],[180355,332299,0.6232,1.7076,2.4487,2.8727,0.08122],[180292,332157,0.6335,1.699,2.4683,2.8727,0.19009],[180283,332014,0.4914,1.5798,2.3243,2.6665,0.28794],[180282,331861,0.2304,1.415,2.1303,2.5623,0.42383],[180270,331707,0.2304,1.3802,2.0492,2.4502,0.55429],[180199,331591,0.3222,1.5051,2.2095,2.574,0.60323],[180135,331552,0.2304,1.3802,1.9731,2.3464,0.61407],[180237,332351,0.9138,1.6721,2.281,2.9096,0.00136],[180103,332297,1.2304,2.1072,2.6075,3.1898,0.0],[179973,332255,1.0792,2.0682,2.8156,3.2646,0.00543],[179826,332217,0.9731,2.017,2.683,3.1841,0.00543],[179687,332161,0.9138,1.8808,2.4409,2.9699,0.00543],[179792,332035,0.415,1.5563,2.2553,2.6355,0.14658],[179902,332113,0.5441,1.5315,2.316,2.7404,0.13568],[180100,332213,1.0374,1.9542,2.7332,3.1962,0.07033],[179604,332059,0.8633,1.9031,2.4914,3.0755,0.04848],[179526,331936,0.9731,1.8921,2.3222,2.9576,0.00543],[179495,331770,0.9191,1.8865,2.1987,2.8814,0.00543],[179489,331633,0.8451,1.8129,2.1492,2.8189,0.03167],[179414,331494,0.8325,1.8195,2.1584,2.8082,0.01222],[179334,331366,0.8692,1.8573,2.2577,2.9036,0.01222],[179255,331264,0.8195,1.8751,2.238,2.8943,0.03734],[179470,331125,0.8921,1.8751,2.601,3.0253,0.21185],[179692,330933,-0.1549,1.3424,1.6532,2.0755,0.45104],[179852,330801,0.5315,1.7404,2.5119,2.891,0.57588],[179140,330955,0.5911,1.6721,2.4281,2.847,0.07569],[179128,330867,0.5441,1.6628,2.4014,2.8299,0.12481],[179065,330864,0.6721,1.7404,2.4983,2.8993,0.10302],[179007,330727,0.5911,1.6902,2.415,2.8357,0.15747],[179110,330758,0.4914,1.5911,2.3747,2.7731,0.20098],[179032,330645,0.4624,1.6532,2.3579,2.7396,0.20098],[179095,330636,0.5911,1.6812,2.382,2.8325,0.26622],[179058,330510,0.4314,1.5563,2.3032,2.7316,0.29884],[178810,330666,0.3979,1.5563,2.3096,2.7482,0.08122],[178912,330779,0.7482,1.8325,2.6325,3.0554,0.07036],[178981,330924,0.9731,1.9445,2.6646,3.1408,0.01222],[179076,331005,1.0334,1.9294,2.5224,3.0648,0.0],[180151,330353,1.2577,1.8808,2.6665,3.2232,0.05377],[179211,331175,0.7993,1.7993,2.2014,2.8837,0.05937],[181118,333214,0.3222,1.5051,2.0645,2.4456,0.21184],[179474,331304,0.2553,1.3979,1.9085,2.382,0.12481],[179559,331423,0.3424,1.4314,2.1173,2.5011,0.12481],[179022,330873,0.4472,1.5563,2.3345,2.7364,0.09215],[178953,330742,0.3802,1.6128,2.1614,2.7033,0.11394],[178875,330516,0.415,1.5185,2.2122,2.6232,0.17922],[178803,330349,0.2553,1.4314,2.1106,2.5211,0.2336],[179029,330394,0.301,1.5798,2.1703,2.6021,0.33686],[178605,330406,0.4314,1.5682,2.3304,2.7427,0.07036],[178701,330557,0.4314,1.5315,2.3541,2.7612,0.05937],[179547,330245,-0.0458,1.2788,1.7324,2.1903,0.25534],[179301,330179,-0.0458,1.3424,1.8451,2.3502,0.36407],[179405,330567,-0.3979,1.415,1.8633,2.2553,0.42929],[179462,330766,-0.0969,1.3979,1.9395,2.3541,0.38033],[179293,330797,-0.3979,1.3424,1.8808,2.2695,0.24987],[179180,330710,-0.3979,1.3802,1.9085,2.2967,0.26621],[179206,330398,-0.3979,1.2553,1.8325,2.2718,0.45104],[179618,330458,-0.0969,1.3617,1.8195,2.2989,0.30971],[179782,330540,-0.3979,1.3424,1.6902,2.1959,0.29336],[179980,330773,-0.3979,1.3617,1.7993,2.3075,0.53235],[180067,331185,-0.3979,1.3617,1.6812,2.1553,0.61951],[180162,331387,-0.699,1.3617,1.7076,2.1335,0.68473],[180451,331473,-0.699,1.2553,1.699,2.0682,0.80974],[180328,331158,-0.3979,1.301,1.5911,2.0531,0.88039],[180276,330963,-0.699,1.3424,1.6812,2.1139,0.74959],[180114,330803,-0.699,1.4314,1.8062,2.2833,0.57575],[179881,330912,-0.3979,1.3979,1.9243,2.3802,0.58148],[179774,330921,-0.699,1.4771,1.8261,2.3444,0.49452],[179657,331150,-0.699,1.3617,1.6902,2.1461,0.32058],[179731,331245,-0.699,1.3802,1.6812,2.1072,0.33685],[179717,331441,-0.699,1.3222,1.7482,2.2201,0.24985],[179446,331422,-0.699,1.3802,1.8129,2.281,0.07569],[179524,331565,-0.699,1.3222,1.9243,2.3655,0.07569],[179644,331730,-0.699,1.3617,1.8751,2.3075,0.16285],[180321,330366,0.5682,1.7243,2.3979,2.8585,0.09749],[180162,331837,-0.699,1.5185,1.9085,2.3222,0.44014],[180029,331720,-0.699,1.3424,1.8573,2.2967,0.4619],[179797,331919,-0.699,1.3617,1.9345,2.143,0.2227],[179642,331955,-0.699,1.3979,1.9731,2.4031,0.10302],[179849,332142,0.0792,1.4771,2.3874,2.847,0.09214],[180265,332297,0.3802,1.6721,2.4728,2.9201,0.04849],[180107,332101,-0.699,1.4914,1.9823,2.4183,0.16833],[180462,331947,-0.699,1.301,1.7482,2.1523,0.38581],[180478,331822,-0.699,1.2041,1.6902,2.0755,0.48906],[180347,331700,-0.699,1.2304,1.699,2.1818,0.57602],[180862,333116,-0.3979,1.415,2.1703,2.618,0.08122],[180700,332882,0.2041,1.5315,2.2095,2.6758,0.03734],[180201,331160,-0.0969,1.2553,1.5682,2.1004,0.7717],[180173,331923,0.0792,1.3617,1.9031,2.3222,0.33683],[180923,332874,-0.699,1.301,1.9031,2.3424,0.22812],[180467,331694,-0.699,1.1461,1.6902,2.1239,0.59776],[179917,331325,-0.0969,1.6628,1.6232,2.1492,0.44558],[179822,331242,0.0,1.4624,1.6812,2.1987,0.39667],[179991,331069,-0.0969,1.2788,1.6128,2.1106,0.58148],[179120,330578,0.0792,1.4914,1.8633,2.3139,0.28797],[179034,330561,0.301,1.4314,2.1644,2.6542,0.2336],[179085,330433,0.1761,1.4624,1.9777,2.4713,0.36407],[179236,330046,0.0414,1.3424,1.8573,2.2765,0.33145],[179456,330072,-0.0969,1.301,1.7076,2.1875,0.21185],[179550,329940,-0.0969,1.301,1.7324,2.2279,0.10303],[179445,329807,0.3222,1.4624,2.1335,2.6053,0.07036],[179337,329870,0.3979,1.5798,2.2304,2.673,0.14658],[179245,329714,0.5798,1.5911,2.2529,2.7868,0.05377],[179024,329733,0.5051,1.5441,2.301,2.7789,0.11929],[178786,329822,0.4914,1.6232,2.4116,2.8938,0.09214],[179135,329890,0.1761,1.3802,1.9685,2.4116,0.24986],[179030,330082,0.0792,1.301,1.8325,2.3304,0.37494],[179184,330182,-0.0969,1.301,1.6902,2.2201,0.42384],[179085,330292,0.4914,1.5911,2.238,2.6955,0.42384],[178875,330311,0.3222,1.4914,2.0755,2.534,0.27709],[179466,330381,-0.0969,1.3222,1.7076,2.2095,0.35861],[180627,330190,0.4314,1.4314,2.0934,2.574,0.01222]
+];
+// Prediction grid. Columns: x, y, dist
+const GRID=[
+[181180,333740,0.0],[181140,333700,0.0],[181180,333700,0.01222],[181220,333700,0.04347],[181100,333660,0.0],[181140,333660,0.01222],[181180,333660,0.03734],[181220,333660,0.05937],[181060,333620,0.00136],[181100,333620,0.01222],[181140,333620,0.03734],[181180,333620,0.05937],[181220,333620,0.08122],[181260,333620,0.10118],[181020,333580,0.0],[181060,333580,0.01222],[181100,333580,0.04849],[181140,333580,0.05937],[181180,333580,0.08122],[181220,333580,0.10303],[181260,333580,0.12481],[181300,333580,0.15216],[180980,333540,0.0],[181020,333540,0.01222],[181060,333540,0.03734],[181100,333540,0.05937],[181140,333540,0.09215],[181180,333540,0.10303],[181220,333540,0.12481],[181260,333540,0.14658],[181300,333540,0.1665],[180940,333500,0.0],[180980,333500,0.01222],[181020,333500,0.03734],[181060,333500,0.05937],[181100,333500,0.08122],[181140,333500,0.10303],[181180,333500,0.1357],[181220,333500,0.14658],[181260,333500,0.16834],[181300,333500,0.19009],[181340,333500,0.20638],[180940,333460,0.00136],[180980,333460,0.03167],[181020,333460,0.05936],[181060,333460,0.08122],[181100,333460,0.10303],[181140,333460,0.12481],[181180,333460,0.14658],[181220,333460,0.17921],[181260,333460,0.19009],[181300,333460,0.21185],[181340,333460,0.2336],[180900,333420,0.0],[180940,333420,0.01222],[180980,333420,0.04849],[181020,333420,0.07569],[181060,333420,0.10303],[181100,333420,0.12481],[181140,333420,0.14658],[181180,333420,0.16834],[181220,333420,0.19009],[181260,333420,0.22272],[181300,333420,0.2336],[181340,333420,0.25534],[181380,333420,0.27526],[180860,333380,0.0],[180900,333380,0.00543],[180940,333380,0.03734],[180980,333380,0.05937],[181020,333380,0.09215],[181060,333380,0.11931],[181100,333380,0.14658],[181140,333380,0.16834],[181180,333380,0.19009],[181220,333380,0.21185],[181260,333380,0.2336],[181300,333380,0.26621],[181340,333380,0.27709],[181380,333380,0.29884],[181420,333380,0.32608],[180860,333340,0.0],[180900,333340,0.02646],[180940,333340,0.05379],[180980,333340,0.08122],[181020,333340,0.10303],[181060,333340,0.1357],[181100,333340,0.16285],[181140,333340,0.19009],[181180,333340,0.21185],[181220,333340,0.2336],[181260,333340,0.25534],[181300,333340,0.27709],[181340,333340,0.3097],[181380,333340,0.32058],[181420,333340,0.34232],[180820,333300,0.0],[180860,333300,0.00543],[180900,333300,0.03734],[180940,333300,0.07035],[180980,333300,0.09751],[181020,333300,0.12481],[181060,333300,0.14658],[181100,333300,0.17922],[181140,333300,0.20637],[181180,333300,0.23359],[181220,333300,0.25534],[181260,333300,0.27709],[181300,333300,0.29884],[181340,333300,0.32058],[181380,333300,0.35319],[181420,333300,0.36407],[181460,333300,0.38036],[180820,333260,0.0],[180860,333260,0.02646],[180900,333260,0.05379],[180940,333260,0.08122],[180980,333260,0.11393],[181020,333260,0.14109],[181060,333260,0.16834],[181100,333260,0.19009],[181140,333260,0.22272],[181180,333260,0.24987],[181220,333260,0.27709],[181260,333260,0.29884],[181300,333260,0.32058],[181340,333260,0.34232],[181380,333260,0.36407],[181420,333260,0.39667],[181460,333260,0.40755],[180780,333220,0.0],[180820,333220,0.00543],[180860,333220,0.03734],[180900,333220,0.07035],[180940,333220,0.09751],[180980,333220,0.12481],[181020,333220,0.15746],[181060,333220,0.18461],[181100,333220,0.21184],[181140,333220,0.2336],[181180,333220,0.26621],[181220,333220,0.29337],[181260,333220,0.32058],[181300,333220,0.34232],[181340,333220,0.36407],[181380,333220,0.38581],[181420,333220,0.40755],[181460,333220,0.44016],[181500,333220,0.45652],[180780,333180,0.0],[180820,333180,0.02646],[180860,333180,0.05379],[180900,333180,0.08122],[180940,333180,0.11393],[180980,333180,0.14109],[181020,333180,0.16834],[181060,333180,0.20097],[181100,333180,0.22812],[181140,333180,0.25534],[181180,333180,0.27709],[181220,333180,0.3097],[181260,333180,0.33686],[181300,333180,0.36406],[181340,333180,0.38581],[181380,333180,0.40755],[181420,333180,0.4293],[181460,333180,0.45104],[181500,333180,0.48364],[181540,333180,0.5],[180780,333140,0.00543],[180820,333140,0.03734],[180860,333140,0.07035],[180900,333140,0.09751],[180940,333140,0.12481],[180980,333140,0.15746],[181020,333140,0.18461],[181060,333140,0.21184],[181100,333140,0.24447],[181140,333140,0.27162],[181180,333140,0.29883],[181220,333140,0.32058],[181260,333140,0.35319],[181300,333140,0.38035],[181340,333140,0.40755],[181380,333140,0.4293],[181420,333140,0.45104],[181460,333140,0.47278],[181500,333140,0.49452],[181540,333140,0.52173],[180740,333100,0.0],[180780,333100,0.01222],[180820,333100,0.05378],[180860,333100,0.08122],[180900,333100,0.11393],[180940,333100,0.14109],[180980,333100,0.16834],[181020,333100,0.20097],[181060,333100,0.22812],[181100,333100,0.25534],[181140,333100,0.28796],[181180,333100,0.31512],[181220,333100,0.34232],[181260,333100,0.36407],[181300,333100,0.39668],[181340,333100,0.42384],[181380,333100,0.45103],[181420,333100,0.47278],[181460,333100,0.49452],[181500,333100,0.51626],[180700,333060,0.0],[180740,333060,0.00543],[180780,333060,0.03734],[180820,333060,0.05937],[180860,333060,0.0975],[180900,333060,0.1248],[180940,333060,0.15746],[180980,333060,0.18461],[181020,333060,0.21184],[181060,333060,0.24447],[181100,333060,0.27162],[181140,333060,0.29883],[181180,333060,0.33145],[181220,333060,0.35861],[181260,333060,0.38581],[181300,333060,0.40755],[181340,333060,0.44016],[181380,333060,0.46732],[181420,333060,0.49452],[181460,333060,0.51626],[181500,333060,0.53255],[180700,333020,0.0],[180740,333020,0.02646],[180780,333020,0.05379],[180820,333020,0.08122],[180860,333020,0.10303],[180900,333020,0.14108],[180940,333020,0.16833],[180980,333020,0.20097],[181020,333020,0.22812],[181060,333020,0.25534],[181100,333020,0.28796],[181140,333020,0.31512],[181180,333020,0.34232],[181220,333020,0.37493],[181260,333020,0.40209],[181300,333020,0.42929],[181340,333020,0.45104],[181380,333020,0.48364],[181420,333020,0.51081],[181460,333020,0.538],[180660,332980,0.0],[180700,332980,0.01222],[180740,332980,0.03734],[180780,332980,0.07035],[180820,332980,0.09751],[180860,332980,0.12481],[180900,332980,0.14658],[180940,332980,0.1846],[180980,332980,0.21184],[181020,332980,0.24447],[181060,332980,0.27162],[181100,332980,0.29883],[181140,332980,0.33145],[181180,332980,0.35861],[181220,332980,0.38581],[181260,332980,0.41842],[181300,332980,0.44558],[181340,332980,0.47278],[181380,332980,0.49452],[181420,332980,0.52712],[181460,332980,0.54348],[180660,332940,0.0],[180700,332940,0.03166],[180740,332940,0.05936],[180780,332940,0.08122],[180820,332940,0.11393],[180860,332940,0.14109],[180900,332940,0.16834],[180940,332940,0.19009],[180980,332940,0.22811],[181020,332940,0.25534],[181060,332940,0.28796],[181100,332940,0.31512],[181140,332940,0.34232],[181180,332940,0.37493],[181220,332940,0.40209],[181260,332940,0.42929],[181300,332940,0.4619],[181340,332940,0.48906],[181380,332940,0.51626],[181420,332940,0.538],[180620,332900,0.0],[180660,332900,0.00543],[180700,332900,0.03734],[180740,332900,0.07568],[180780,332900,0.10302],[180820,332900,0.12481],[180860,332900,0.15746],[180900,332900,0.18461],[180940,332900,0.21184],[180980,332900,0.2336],[181020,332900,0.27161],[181060,332900,0.29883],[181100,332900,0.33145],[181140,332900,0.35861],[181180,332900,0.38581],[181220,332900,0.41842],[181260,332900,0.44558],[181300,332900,0.47278],[181340,332900,0.50538],[181380,332900,0.53255],[181420,332900,0.55429],[180620,332860,0.0],[180660,332860,0.02646],[180700,332860,0.05379],[180740,332860,0.08122],[180780,332860,0.1193],[180820,332860,0.14657],[180860,332860,0.16834],[180900,332860,0.20097],[180940,332860,0.22812],[180980,332860,0.25534],[181020,332860,0.27709],[181060,332860,0.31511],[181100,332860,0.34232],[181140,332860,0.37493],[181180,332860,0.40209],[181220,332860,0.42929],[181260,332860,0.4619],[181300,332860,0.48906],[181340,332860,0.51626],[181380,332860,0.54887],[180620,332820,0.00136],[180660,332820,0.03167],[180700,332820,0.07034],[180740,332820,0.09751],[180780,332820,0.12481],[180820,332820,0.16284],[180860,332820,0.19009],[180900,332820,0.21185],[180940,332820,0.24447],[180980,332820,0.27162],[181020,332820,0.29883],[181060,332820,0.32058],[181100,332820,0.3586],[181140,332820,0.3858],[181180,332820,0.41842],[181220,332820,0.44558],[181260,332820,0.47278],[181300,332820,0.50538],[181340,332820,0.53255],[181380,332820,0.55429],[180580,332780,0.0],[180620,332780,0.00543],[180660,332780,0.04848],[180700,332780,0.07569],[180740,332780,0.11392],[180780,332780,0.14109],[180820,332780,0.16834],[180860,332780,0.20636],[180900,332780,0.23359],[180940,332780,0.25534],[180980,332780,0.28796],[181020,332780,0.31512],[181060,332780,0.34232],[181100,332780,0.36407],[181140,332780,0.40208],[181180,332780,0.42929],[181220,332780,0.4619],[181260,332780,0.48906],[181300,332780,0.51626],[181340,332780,0.54887],[180580,332740,0.0],[180620,332740,0.02646],[180660,332740,0.05379],[180700,332740,0.09214],[180740,332740,0.11931],[180780,332740,0.15745],[180820,332740,0.18461],[180860,332740,0.21184],[180900,332740,0.24986],[180940,332740,0.27708],[180980,332740,0.29884],[181020,332740,0.33145],[181060,332740,0.35861],[181100,332740,0.38581],[181140,332740,0.40755],[181180,332740,0.44557],[181220,332740,0.47277],[181260,332740,0.50538],[181300,332740,0.53255],[181340,332740,0.55429],[180540,332700,0.0],[180580,332700,0.00543],[180620,332700,0.03734],[180660,332700,0.07035],[180700,332700,0.09751],[180740,332700,0.13569],[180780,332700,0.16285],[180820,332700,0.20096],[180860,332700,0.22812],[180900,332700,0.25534],[180940,332700,0.29336],[180980,332700,0.32057],[181020,332700,0.34232],[181060,332700,0.37493],[181100,332700,0.40209],[181140,332700,0.42929],[181180,332700,0.45104],[181220,332700,0.48905],[181260,332700,0.51626],[181300,332700,0.54887],[180540,332660,0.0],[180580,332660,0.02646],[180620,332660,0.05379],[180660,332660,0.08122],[180700,332660,0.11393],[180740,332660,0.14109],[180780,332660,0.17921],[180820,332660,0.20637],[180860,332660,0.24446],[180900,332660,0.27162],[180940,332660,0.29883],[180980,332660,0.33685],[181020,332660,0.36406],[181060,332660,0.38581],[181100,332660,0.41842],[181140,332660,0.44558],[181180,332660,0.47278],[181220,332660,0.49452],[181260,332660,0.53254],[181300,332660,0.55428],[180500,332620,0.0],[180540,332620,0.01222],[180580,332620,0.03734],[180620,332620,0.07035],[180660,332620,0.09751],[180700,332620,0.12481],[180740,332620,0.15746],[180780,332620,0.18461],[180820,332620,0.22271],[180860,332620,0.24987],[180900,332620,0.28795],[180940,332620,0.31512],[180980,332620,0.34232],[181020,332620,0.38034],[181060,332620,0.40755],[181100,332620,0.4293],[181140,332620,0.4619],[181180,332620,0.48906],[181220,332620,0.51626],[181260,332620,0.538],[180460,332580,0.0],[180500,332580,0.00136],[180540,332580,0.03167],[180580,332580,0.05936],[180620,332580,0.08122],[180660,332580,0.11393],[180700,332580,0.14109],[180740,332580,0.16834],[180780,332580,0.20097],[180820,332580,0.22812],[180860,332580,0.2662],[180900,332580,0.29337],[180940,332580,0.33144],[180980,332580,0.35861],[181020,332580,0.38581],[181060,332580,0.42383],[181100,332580,0.45103],[181140,332580,0.47278],[181180,332580,0.50538],[181220,332580,0.53255],[181260,332580,0.55429],[180420,332540,0.0],[180460,332540,0.00136],[180500,332540,0.02647],[180540,332540,0.0485],[180580,332540,0.07569],[180620,332540,0.10303],[180660,332540,0.12481],[180700,332540,0.15746],[180740,332540,0.18461],[180780,332540,0.21184],[180820,332540,0.24447],[180860,332540,0.27162],[180900,332540,0.30969],[180940,332540,0.33686],[180980,332540,0.37492],[181020,332540,0.40209],[181060,332540,0.42929],[181100,332540,0.46731],[181140,332540,0.49451],[181180,332540,0.51626],[181220,332540,0.54887],[180380,332500,0.0],[180420,332500,0.00136],[180460,332500,0.02647],[180500,332500,0.0485],[180540,332500,0.07036],[180580,332500,0.09216],[180620,332500,0.11931],[180660,332500,0.14658],[180700,332500,0.16834],[180740,332500,0.20097],[180780,332500,0.22812],[180820,332500,0.25534],[180860,332500,0.28796],[180900,332500,0.31512],[180940,332500,0.35318],[180980,332500,0.38035],[181020,332500,0.41841],[181060,332500,0.44558],[181100,332500,0.47278],[181140,332500,0.5108],[181180,332500,0.538],[181220,332500,0.5543],[180340,332460,0.0],[180380,332460,0.00136],[180420,332460,0.02647],[180460,332460,0.0485],[180500,332460,0.07036],[180540,332460,0.09216],[180580,332460,0.11394],[180620,332460,0.13571],[180660,332460,0.16285],[180700,332460,0.19009],[180740,332460,0.21185],[180780,332460,0.24447],[180820,332460,0.27162],[180860,332460,0.29883],[180900,332460,0.33145],[180940,332460,0.35861],[180980,332460,0.39667],[181020,332460,0.42384],[181060,332460,0.46189],[181100,332460,0.48906],[181140,332460,0.51626],[181180,332460,0.55428],[180300,332420,0.0],[180340,332420,0.00136],[180380,332420,0.02647],[180420,332420,0.0485],[180460,332420,0.07036],[180500,332420,0.09216],[180540,332420,0.11394],[180580,332420,0.13571],[180620,332420,0.15747],[180660,332420,0.17922],[180700,332420,0.20637],[180740,332420,0.23359],[180780,332420,0.25534],[180820,332420,0.28796],[180860,332420,0.31512],[180900,332420,0.34232],[180940,332420,0.37493],[180980,332420,0.40209],[181020,332420,0.44015],[181060,332420,0.46732],[181100,332420,0.50538],[181140,332420,0.53255],[181180,332420,0.55429],[180260,332380,0.0],[180300,332380,0.00543],[180340,332380,0.02647],[180380,332380,0.0485],[180420,332380,0.07036],[180460,332380,0.09216],[180500,332380,0.11394],[180540,332380,0.13571],[180580,332380,0.15747],[180620,332380,0.17922],[180660,332380,0.20098],[180700,332380,0.22273],[180740,332380,0.24987],[180780,332380,0.27709],[180820,332380,0.29884],[180860,332380,0.33145],[180900,332380,0.35861],[180940,332380,0.38581],[180980,332380,0.41842],[181020,332380,0.44558],[181060,332380,0.48363],[181100,332380,0.51081],[181140,332380,0.54886],[180140,332340,0.0],[180180,332340,0.0],[180220,332340,0.00136],[180260,332340,0.01222],[180300,332340,0.03734],[180340,332340,0.05379],[180380,332340,0.07036],[180420,332340,0.09216],[180460,332340,0.11394],[180500,332340,0.13571],[180540,332340,0.15747],[180580,332340,0.17922],[180620,332340,0.20098],[180660,332340,0.22273],[180700,332340,0.24447],[180740,332340,0.26622],[180780,332340,0.29337],[180820,332340,0.32058],[180860,332340,0.34232],[180900,332340,0.37493],[180940,332340,0.40209],[180980,332340,0.42929],[181020,332340,0.4619],[181060,332340,0.48906],[181100,332340,0.52712],[181140,332340,0.54348],[180020,332300,0.0],[180060,332300,0.0],[180100,332300,0.0],[180140,332300,0.01222],[180180,332300,0.03166],[180220,332300,0.03167],[180260,332300,0.04849],[180300,332300,0.05937],[180340,332300,0.08122],[180380,332300,0.09751],[180420,332300,0.11394],[180460,332300,0.13571],[180500,332300,0.15747],[180540,332300,0.17922],[180580,332300,0.20098],[180620,332300,0.22273],[180660,332300,0.24447],[180700,332300,0.26622],[180740,332300,0.28797],[180780,332300,0.30971],[180820,332300,0.33686],[180860,332300,0.36406],[180900,332300,0.38581],[180940,332300,0.41842],[180980,332300,0.44558],[181020,332300,0.47278],[181060,332300,0.50538],[181100,332300,0.53255],[179860,332260,0.0],[179900,332260,0.0],[179940,332260,0.0],[179980,332260,0.00543],[180020,332260,0.00543],[180060,332260,0.02646],[180100,332260,0.03166],[180140,332260,0.03734],[180180,332260,0.05936],[180220,332260,0.07566],[180260,332260,0.07569],[180300,332260,0.09215],[180340,332260,0.10303],[180380,332260,0.12481],[180420,332260,0.14109],[180460,332260,0.15747],[180500,332260,0.17922],[180540,332260,0.20098],[180580,332260,0.22273],[180620,332260,0.24447],[180660,332260,0.26622],[180700,332260,0.28797],[180740,332260,0.30971],[180780,332260,0.33145],[180820,332260,0.3532],[180860,332260,0.38035],[180900,332260,0.40755],[180940,332260,0.4293],[180980,332260,0.4619],[181020,332260,0.48906],[181060,332260,0.51626],[181100,332260,0.54347],[179700,332220,0.0],[179740,332220,0.0],[179780,332220,0.00136],[179820,332220,0.00543],[179860,332220,0.01222],[179900,332220,0.03166],[179940,332220,0.03166],[179980,332220,0.03734],[180020,332220,0.05377],[180060,332220,0.05379],[180100,332220,0.07033],[180140,332220,0.07568],[180180,332220,0.08122],[180220,332220,0.10302],[180260,332220,0.11929],[180300,332220,0.11931],[180340,332220,0.1357],[180380,332220,0.14658],[180420,332220,0.16834],[180460,332220,0.18461],[180500,332220,0.20098],[180540,332220,0.22273],[180580,332220,0.24447],[180620,332220,0.26622],[180660,332220,0.28797],[180700,332220,0.30971],[180740,332220,0.33145],[180780,332220,0.3532],[180820,332220,0.37494],[180860,332220,0.39668],[180900,332220,0.42384],[180940,332220,0.45103],[180980,332220,0.47278],[181020,332220,0.50538],[181060,332220,0.52893],[179660,332180,0.0],[179700,332180,0.00543],[179740,332180,0.02646],[179780,332180,0.03167],[179820,332180,0.04848],[179860,332180,0.05378],[179900,332180,0.05936],[179940,332180,0.07566],[179980,332180,0.07568],[180020,332180,0.08122],[180060,332180,0.09749],[180100,332180,0.09751],[180140,332180,0.11392],[180180,332180,0.1193],[180220,332180,0.12481],[180260,332180,0.14657],[180300,332180,0.16283],[180340,332180,0.16285],[180380,332180,0.17922],[180420,332180,0.19009],[180460,332180,0.21184],[180500,332180,0.22812],[180540,332180,0.24447],[180580,332180,0.26622],[180620,332180,0.28797],[180660,332180,0.30971],[180700,332180,0.33145],[180740,332180,0.3532],[180780,332180,0.37494],[180820,332180,0.39668],[180860,332180,0.41842],[180900,332180,0.44017],[180940,332180,0.46732],[180980,332180,0.49452],[181020,332180,0.51626],[181060,332180,0.54346],[179620,332140,0.0],[179660,332140,0.01222],[179700,332140,0.03734],[179740,332140,0.05379],[179780,332140,0.07034],[179820,332140,0.07569],[179860,332140,0.09214],[179900,332140,0.0975],[179940,332140,0.10302],[179980,332140,0.11928],[180020,332140,0.1193],[180060,332140,0.1248],[180100,332140,0.14106],[180140,332140,0.14109],[180180,332140,0.15744],[180220,332140,0.16284],[180260,332140,0.16834],[180300,332140,0.19009],[180340,332140,0.20635],[180380,332140,0.20637],[180420,332140,0.22272],[180460,332140,0.2336],[180500,332140,0.25534],[180540,332140,0.27162],[180580,332140,0.28797],[180620,332140,0.30971],[180660,332140,0.33145],[180700,332140,0.3532],[180740,332140,0.37494],[180780,332140,0.39668],[180820,332140,0.41842],[180860,332140,0.44017],[180900,332140,0.46191],[180940,332140,0.48365],[180980,332140,0.51081],[181020,332140,0.53618],[179580,332100,0.00543],[179620,332100,0.02646],[179660,332100,0.03734],[179700,332100,0.05937],[179740,332100,0.08122],[179780,332100,0.09751],[179820,332100,0.11392],[179860,332100,0.11931],[179900,332100,0.13568],[179940,332100,0.14108],[179980,332100,0.14657],[180020,332100,0.16282],[180060,332100,0.16284],[180100,332100,0.16833],[180140,332100,0.18459],[180180,332100,0.18461],[180220,332100,0.20095],[180260,332100,0.20636],[180300,332100,0.21185],[180340,332100,0.23359],[180380,332100,0.24985],[180420,332100,0.24987],[180460,332100,0.26621],[180500,332100,0.27709],[180540,332100,0.29883],[180580,332100,0.31512],[180620,332100,0.33145],[180660,332100,0.3532],[180700,332100,0.37494],[180740,332100,0.39668],[180780,332100,0.41842],[180820,332100,0.44017],[180860,332100,0.46191],[180900,332100,0.48365],[180940,332100,0.50539],[180980,332100,0.52713],[181020,332100,0.54347],[179580,332060,0.00543],[179620,332060,0.04848],[179660,332060,0.07035],[179700,332060,0.08122],[179740,332060,0.10303],[179780,332060,0.12481],[179820,332060,0.14109],[179860,332060,0.15745],[179900,332060,0.16285],[179940,332060,0.1792],[179980,332060,0.1846],[180020,332060,0.19008],[180060,332060,0.20634],[180100,332060,0.20636],[180140,332060,0.21184],[180180,332060,0.2281],[180220,332060,0.22812],[180260,332060,0.24445],[180300,332060,0.24986],[180340,332060,0.25534],[180380,332060,0.27708],[180420,332060,0.29335],[180460,332060,0.29337],[180500,332060,0.3097],[180540,332060,0.32058],[180580,332060,0.34232],[180620,332060,0.35861],[180660,332060,0.37494],[180700,332060,0.39668],[180740,332060,0.41842],[180780,332060,0.44017],[180820,332060,0.46191],[180860,332060,0.48365],[180900,332060,0.50539],[180940,332060,0.52713],[180980,332060,0.54348],[179540,332020,0.0],[179580,332020,0.01222],[179620,332020,0.05378],[179660,332020,0.09214],[179700,332020,0.11393],[179740,332020,0.12481],[179780,332020,0.14658],[179820,332020,0.16834],[179860,332020,0.18461],[179900,332020,0.20096],[179940,332020,0.20637],[179980,332020,0.2227],[180020,332020,0.22811],[180060,332020,0.23358],[180100,332020,0.24984],[180140,332020,0.24986],[180180,332020,0.25533],[180220,332020,0.2716],[180260,332020,0.27162],[180300,332020,0.28794],[180340,332020,0.29336],[180380,332020,0.29884],[180420,332020,0.32057],[180460,332020,0.33684],[180500,332020,0.33686],[180540,332020,0.35319],[180580,332020,0.36407],[180620,332020,0.38581],[180660,332020,0.40209],[180700,332020,0.41842],[180740,332020,0.44017],[180780,332020,0.46191],[180820,332020,0.48365],[180860,332020,0.50539],[180900,332020,0.52713],[180940,332020,0.54887],[180980,332020,0.56521],[179540,331980,0.0],[179580,331980,0.03166],[179620,331980,0.05936],[179660,331980,0.0975],[179700,331980,0.13568],[179740,331980,0.15746],[179780,331980,0.16834],[179820,331980,0.19009],[179860,331980,0.21184],[179900,331980,0.22812],[179940,331980,0.24446],[179980,331980,0.24987],[180020,331980,0.2662],[180060,331980,0.27161],[180100,331980,0.27708],[180140,331980,0.29334],[180180,331980,0.29336],[180220,331980,0.29883],[180260,331980,0.31509],[180300,331980,0.31512],[180340,331980,0.33143],[180380,331980,0.33685],[180420,331980,0.34232],[180460,331980,0.36406],[180500,331980,0.38033],[180540,331980,0.38035],[180580,331980,0.39668],[180620,331980,0.40755],[180660,331980,0.42929],[180700,331980,0.44558],[180740,331980,0.46191],[180780,331980,0.48365],[180820,331980,0.50539],[180860,331980,0.52713],[180900,331980,0.54887],[180940,331980,0.56522],[179540,331940,0.00543],[179580,331940,0.03734],[179620,331940,0.07568],[179660,331940,0.10302],[179700,331940,0.14108],[179740,331940,0.1792],[179780,331940,0.20097],[179820,331940,0.21185],[179860,331940,0.2336],[179900,331940,0.25534],[179940,331940,0.27162],[179980,331940,0.28795],[180020,331940,0.29337],[180060,331940,0.30969],[180100,331940,0.31511],[180140,331940,0.32057],[180180,331940,0.33683],[180220,331940,0.33685],[180260,331940,0.34232],[180300,331940,0.35858],[180340,331940,0.35861],[180380,331940,0.37492],[180420,331940,0.38034],[180460,331940,0.38581],[180500,331940,0.40754],[180540,331940,0.42382],[180580,331940,0.42384],[180620,331940,0.44016],[180660,331940,0.45104],[180700,331940,0.47278],[180740,331940,0.48906],[180780,331940,0.50539],[180820,331940,0.52713],[180860,331940,0.54887],[180900,331940,0.57061],[180940,331940,0.58695],[179500,331900,0.0],[179540,331900,0.01222],[179580,331900,0.05378],[179620,331900,0.08122],[179660,331900,0.1193],[179700,331900,0.14657],[179740,331900,0.1846],[179780,331900,0.2227],[179820,331900,0.24447],[179860,331900,0.25534],[179900,331900,0.27709],[179940,331900,0.29883],[179980,331900,0.31512],[180020,331900,0.33144],[180060,331900,0.33686],[180100,331900,0.35317],[180140,331900,0.3586],[180180,331900,0.36406],[180220,331900,0.38032],[180260,331900,0.38034],[180300,331900,0.3858],[180340,331900,0.40207],[180380,331900,0.40209],[180420,331900,0.4184],[180460,331900,0.42383],[180500,331900,0.4293],[180540,331900,0.45103],[180580,331900,0.4673],[180620,331900,0.46732],[180660,331900,0.48364],[180700,331900,0.49452],[180740,331900,0.51626],[180780,331900,0.53255],[180820,331900,0.54887],[180860,331900,0.57061],[180900,331900,0.58696],[179500,331860,0.00136],[179540,331860,0.03167],[179580,331860,0.05936],[179620,331860,0.0975],[179660,331860,0.1248],[179700,331860,0.16284],[179740,331860,0.19009],[179780,331860,0.22811],[179820,331860,0.2662],[179860,331860,0.28796],[179900,331860,0.29884],[179940,331860,0.32058],[179980,331860,0.34232],[180020,331860,0.35861],[180060,331860,0.37492],[180100,331860,0.38035],[180140,331860,0.39666],[180180,331860,0.40208],[180220,331860,0.40754],[180260,331860,0.4238],[180300,331860,0.42383],[180340,331860,0.42929],[180380,331860,0.44556],[180420,331860,0.44558],[180460,331860,0.46188],[180500,331860,0.46731],[180540,331860,0.47278],[180580,331860,0.49451],[180620,331860,0.51078],[180660,331860,0.51081],[180700,331860,0.52712],[180740,331860,0.538],[180780,331860,0.55974],[180820,331860,0.57603],[180860,331860,0.59236],[180900,331860,0.60869],[179500,331820,0.00543],[179540,331820,0.04848],[179580,331820,0.07569],[179620,331820,0.10303],[179660,331820,0.14108],[179700,331820,0.16833],[179740,331820,0.20636],[179780,331820,0.23359],[179820,331820,0.27161],[179860,331820,0.30969],[179900,331820,0.33145],[179940,331820,0.34232],[179980,331820,0.36407],[180020,331820,0.38581],[180060,331820,0.40209],[180100,331820,0.41841],[180140,331820,0.42384],[180180,331820,0.44014],[180220,331820,0.44557],[180260,331820,0.45103],[180300,331820,0.46729],[180340,331820,0.46731],[180380,331820,0.47277],[180420,331820,0.48904],[180460,331820,0.48906],[180500,331820,0.50537],[180540,331820,0.5108],[180580,331820,0.51626],[180620,331820,0.53799],[180660,331820,0.55427],[180700,331820,0.55429],[180740,331820,0.57061],[180780,331820,0.58148],[180820,331820,0.60322],[180860,331820,0.61951],[179500,331780,0.00543],[179540,331780,0.05377],[179580,331780,0.09213],[179620,331780,0.11931],[179660,331780,0.14658],[179700,331780,0.1846],[179740,331780,0.21184],[179780,331780,0.24986],[179820,331780,0.27708],[179860,331780,0.31511],[179900,331780,0.35317],[179940,331780,0.37493],[179980,331780,0.38581],[180020,331780,0.40755],[180060,331780,0.42929],[180100,331780,0.44558],[180140,331780,0.46189],[180180,331780,0.46732],[180220,331780,0.48362],[180260,331780,0.48905],[180300,331780,0.49451],[180340,331780,0.51077],[180380,331780,0.5108],[180420,331780,0.51625],[180460,331780,0.53253],[180500,331780,0.53255],[180540,331780,0.54885],[180580,331780,0.55428],[180620,331780,0.55974],[180660,331780,0.58148],[180700,331780,0.59775],[180740,331780,0.59777],[180780,331780,0.61409],[180820,331780,0.62496],[179460,331740,0.0],[179500,331740,0.00543],[179540,331740,0.05377],[179580,331740,0.09748],[179620,331740,0.13566],[179660,331740,0.16285],[179700,331740,0.19009],[179740,331740,0.22811],[179780,331740,0.25534],[179820,331740,0.29336],[179860,331740,0.32057],[179900,331740,0.3586],[179940,331740,0.39666],[179980,331740,0.41842],[180020,331740,0.4293],[180060,331740,0.45104],[180100,331740,0.47278],[180140,331740,0.48906],[180180,331740,0.50538],[180220,331740,0.51081],[180260,331740,0.52711],[180300,331740,0.53254],[180340,331740,0.53799],[180380,331740,0.55426],[180420,331740,0.55428],[180460,331740,0.55974],[180500,331740,0.57601],[180540,331740,0.57603],[180580,331740,0.59233],[180620,331740,0.59776],[180660,331740,0.60322],[180700,331740,0.62496],[180740,331740,0.64123],[180780,331740,0.64125],[180820,331740,0.65217],[179460,331700,0.0],[179500,331700,0.02646],[179540,331700,0.05379],[179580,331700,0.09749],[179620,331700,0.14104],[179660,331700,0.17918],[179700,331700,0.20637],[179740,331700,0.23359],[179780,331700,0.27161],[179820,331700,0.29883],[179860,331700,0.33685],[179900,331700,0.36406],[179940,331700,0.40208],[179980,331700,0.44014],[180020,331700,0.4619],[180060,331700,0.47278],[180100,331700,0.49452],[180140,331700,0.51626],[180180,331700,0.53255],[180220,331700,0.54886],[180260,331700,0.55429],[180300,331700,0.57059],[180340,331700,0.57602],[180380,331700,0.58147],[180420,331700,0.59774],[180460,331700,0.59776],[180500,331700,0.60322],[180540,331700,0.61949],[180580,331700,0.61951],[180620,331700,0.63581],[180660,331700,0.64124],[180700,331700,0.64671],[180740,331700,0.66844],[180780,331700,0.68471],[179460,331660,0.0],[179500,331660,0.03166],[179540,331660,0.07033],[179580,331660,0.09751],[179620,331660,0.14106],[179660,331660,0.18457],[179700,331660,0.22268],[179740,331660,0.24987],[179780,331660,0.27709],[179820,331660,0.31511],[179860,331660,0.34232],[179900,331660,0.38034],[179940,331660,0.40755],[179980,331660,0.44557],[180020,331660,0.48362],[180060,331660,0.50538],[180100,331660,0.51626],[180140,331660,0.538],[180180,331660,0.55974],[180220,331660,0.57603],[180260,331660,0.59234],[180300,331660,0.59777],[180340,331660,0.61407],[180380,331660,0.6195],[180420,331660,0.62495],[180460,331660,0.64122],[180500,331660,0.64124],[180540,331660,0.6467],[180580,331660,0.66297],[180620,331660,0.663],[180660,331660,0.67929],[180700,331660,0.68472],[180740,331660,0.69019],[180780,331660,0.70648],[179460,331620,0.00136],[179500,331620,0.03167],[179540,331620,0.07566],[179580,331620,0.11391],[179620,331620,0.14109],[179660,331620,0.18459],[179700,331620,0.22808],[179740,331620,0.26617],[179780,331620,0.29337],[179820,331620,0.32058],[179860,331620,0.3586],[179900,331620,0.3858],[179940,331620,0.42383],[179980,331620,0.45103],[180020,331620,0.48905],[180060,331620,0.52711],[180100,331620,0.54887],[180140,331620,0.55974],[180180,331620,0.58148],[180220,331620,0.60322],[180260,331620,0.61951],[180300,331620,0.63582],[180340,331620,0.64125],[180380,331620,0.65755],[180420,331620,0.66298],[180460,331620,0.66844],[180500,331620,0.6847],[180540,331620,0.68472],[180580,331620,0.69018],[180620,331620,0.70645],[180660,331620,0.70648],[180700,331620,0.72277],[180740,331620,0.72821],[179420,331580,0.0],[179460,331580,0.01222],[179500,331580,0.04849],[179540,331580,0.07569],[179580,331580,0.11929],[179620,331580,0.15744],[179660,331580,0.18461],[179700,331580,0.2281],[179740,331580,0.27158],[179780,331580,0.30966],[179820,331580,0.33686],[179860,331580,0.36406],[179900,331580,0.40208],[179940,331580,0.42929],[179980,331580,0.46731],[180020,331580,0.49451],[180060,331580,0.53254],[180100,331580,0.57059],[180140,331580,0.59235],[180180,331580,0.60322],[180220,331580,0.62496],[180260,331580,0.6467],[180300,331580,0.663],[180340,331580,0.6793],[180380,331580,0.68474],[180420,331580,0.70103],[180460,331580,0.70646],[180500,331580,0.71192],[180540,331580,0.72818],[180580,331580,0.72821],[180620,331580,0.73366],[180660,331580,0.74994],[180700,331580,0.74996],[180740,331580,0.76086],[179420,331540,0.0],[179460,331540,0.03166],[179500,331540,0.05936],[179540,331540,0.09215],[179580,331540,0.11931],[179620,331540,0.16283],[179660,331540,0.20094],[179700,331540,0.22812],[179740,331540,0.2716],[179780,331540,0.31507],[179820,331540,0.35315],[179860,331540,0.38035],[179900,331540,0.40755],[179940,331540,0.44557],[179980,331540,0.47277],[180020,331540,0.5108],[180060,331540,0.538],[180100,331540,0.57602],[180140,331540,0.61407],[180180,331540,0.63583],[180220,331540,0.64671],[180260,331540,0.66845],[180300,331540,0.69018],[180340,331540,0.70648],[180380,331540,0.72278],[180420,331540,0.72822],[180460,331540,0.74451],[180500,331540,0.74995],[180540,331540,0.7554],[180580,331540,0.77166],[180620,331540,0.77169],[180660,331540,0.77714],[180700,331540,0.79342],[179380,331500,0.0],[179420,331500,0.01222],[179460,331500,0.03734],[179500,331500,0.07568],[179540,331500,0.10302],[179580,331500,0.1357],[179620,331500,0.16285],[179660,331500,0.20635],[179700,331500,0.24444],[179740,331500,0.27162],[179780,331500,0.31509],[179820,331500,0.35856],[179860,331500,0.39663],[179900,331500,0.42384],[179940,331500,0.45103],[179980,331500,0.48905],[180020,331500,0.51626],[180060,331500,0.55428],[180100,331500,0.58148],[180140,331500,0.6195],[180180,331500,0.65755],[180220,331500,0.67931],[180260,331500,0.69019],[180300,331500,0.71193],[180340,331500,0.73366],[180380,331500,0.74996],[180420,331500,0.76626],[180460,331500,0.7717],[180500,331500,0.78799],[180540,331500,0.79343],[180580,331500,0.79888],[180620,331500,0.81515],[180660,331500,0.81517],[180700,331500,0.81518],[179380,331460,0.00136],[179420,331460,0.03167],[179460,331460,0.05936],[179500,331460,0.08122],[179540,331460,0.1193],[179580,331460,0.14657],[179620,331460,0.17922],[179660,331460,0.20637],[179700,331460,0.24985],[179740,331460,0.28793],[179780,331460,0.31512],[179820,331460,0.35858],[179860,331460,0.40205],[179900,331460,0.44012],[179940,331460,0.46732],[179980,331460,0.49452],[180020,331460,0.53254],[180060,331460,0.55974],[180100,331460,0.59776],[180140,331460,0.62496],[180180,331460,0.66298],[180220,331460,0.70103],[180260,331460,0.72279],[180300,331460,0.73367],[180340,331460,0.75541],[180380,331460,0.77714],[180420,331460,0.79344],[180460,331460,0.80974],[180500,331460,0.81518],[180540,331460,0.83147],[180580,331460,0.83691],[180620,331460,0.84236],[180660,331460,0.85863],[179340,331420,0.0],[179380,331420,0.01222],[179420,331420,0.04849],[179460,331420,0.07569],[179500,331420,0.10303],[179540,331420,0.12481],[179580,331420,0.16284],[179620,331420,0.19009],[179660,331420,0.22272],[179700,331420,0.24987],[179740,331420,0.29335],[179780,331420,0.33142],[179820,331420,0.35861],[179860,331420,0.40207],[179900,331420,0.44554],[179940,331420,0.4836],[179980,331420,0.51081],[180020,331420,0.538],[180060,331420,0.57602],[180100,331420,0.60322],[180140,331420,0.64124],[180180,331420,0.66844],[180220,331420,0.70646],[180260,331420,0.74451],[180300,331420,0.76627],[180340,331420,0.77715],[180380,331420,0.79889],[180420,331420,0.82063],[180460,331420,0.83692],[180500,331420,0.85322],[180540,331420,0.85866],[180580,331420,0.87495],[180620,331420,0.88039],[180660,331420,0.8804],[179300,331380,0.0],[179340,331380,0.01222],[179380,331380,0.03734],[179420,331380,0.05937],[179460,331380,0.09215],[179500,331380,0.11931],[179540,331380,0.14658],[179580,331380,0.16834],[179620,331380,0.20636],[179660,331380,0.23359],[179700,331380,0.26621],[179740,331380,0.29337],[179780,331380,0.33684],[179820,331380,0.37491],[179860,331380,0.40209],[179900,331380,0.44556],[179940,331380,0.48902],[179980,331380,0.52708],[180020,331380,0.55429],[180060,331380,0.58148],[180100,331380,0.6195],[180140,331380,0.6467],[180180,331380,0.68472],[180220,331380,0.71192],[180260,331380,0.74995],[180300,331380,0.78799],[180340,331380,0.80975],[180380,331380,0.82063],[180420,331380,0.84237],[180460,331380,0.86411],[180500,331380,0.8804],[180540,331380,0.8967],[180580,331380,0.90214],[180620,331380,0.91843],[179260,331340,0.0],[179300,331340,0.01222],[179340,331340,0.03734],[179380,331340,0.05937],[179420,331340,0.08122],[179460,331340,0.10303],[179500,331340,0.1357],[179540,331340,0.16285],[179580,331340,0.19009],[179620,331340,0.21185],[179660,331340,0.24986],[179700,331340,0.27708],[179740,331340,0.3097],[179780,331340,0.33686],[179820,331340,0.38033],[179860,331340,0.41839],[179900,331340,0.44558],[179940,331340,0.48904],[179980,331340,0.5325],[180020,331340,0.57056],[180060,331340,0.59777],[180100,331340,0.62496],[180140,331340,0.66298],[180180,331340,0.69018],[180220,331340,0.72821],[180260,331340,0.7554],[180300,331340,0.79343],[180340,331340,0.83147],[180380,331340,0.85323],[180420,331340,0.86411],[180460,331340,0.88585],[180500,331340,0.90759],[180540,331340,0.92388],[180580,331340,0.94018],[180620,331340,0.94562],[179220,331300,0.0],[179260,331300,0.01222],[179300,331300,0.03734],[179340,331300,0.05937],[179380,331300,0.08122],[179420,331300,0.10303],[179460,331300,0.12481],[179500,331300,0.14658],[179540,331300,0.17922],[179580,331300,0.20637],[179620,331300,0.23359],[179660,331300,0.25534],[179700,331300,0.29336],[179740,331300,0.32057],[179780,331300,0.35319],[179820,331300,0.38035],[179860,331300,0.42382],[179900,331300,0.46188],[179940,331300,0.48906],[179980,331300,0.53253],[180020,331300,0.57599],[180060,331300,0.61405],[180100,331300,0.64125],[180140,331300,0.66844],[180180,331300,0.70646],[180220,331300,0.73366],[180260,331300,0.77169],[180300,331300,0.79888],[180340,331300,0.83691],[180380,331300,0.87495],[180420,331300,0.89671],[180460,331300,0.90759],[180500,331300,0.92933],[180540,331300,0.95107],[180580,331300,0.96374],[179180,331260,0.0],[179220,331260,0.01222],[179260,331260,0.03734],[179300,331260,0.05937],[179340,331260,0.08122],[179380,331260,0.10303],[179420,331260,0.12481],[179460,331260,0.14658],[179500,331260,0.16834],[179540,331260,0.19009],[179580,331260,0.22272],[179620,331260,0.24987],[179660,331260,0.27709],[179700,331260,0.29884],[179740,331260,0.33685],[179780,331260,0.36406],[179820,331260,0.39668],[179860,331260,0.42384],[179900,331260,0.4673],[179940,331260,0.50536],[179980,331260,0.53255],[180020,331260,0.57601],[180060,331260,0.61947],[180100,331260,0.65753],[180140,331260,0.68474],[180180,331260,0.71192],[180220,331260,0.74995],[180260,331260,0.77714],[180300,331260,0.81517],[180340,331260,0.84236],[180380,331260,0.88039],[180420,331260,0.91843],[180460,331260,0.94019],[180500,331260,0.95107],[180540,331260,0.97281],[180580,331260,0.97827],[179140,331220,0.0],[179180,331220,0.01222],[179220,331220,0.03734],[179260,331220,0.05937],[179300,331220,0.08122],[179340,331220,0.10303],[179380,331220,0.12481],[179420,331220,0.14658],[179460,331220,0.16834],[179500,331220,0.19009],[179540,331220,0.21185],[179580,331220,0.2336],[179620,331220,0.26621],[179660,331220,0.29337],[179700,331220,0.32058],[179740,331220,0.34232],[179780,331220,0.38034],[179820,331220,0.40755],[179860,331220,0.44016],[179900,331220,0.46732],[179940,331220,0.51078],[179980,331220,0.54884],[180020,331220,0.57603],[180060,331220,0.61949],[180100,331220,0.66295],[180140,331220,0.70101],[180180,331220,0.72822],[180220,331220,0.7554],[180260,331220,0.79343],[180300,331220,0.82062],[180340,331220,0.85865],[180380,331220,0.88584],[180420,331220,0.92387],[180460,331220,0.96191],[180500,331220,0.98358],[180540,331220,0.99261],[179140,331180,0.00543],[179180,331180,0.03734],[179220,331180,0.05937],[179260,331180,0.08122],[179300,331180,0.10303],[179340,331180,0.12481],[179380,331180,0.14658],[179420,331180,0.16834],[179460,331180,0.19009],[179500,331180,0.21185],[179540,331180,0.2336],[179580,331180,0.25534],[179620,331180,0.27709],[179660,331180,0.3097],[179700,331180,0.33686],[179740,331180,0.36406],[179780,331180,0.38581],[179820,331180,0.42383],[179860,331180,0.45103],[179900,331180,0.48364],[179940,331180,0.51081],[179980,331180,0.55427],[180020,331180,0.59232],[180060,331180,0.61951],[180100,331180,0.66297],[180140,331180,0.70643],[180180,331180,0.74449],[180220,331180,0.7717],[180260,331180,0.79888],[180300,331180,0.83691],[180340,331180,0.8641],[180380,331180,0.90213],[180420,331180,0.92932],[180460,331180,0.96164],[180500,331180,0.96699],[180540,331180,0.9779],[179100,331140,0.0],[179140,331140,0.01222],[179180,331140,0.05378],[179220,331140,0.08122],[179260,331140,0.10303],[179300,331140,0.12481],[179340,331140,0.14658],[179380,331140,0.16834],[179420,331140,0.19009],[179460,331140,0.21185],[179500,331140,0.2336],[179540,331140,0.25534],[179580,331140,0.27709],[179620,331140,0.29884],[179660,331140,0.32058],[179700,331140,0.35319],[179740,331140,0.38035],[179780,331140,0.40755],[179820,331140,0.4293],[179860,331140,0.46731],[179900,331140,0.49451],[179940,331140,0.52712],[179980,331140,0.55429],[180020,331140,0.59775],[180060,331140,0.6358],[180100,331140,0.663],[180140,331140,0.70645],[180180,331140,0.74991],[180220,331140,0.78797],[180260,331140,0.81518],[180300,331140,0.84237],[180340,331140,0.88039],[180380,331140,0.90738],[180420,331140,0.92349],[180460,331140,0.92351],[180500,331140,0.92715],[179100,331100,0.0],[179140,331100,0.03166],[179180,331100,0.05936],[179220,331100,0.0975],[179260,331100,0.1248],[179300,331100,0.14658],[179340,331100,0.16834],[179380,331100,0.19009],[179420,331100,0.21185],[179460,331100,0.2336],[179500,331100,0.25534],[179540,331100,0.27709],[179580,331100,0.29884],[179620,331100,0.32058],[179660,331100,0.34232],[179700,331100,0.36407],[179740,331100,0.39668],[179780,331100,0.42384],[179820,331100,0.45103],[179860,331100,0.47278],[179900,331100,0.5108],[179940,331100,0.538],[179980,331100,0.57061],[180020,331100,0.59777],[180060,331100,0.64123],[180100,331100,0.67928],[180140,331100,0.70648],[180180,331100,0.74994],[180220,331100,0.7934],[180260,331100,0.83145],[180300,331100,0.85855],[180340,331100,0.87467],[180380,331100,0.88],[180420,331100,0.88003],[180460,331100,0.88005],[180500,331100,0.89096],[179100,331060,0.00241],[179140,331060,0.03167],[179180,331060,0.07566],[179220,331060,0.10302],[179260,331060,0.14108],[179300,331060,0.16833],[179340,331060,0.19009],[179380,331060,0.21185],[179420,331060,0.2336],[179460,331060,0.25534],[179500,331060,0.27709],[179540,331060,0.29884],[179580,331060,0.32058],[179620,331060,0.34232],[179660,331060,0.36407],[179700,331060,0.38581],[179740,331060,0.40755],[179780,331060,0.44016],[179820,331060,0.46732],[179860,331060,0.49452],[179900,331060,0.51626],[179940,331060,0.55428],[179980,331060,0.58148],[180020,331060,0.61409],[180060,331060,0.64125],[180100,331060,0.68471],[180140,331060,0.72276],[180180,331060,0.74996],[180220,331060,0.79342],[180260,331060,0.83118],[180300,331060,0.83651],[180340,331060,0.83652],[180380,331060,0.83655],[180420,331060,0.83657],[180460,331060,0.84021],[179060,331020,0.0],[179100,331020,0.00543],[179140,331020,0.04848],[179180,331020,0.07569],[179220,331020,0.11929],[179260,331020,0.14657],[179300,331020,0.1846],[179340,331020,0.21184],[179380,331020,0.2336],[179420,331020,0.25534],[179460,331020,0.27709],[179500,331020,0.29884],[179540,331020,0.32058],[179580,331020,0.34232],[179620,331020,0.36407],[179660,331020,0.38581],[179700,331020,0.40755],[179740,331020,0.4293],[179780,331020,0.45104],[179820,331020,0.48364],[179860,331020,0.51081],[179900,331020,0.538],[179940,331020,0.55974],[179980,331020,0.59776],[180020,331020,0.62496],[180060,331020,0.65757],[180100,331020,0.68474],[180140,331020,0.7282],[180180,331020,0.76616],[180220,331020,0.78772],[180260,331020,0.79305],[180300,331020,0.79305],[180340,331020,0.79307],[180380,331020,0.79309],[180420,331020,0.79311],[180460,331020,0.80403],[178980,330980,0.0],[179020,330980,0.0],[179060,330980,0.01222],[179100,330980,0.03167],[179140,330980,0.05379],[179180,330980,0.09214],[179220,330980,0.11931],[179260,330980,0.16283],[179300,330980,0.19009],[179340,330980,0.22811],[179380,330980,0.25534],[179420,330980,0.27709],[179460,330980,0.29884],[179500,330980,0.32058],[179540,330980,0.34232],[179580,330980,0.36407],[179620,330980,0.38581],[179660,330980,0.40755],[179700,330980,0.4293],[179740,330980,0.45104],[179780,330980,0.47278],[179820,330980,0.49452],[179860,330980,0.52712],[179900,330980,0.55429],[179940,330980,0.58148],[179980,330980,0.60322],[180020,330980,0.64124],[180060,330980,0.66844],[180100,330980,0.70105],[180140,330980,0.72813],[180180,330980,0.74959],[180220,330980,0.74959],[180260,330980,0.74959],[180300,330980,0.74959],[180340,330980,0.74961],[180380,330980,0.74963],[180420,330980,0.74965],[178900,330940,0.0],[178940,330940,0.00136],[178980,330940,0.01222],[179020,330940,0.03166],[179060,330940,0.03734],[179100,330940,0.05936],[179140,330940,0.07569],[179180,330940,0.09751],[179220,330940,0.13569],[179260,330940,0.16285],[179300,330940,0.20635],[179340,330940,0.23359],[179380,330940,0.27161],[179420,330940,0.29883],[179460,330940,0.32058],[179500,330940,0.34232],[179540,330940,0.36407],[179580,330940,0.38581],[179620,330940,0.40755],[179660,330940,0.4293],[179700,330940,0.45104],[179740,330940,0.47278],[179780,330940,0.49452],[179820,330940,0.51626],[179860,330940,0.538],[179900,330940,0.57061],[179940,330940,0.59777],[179980,330940,0.62496],[180020,330940,0.64671],[180060,330940,0.68465],[180100,330940,0.7008],[180140,330940,0.70613],[180180,330940,0.70613],[180220,330940,0.70613],[180260,330940,0.70613],[180300,330940,0.70613],[180340,330940,0.70615],[180380,330940,0.70617],[180420,330940,0.70619],[178860,330900,0.0],[178900,330900,0.00136],[178940,330900,0.02647],[178980,330900,0.04849],[179020,330900,0.05936],[179060,330900,0.07568],[179100,330900,0.08122],[179140,330900,0.10303],[179180,330900,0.11931],[179220,330900,0.14109],[179260,330900,0.17921],[179300,330900,0.20637],[179340,330900,0.24985],[179380,330900,0.27708],[179420,330900,0.31511],[179460,330900,0.34232],[179500,330900,0.36407],[179540,330900,0.38581],[179580,330900,0.40755],[179620,330900,0.4293],[179660,330900,0.45104],[179700,330900,0.47278],[179740,330900,0.49452],[179780,330900,0.51626],[179820,330900,0.538],[179860,330900,0.55974],[179900,330900,0.58148],[179940,330900,0.61409],[179980,330900,0.64119],[180020,330900,0.65736],[180060,330900,0.66269],[180100,330900,0.66267],[180140,330900,0.66267],[180180,330900,0.66267],[180220,330900,0.66267],[180260,330900,0.66267],[180300,330900,0.66267],[180340,330900,0.66269],[180380,330900,0.66271],[180420,330900,0.66273],[178820,330860,0.0],[178860,330860,0.00136],[178900,330860,0.02647],[178940,330860,0.0485],[178980,330860,0.07036],[179020,330860,0.09215],[179060,330860,0.10302],[179100,330860,0.1193],[179140,330860,0.12481],[179180,330860,0.14658],[179220,330860,0.16285],[179260,330860,0.18461],[179300,330860,0.22271],[179340,330860,0.24987],[179380,330860,0.29335],[179420,330860,0.32057],[179460,330860,0.3586],[179500,330860,0.3858],[179540,330860,0.40755],[179580,330860,0.4293],[179620,330860,0.45104],[179660,330860,0.47278],[179700,330860,0.49452],[179740,330860,0.51626],[179780,330860,0.538],[179820,330860,0.55974],[179860,330860,0.58148],[179900,330860,0.60313],[179940,330860,0.61393],[179980,330860,0.61927],[180020,330860,0.61925],[180060,330860,0.61923],[180100,330860,0.61921],[180140,330860,0.61921],[180180,330860,0.61921],[180220,330860,0.61921],[180260,330860,0.61921],[180300,330860,0.61921],[180340,330860,0.61923],[180380,330860,0.61925],[180420,330860,0.63018],[178820,330820,0.00136],[178860,330820,0.02647],[178900,330820,0.0485],[178940,330820,0.07036],[178980,330820,0.09216],[179020,330820,0.11394],[179060,330820,0.1357],[179100,330820,0.14657],[179140,330820,0.16284],[179180,330820,0.16834],[179220,330820,0.19009],[179260,330820,0.20637],[179300,330820,0.22812],[179340,330820,0.2662],[179380,330820,0.29337],[179420,330820,0.33684],[179460,330820,0.36406],[179500,330820,0.40208],[179540,330820,0.42929],[179580,330820,0.45104],[179620,330820,0.47278],[179660,330820,0.49452],[179700,330820,0.51626],[179740,330820,0.538],[179780,330820,0.55969],[179820,330820,0.57051],[179860,330820,0.57588],[179900,330820,0.57586],[179940,330820,0.57583],[179980,330820,0.57581],[180020,330820,0.57579],[180060,330820,0.57577],[180100,330820,0.57575],[180140,330820,0.57575],[180180,330820,0.57575],[180220,330820,0.57575],[180260,330820,0.57575],[180300,330820,0.57575],[180340,330820,0.57577],[180380,330820,0.57579],[178780,330780,0.0],[178820,330780,0.01222],[178860,330780,0.04849],[178900,330780,0.07036],[178940,330780,0.09216],[178980,330780,0.11394],[179020,330780,0.13571],[179060,330780,0.15747],[179100,330780,0.17922],[179140,330780,0.19009],[179180,330780,0.20636],[179220,330780,0.21185],[179260,330780,0.23359],[179300,330780,0.24987],[179340,330780,0.27162],[179380,330780,0.30969],[179420,330780,0.33686],[179460,330780,0.38033],[179500,330780,0.40754],[179540,330780,0.44557],[179580,330780,0.47277],[179620,330780,0.49452],[179660,330780,0.51625],[179700,330780,0.5271],[179740,330780,0.53248],[179780,330780,0.53246],[179820,330780,0.53244],[179860,330780,0.53242],[179900,330780,0.53239],[179940,330780,0.53237],[179980,330780,0.53235],[180020,330780,0.53233],[180060,330780,0.53231],[180100,330780,0.53229],[180140,330780,0.53229],[180180,330780,0.53229],[180220,330780,0.53229],[180260,330780,0.53229],[180300,330780,0.53229],[180340,330780,0.53231],[180380,330780,0.53233],[178740,330740,0.0],[178780,330740,0.01222],[178820,330740,0.03734],[178860,330740,0.05937],[178900,330740,0.09215],[178940,330740,0.11394],[178980,330740,0.13571],[179020,330740,0.15747],[179060,330740,0.17922],[179100,330740,0.20098],[179140,330740,0.22272],[179180,330740,0.23359],[179220,330740,0.24986],[179260,330740,0.25534],[179300,330740,0.27709],[179340,330740,0.29337],[179380,330740,0.31512],[179420,330740,0.35318],[179460,330740,0.38035],[179500,330740,0.42382],[179540,330740,0.45103],[179580,330740,0.48905],[179620,330740,0.49999],[179660,330740,0.48906],[179700,330740,0.48904],[179740,330740,0.48902],[179780,330740,0.489],[179820,330740,0.48898],[179860,330740,0.48896],[179900,330740,0.48893],[179940,330740,0.48891],[179980,330740,0.48889],[180020,330740,0.48887],[180060,330740,0.48884],[180100,330740,0.48883],[180140,330740,0.48883],[180180,330740,0.48883],[180220,330740,0.48883],[180260,330740,0.48883],[180300,330740,0.48883],[180340,330740,0.48884],[180380,330740,0.48887],[178700,330700,0.0],[178740,330700,0.01222],[178780,330700,0.03734],[178820,330700,0.05937],[178860,330700,0.08122],[178900,330700,0.10303],[178940,330700,0.1357],[178980,330700,0.15747],[179020,330700,0.17922],[179060,330700,0.20098],[179100,330700,0.22273],[179140,330700,0.24447],[179180,330700,0.26621],[179220,330700,0.27708],[179260,330700,0.29336],[179300,330700,0.29884],[179340,330700,0.32058],[179380,330700,0.33686],[179420,330700,0.35861],[179460,330700,0.39667],[179500,330700,0.42384],[179540,330700,0.4673],[179580,330700,0.47278],[179620,330700,0.46731],[179660,330700,0.46188],[179700,330700,0.44558],[179740,330700,0.44556],[179780,330700,0.44554],[179820,330700,0.44551],[179860,330700,0.44549],[179900,330700,0.44547],[179940,330700,0.44545],[179980,330700,0.44543],[180020,330700,0.4454],[180060,330700,0.44538],[180100,330700,0.44537],[180140,330700,0.44537],[180180,330700,0.44537],[180220,330700,0.44537],[180260,330700,0.44537],[180300,330700,0.44537],[180340,330700,0.44538],[180380,330700,0.4454],[180420,330700,0.43462],[178700,330660,0.00136],[178740,330660,0.03167],[178780,330660,0.05936],[178820,330660,0.08122],[178860,330660,0.10303],[178900,330660,0.12481],[178940,330660,0.14658],[178980,330660,0.17922],[179020,330660,0.20098],[179060,330660,0.22273],[179100,330660,0.24447],[179140,330660,0.26622],[179180,330660,0.28797],[179220,330660,0.3097],[179260,330660,0.32057],[179300,330660,0.33685],[179340,330660,0.34232],[179380,330660,0.36406],[179420,330660,0.38035],[179460,330660,0.40209],[179500,330660,0.44015],[179540,330660,0.4619],[179580,330660,0.45103],[179620,330660,0.4293],[179660,330660,0.42383],[179700,330660,0.4184],[179740,330660,0.40209],[179780,330660,0.40207],[179820,330660,0.40205],[179860,330660,0.40203],[179900,330660,0.40201],[179940,330660,0.40198],[179980,330660,0.40196],[180020,330660,0.40194],[180060,330660,0.40192],[180100,330660,0.4019],[180140,330660,0.4019],[180180,330660,0.4019],[180220,330660,0.4019],[180260,330660,0.4019],[180300,330660,0.4019],[180340,330660,0.40192],[180380,330660,0.40194],[180420,330660,0.40196],[178660,330620,0.0],[178700,330620,0.01222],[178740,330620,0.04849],[178780,330620,0.07569],[178820,330620,0.10303],[178860,330620,0.12481],[178900,330620,0.14658],[178940,330620,0.16834],[178980,330620,0.19009],[179020,330620,0.22272],[179060,330620,0.24447],[179100,330620,0.26622],[179140,330620,0.28797],[179180,330620,0.30971],[179220,330620,0.33145],[179260,330620,0.35319],[179300,330620,0.36406],[179340,330620,0.38034],[179380,330620,0.38581],[179420,330620,0.40755],[179460,330620,0.42384],[179500,330620,0.44558],[179540,330620,0.44017],[179580,330620,0.42384],[179620,330620,0.40755],[179660,330620,0.38581],[179700,330620,0.38034],[179740,330620,0.37492],[179780,330620,0.35861],[179820,330620,0.35858],[179860,330620,0.35856],[179900,330620,0.35854],[179940,330620,0.35852],[179980,330620,0.3585],[180020,330620,0.35848],[180060,330620,0.35845],[180100,330620,0.35844],[180140,330620,0.35844],[180180,330620,0.35844],[180220,330620,0.35844],[180260,330620,0.35844],[180300,330620,0.35844],[180340,330620,0.35845],[180380,330620,0.35848],[180420,330620,0.35488],[178620,330580,0.0],[178660,330580,0.01222],[178700,330580,0.03734],[178740,330580,0.05937],[178780,330580,0.09215],[178820,330580,0.11931],[178860,330580,0.14658],[178900,330580,0.16834],[178940,330580,0.19009],[178980,330580,0.21185],[179020,330580,0.2336],[179060,330580,0.26621],[179100,330580,0.28797],[179140,330580,0.30971],[179180,330580,0.33145],[179220,330580,0.3532],[179260,330580,0.37494],[179300,330580,0.39668],[179340,330580,0.40755],[179380,330580,0.42383],[179420,330580,0.4293],[179460,330580,0.45103],[179500,330580,0.44017],[179540,330580,0.41842],[179580,330580,0.39668],[179620,330580,0.38035],[179660,330580,0.36406],[179700,330580,0.34232],[179740,330580,0.33685],[179780,330580,0.33143],[179820,330580,0.31512],[179860,330580,0.31509],[179900,330580,0.31507],[179940,330580,0.31505],[179980,330580,0.31503],[180020,330580,0.31501],[180060,330580,0.31498],[180100,330580,0.31497],[180140,330580,0.31497],[180180,330580,0.31497],[180220,330580,0.31497],[180260,330580,0.31497],[180300,330580,0.31497],[180340,330580,0.31498],[180380,330580,0.31501],[180420,330580,0.31503],[178580,330540,0.0],[178620,330540,0.01222],[178660,330540,0.03734],[178700,330540,0.05937],[178740,330540,0.08122],[178780,330540,0.10303],[178820,330540,0.1357],[178860,330540,0.16285],[178900,330540,0.19009],[178940,330540,0.21185],[178980,330540,0.2336],[179020,330540,0.25534],[179060,330540,0.27709],[179100,330540,0.3097],[179140,330540,0.33145],[179180,330540,0.3532],[179220,330540,0.37494],[179260,330540,0.39668],[179300,330540,0.41842],[179340,330540,0.44016],[179380,330540,0.45103],[179420,330540,0.45652],[179460,330540,0.44017],[179500,330540,0.41842],[179540,330540,0.39668],[179580,330540,0.37494],[179620,330540,0.3532],[179660,330540,0.33686],[179700,330540,0.32058],[179740,330540,0.29884],[179780,330540,0.29336],[179820,330540,0.28794],[179860,330540,0.27162],[179900,330540,0.2716],[179940,330540,0.27158],[179980,330540,0.27156],[180020,330540,0.27154],[180060,330540,0.27151],[180100,330540,0.2715],[180140,330540,0.2715],[180180,330540,0.2715],[180220,330540,0.2715],[180260,330540,0.2715],[180300,330540,0.2715],[180340,330540,0.27151],[180380,330540,0.27154],[180420,330540,0.27156],[180460,330540,0.27157],[178540,330500,0.0],[178580,330500,0.00543],[178620,330500,0.03734],[178660,330500,0.05937],[178700,330500,0.08122],[178740,330500,0.10303],[178780,330500,0.12481],[178820,330500,0.14658],[178860,330500,0.17922],[178900,330500,0.20637],[178940,330500,0.23359],[178980,330500,0.25534],[179020,330500,0.27709],[179060,330500,0.29884],[179100,330500,0.32058],[179140,330500,0.35319],[179180,330500,0.37494],[179220,330500,0.39668],[179260,330500,0.41842],[179300,330500,0.44017],[179340,330500,0.46191],[179380,330500,0.46191],[179420,330500,0.44017],[179460,330500,0.41842],[179500,330500,0.39668],[179540,330500,0.37494],[179580,330500,0.3532],[179620,330500,0.33145],[179660,330500,0.30971],[179700,330500,0.29337],[179740,330500,0.27709],[179780,330500,0.25534],[179820,330500,0.24986],[179860,330500,0.24445],[179900,330500,0.22812],[179940,330500,0.2281],[179980,330500,0.22808],[180020,330500,0.22806],[180060,330500,0.22804],[180100,330500,0.22802],[180140,330500,0.22802],[180180,330500,0.22802],[180220,330500,0.22802],[180260,330500,0.22802],[180300,330500,0.22802],[180340,330500,0.22804],[180380,330500,0.22806],[180420,330500,0.22808],[180460,330500,0.2281],[178540,330460,0.00136],[178580,330460,0.02647],[178620,330460,0.05379],[178660,330460,0.08122],[178700,330460,0.10303],[178740,330460,0.12481],[178780,330460,0.14658],[178820,330460,0.16834],[178860,330460,0.19009],[178900,330460,0.22272],[178940,330460,0.24987],[178980,330460,0.27709],[179020,330460,0.29884],[179060,330460,0.32058],[179100,330460,0.34232],[179140,330460,0.36407],[179180,330460,0.39668],[179220,330460,0.41842],[179260,330460,0.44017],[179300,330460,0.46191],[179340,330460,0.47277],[179380,330460,0.44558],[179420,330460,0.41842],[179460,330460,0.39668],[179500,330460,0.37494],[179540,330460,0.3532],[179580,330460,0.33145],[179620,330460,0.30971],[179660,330460,0.28797],[179700,330460,0.26622],[179740,330460,0.24987],[179780,330460,0.23359],[179820,330460,0.21185],[179860,330460,0.20636],[179900,330460,0.20095],[179940,330460,0.18461],[179980,330460,0.18459],[180020,330460,0.18457],[180060,330460,0.18455],[180100,330460,0.18453],[180140,330460,0.18453],[180180,330460,0.18453],[180220,330460,0.18453],[180260,330460,0.18453],[180300,330460,0.18453],[180340,330460,0.18455],[180380,330460,0.18457],[180420,330460,0.18459],[180460,330460,0.18461],[180500,330460,0.19564],[178500,330420,0.0],[178540,330420,0.01222],[178580,330420,0.04849],[178620,330420,0.07036],[178660,330420,0.09751],[178700,330420,0.12481],[178740,330420,0.14658],[178780,330420,0.16834],[178820,330420,0.19009],[178860,330420,0.21185],[178900,330420,0.2336],[178940,330420,0.26621],[178980,330420,0.29337],[179020,330420,0.32058],[179060,330420,0.34232],[179100,330420,0.36407],[179140,330420,0.38581],[179180,330420,0.40755],[179220,330420,0.44016],[179260,330420,0.46191],[179300,330420,0.47826],[179340,330420,0.45104],[179380,330420,0.42929],[179420,330420,0.40209],[179460,330420,0.37494],[179500,330420,0.3532],[179540,330420,0.33145],[179580,330420,0.30971],[179620,330420,0.28797],[179660,330420,0.26622],[179700,330420,0.24447],[179740,330420,0.22273],[179780,330420,0.20637],[179820,330420,0.19009],[179860,330420,0.16834],[179900,330420,0.16284],[179940,330420,0.15744],[179980,330420,0.14109],[180020,330420,0.14106],[180060,330420,0.14104],[180100,330420,0.14103],[180140,330420,0.14103],[180180,330420,0.14103],[180220,330420,0.14103],[180260,330420,0.14103],[180300,330420,0.14103],[180340,330420,0.14104],[180380,330420,0.14106],[180420,330420,0.14109],[180460,330420,0.15745],[180500,330420,0.16285],[180540,330420,0.17387],[178500,330380,0.00241],[178540,330380,0.03166],[178580,330380,0.05936],[178620,330380,0.09215],[178660,330380,0.11394],[178700,330380,0.14109],[178740,330380,0.16834],[178780,330380,0.19009],[178820,330380,0.21185],[178860,330380,0.2336],[178900,330380,0.25534],[178940,330380,0.27709],[178980,330380,0.3097],[179020,330380,0.33686],[179060,330380,0.36406],[179100,330380,0.38581],[179140,330380,0.40755],[179180,330380,0.4293],[179220,330380,0.45104],[179260,330380,0.47826],[179300,330380,0.46191],[179340,330380,0.44016],[179380,330380,0.40755],[179420,330380,0.38581],[179460,330380,0.35861],[179500,330380,0.33145],[179540,330380,0.30971],[179580,330380,0.28797],[179620,330380,0.26622],[179660,330380,0.24447],[179700,330380,0.22273],[179740,330380,0.20098],[179780,330380,0.17922],[179820,330380,0.16285],[179860,330380,0.14658],[179900,330380,0.12481],[179940,330380,0.1193],[179980,330380,0.11392],[180020,330380,0.09751],[180060,330380,0.09749],[180100,330380,0.09748],[180140,330380,0.09748],[180180,330380,0.09748],[180220,330380,0.09748],[180260,330380,0.09748],[180300,330380,0.09748],[180340,330380,0.09749],[180380,330380,0.09751],[180420,330380,0.11392],[180460,330380,0.11931],[180500,330380,0.13568],[180540,330380,0.14108],[180580,330380,0.13044],[178500,330340,0.0],[178540,330340,0.03166],[178580,330340,0.07566],[178620,330340,0.10302],[178660,330340,0.1357],[178700,330340,0.15747],[178740,330340,0.18461],[178780,330340,0.21184],[178820,330340,0.2336],[178860,330340,0.25534],[178900,330340,0.27709],[178940,330340,0.29884],[178980,330340,0.32058],[179020,330340,0.35319],[179060,330340,0.38035],[179100,330340,0.40755],[179140,330340,0.4293],[179180,330340,0.45104],[179220,330340,0.47278],[179260,330340,0.47278],[179300,330340,0.44558],[179340,330340,0.41842],[179380,330340,0.39668],[179420,330340,0.36407],[179460,330340,0.34232],[179500,330340,0.31512],[179540,330340,0.28797],[179580,330340,0.26622],[179620,330340,0.24447],[179660,330340,0.22273],[179700,330340,0.20098],[179740,330340,0.17922],[179780,330340,0.15747],[179820,330340,0.13571],[179860,330340,0.11931],[179900,330340,0.10303],[179940,330340,0.08122],[179980,330340,0.07568],[180020,330340,0.07033],[180060,330340,0.05379],[180100,330340,0.05377],[180140,330340,0.05377],[180180,330340,0.05377],[180220,330340,0.05377],[180260,330340,0.05377],[180300,330340,0.05377],[180340,330340,0.05379],[180380,330340,0.07034],[180420,330340,0.07569],[180460,330340,0.09214],[180500,330340,0.0975],[180540,330340,0.10302],[180580,330340,0.1193],[180620,330340,0.1087],[178500,330300,0.00136],[178540,330300,0.03167],[178580,330300,0.07566],[178620,330300,0.11926],[178660,330300,0.14656],[178700,330300,0.17922],[178740,330300,0.20098],[178780,330300,0.22812],[178820,330300,0.25534],[178860,330300,0.27709],[178900,330300,0.29884],[178940,330300,0.32058],[178980,330300,0.34232],[179020,330300,0.36407],[179060,330300,0.39668],[179100,330300,0.42384],[179140,330300,0.45103],[179180,330300,0.47278],[179220,330300,0.47278],[179260,330300,0.45104],[179300,330300,0.42929],[179340,330300,0.40209],[179380,330300,0.37494],[179420,330300,0.35319],[179460,330300,0.32058],[179500,330300,0.29883],[179540,330300,0.27162],[179580,330300,0.24447],[179620,330300,0.22273],[179660,330300,0.20098],[179700,330300,0.17922],[179740,330300,0.15747],[179780,330300,0.13571],[179820,330300,0.11394],[179860,330300,0.09216],[179900,330300,0.07569],[179940,330300,0.05936],[179980,330300,0.03734],[180020,330300,0.03166],[180060,330300,0.02646],[180100,330300,0.00543],[180140,330300,0.00543],[180180,330300,0.00543],[180220,330300,0.00543],[180260,330300,0.00543],[180300,330300,0.00543],[180340,330300,0.02646],[180380,330300,0.03167],[180420,330300,0.04848],[180460,330300,0.05378],[180500,330300,0.05936],[180540,330300,0.07568],[180580,330300,0.08122],[180620,330300,0.09751],[180660,330300,0.10868],[178500,330260,0.00543],[178540,330260,0.04848],[178580,330260,0.07569],[178620,330260,0.11929],[178660,330260,0.16281],[178700,330260,0.19008],[178740,330260,0.22272],[178780,330260,0.24447],[178820,330260,0.27162],[178860,330260,0.29883],[178900,330260,0.32058],[178940,330260,0.34232],[178980,330260,0.36407],[179020,330260,0.38581],[179060,330260,0.40755],[179100,330260,0.44016],[179140,330260,0.46732],[179180,330260,0.47278],[179220,330260,0.45104],[179260,330260,0.4293],[179300,330260,0.40755],[179340,330260,0.38581],[179380,330260,0.35861],[179420,330260,0.33145],[179460,330260,0.3097],[179500,330260,0.27709],[179540,330260,0.25534],[179580,330260,0.22812],[179620,330260,0.20098],[179660,330260,0.17922],[179700,330260,0.15747],[179740,330260,0.13571],[179780,330260,0.11394],[179820,330260,0.09216],[179860,330260,0.07036],[179900,330260,0.0485],[179940,330260,0.03167],[179980,330260,0.01222],[180020,330260,0.0],[180060,330260,0.0],[180100,330260,0.0],[180300,330260,0.0],[180340,330260,0.0],[180380,330260,0.00136],[180420,330260,0.00543],[180460,330260,0.01222],[180500,330260,0.03166],[180540,330260,0.03734],[180580,330260,0.05379],[180620,330260,0.07035],[180660,330260,0.08122],[178500,330220,0.00543],[178540,330220,0.05377],[178580,330220,0.09213],[178620,330220,0.11931],[178660,330220,0.16283],[178700,330220,0.20633],[178740,330220,0.23358],[178780,330220,0.26621],[178820,330220,0.28797],[178860,330220,0.31512],[178900,330220,0.34232],[178940,330220,0.36407],[178980,330220,0.38581],[179020,330220,0.40755],[179060,330220,0.4293],[179100,330220,0.45104],[179140,330220,0.46732],[179180,330220,0.45103],[179220,330220,0.4293],[179260,330220,0.40755],[179300,330220,0.38581],[179340,330220,0.36407],[179380,330220,0.34232],[179420,330220,0.31512],[179460,330220,0.28797],[179500,330220,0.26621],[179540,330220,0.2336],[179580,330220,0.21184],[179620,330220,0.18461],[179660,330220,0.15747],[179700,330220,0.13571],[179740,330220,0.11394],[179780,330220,0.09216],[179820,330220,0.07036],[179860,330220,0.0485],[179900,330220,0.02647],[179940,330220,0.00136],[179980,330220,0.0],[180460,330220,0.0],[180500,330220,0.0],[180540,330220,0.00543],[180580,330220,0.02646],[180620,330220,0.03734],[180660,330220,0.05937],[180700,330220,0.07936],[178460,330180,0.02173],[178500,330180,0.00543],[178540,330180,0.05377],[178580,330180,0.09748],[178620,330180,0.1304],[178660,330180,0.16285],[178700,330180,0.20634],[178740,330180,0.23358],[178780,330180,0.26621],[178820,330180,0.29337],[178860,330180,0.32058],[178900,330180,0.35319],[178940,330180,0.38035],[178980,330180,0.4021],[179020,330180,0.41842],[179060,330180,0.44017],[179100,330180,0.45652],[179140,330180,0.44017],[179180,330180,0.42384],[179220,330180,0.40755],[179260,330180,0.38581],[179300,330180,0.36407],[179340,330180,0.34232],[179380,330180,0.32058],[179420,330180,0.29883],[179460,330180,0.27162],[179500,330180,0.24447],[179540,330180,0.22272],[179580,330180,0.19009],[179620,330180,0.16834],[179660,330180,0.14109],[179700,330180,0.11394],[179740,330180,0.09216],[179780,330180,0.07036],[179820,330180,0.0485],[179860,330180,0.02647],[179900,330180,0.00136],[179940,330180,0.0],[180540,330180,0.0],[180580,330180,0.0],[180620,330180,0.01222],[180660,330180,0.03734],[180700,330180,0.07034],[178460,330140,0.02173],[178500,330140,0.00543],[178540,330140,0.05377],[178580,330140,0.09213],[178620,330140,0.11931],[178660,330140,0.16283],[178700,330140,0.19009],[178740,330140,0.22272],[178780,330140,0.24987],[178820,330140,0.27709],[178860,330140,0.3097],[178900,330140,0.33686],[178940,330140,0.36406],[178980,330140,0.38035],[179020,330140,0.39668],[179060,330140,0.41842],[179100,330140,0.43477],[179140,330140,0.41842],[179180,330140,0.39668],[179220,330140,0.38035],[179260,330140,0.36406],[179300,330140,0.34232],[179340,330140,0.32058],[179380,330140,0.29884],[179420,330140,0.27709],[179460,330140,0.25534],[179500,330140,0.22812],[179540,330140,0.20098],[179580,330140,0.17922],[179620,330140,0.14658],[179660,330140,0.12481],[179700,330140,0.09751],[179740,330140,0.07036],[179780,330140,0.0485],[179820,330140,0.02647],[179860,330140,0.00136],[179900,330140,0.0],[180620,330140,0.0],[180660,330140,0.02646],[180700,330140,0.03539],[178500,330100,0.00543],[178540,330100,0.04848],[178580,330100,0.07569],[178620,330100,0.11929],[178660,330100,0.14657],[178700,330100,0.17922],[178740,330100,0.20637],[178780,330100,0.23359],[178820,330100,0.26621],[178860,330100,0.29337],[178900,330100,0.32057],[178940,330100,0.33686],[178980,330100,0.3532],[179020,330100,0.37494],[179060,330100,0.39667],[179100,330100,0.40209],[179140,330100,0.39668],[179180,330100,0.37494],[179220,330100,0.3532],[179260,330100,0.33686],[179300,330100,0.32058],[179340,330100,0.29884],[179380,330100,0.27709],[179420,330100,0.25534],[179460,330100,0.2336],[179500,330100,0.21184],[179540,330100,0.18461],[179580,330100,0.15747],[179620,330100,0.1357],[179660,330100,0.10303],[179700,330100,0.08122],[179740,330100,0.05379],[179780,330100,0.02647],[179820,330100,0.00136],[179860,330100,0.0],[180660,330100,0.0],[180700,330100,0.0],[178500,330060,0.00136],[178540,330060,0.03167],[178580,330060,0.07566],[178620,330060,0.10302],[178660,330060,0.1357],[178700,330060,0.16285],[178740,330060,0.19009],[178780,330060,0.22272],[178820,330060,0.24987],[178860,330060,0.27708],[178900,330060,0.29337],[178940,330060,0.30971],[178980,330060,0.33145],[179020,330060,0.35318],[179060,330060,0.35861],[179100,330060,0.37494],[179140,330060,0.36406],[179180,330060,0.35319],[179220,330060,0.33145],[179260,330060,0.30971],[179300,330060,0.29337],[179340,330060,0.27709],[179380,330060,0.25534],[179420,330060,0.2336],[179460,330060,0.21185],[179500,330060,0.19009],[179540,330060,0.16834],[179580,330060,0.14109],[179620,330060,0.11394],[179660,330060,0.09215],[179700,330060,0.05937],[179740,330060,0.03734],[179780,330060,0.00543],[179820,330060,0.0],[178500,330020,0.0],[178540,330020,0.03166],[178580,330020,0.05936],[178620,330020,0.09215],[178660,330020,0.11931],[178700,330020,0.14658],[178740,330020,0.17922],[178780,330020,0.20637],[178820,330020,0.23359],[178860,330020,0.24987],[178900,330020,0.26622],[178940,330020,0.28797],[178980,330020,0.30969],[179020,330020,0.31512],[179060,330020,0.33686],[179100,330020,0.35319],[179140,330020,0.33686],[179180,330020,0.32058],[179220,330020,0.3097],[179260,330020,0.28797],[179300,330020,0.26622],[179340,330020,0.24987],[179380,330020,0.23359],[179420,330020,0.21185],[179460,330020,0.19009],[179500,330020,0.16834],[179540,330020,0.14658],[179580,330020,0.12481],[179620,330020,0.09751],[179660,330020,0.07036],[179700,330020,0.04849],[179740,330020,0.01222],[179780,330020,0.0],[178500,329980,0.0],[178540,329980,0.01222],[178580,329980,0.04849],[178620,329980,0.07569],[178660,329980,0.10303],[178700,329980,0.1357],[178740,329980,0.16285],[178780,329980,0.19009],[178820,329980,0.20637],[178860,329980,0.22273],[178900,329980,0.24447],[178940,329980,0.2662],[178980,329980,0.27162],[179020,329980,0.29337],[179060,329980,0.31512],[179100,329980,0.32057],[179140,329980,0.3097],[179180,329980,0.29337],[179220,329980,0.27709],[179260,329980,0.26621],[179300,329980,0.24447],[179340,329980,0.22273],[179380,329980,0.20637],[179420,329980,0.19009],[179460,329980,0.16834],[179500,329980,0.14658],[179540,329980,0.12481],[179580,329980,0.10303],[179620,329980,0.08122],[179660,329980,0.05379],[179700,329980,0.02647],[179740,329980,0.00241],[178540,329940,0.00136],[178580,329940,0.03167],[178620,329940,0.05936],[178660,329940,0.09215],[178700,329940,0.11931],[178740,329940,0.14657],[178780,329940,0.16285],[178820,329940,0.17922],[178860,329940,0.20098],[178900,329940,0.22271],[178940,329940,0.22812],[178980,329940,0.24987],[179020,329940,0.27162],[179060,329940,0.28796],[179100,329940,0.29336],[179140,329940,0.27708],[179180,329940,0.26621],[179220,329940,0.24987],[179260,329940,0.23359],[179300,329940,0.22272],[179340,329940,0.20098],[179380,329940,0.17922],[179420,329940,0.16285],[179460,329940,0.14658],[179500,329940,0.12481],[179540,329940,0.10303],[179580,329940,0.08122],[179620,329940,0.05937],[179660,329940,0.03734],[179700,329940,0.00543],[179740,329940,0.0],[178540,329900,0.0],[178580,329900,0.01222],[178620,329900,0.04849],[178660,329900,0.07569],[178700,329900,0.10302],[178740,329900,0.11931],[178780,329900,0.13571],[178820,329900,0.15747],[178860,329900,0.17921],[178900,329900,0.18461],[178940,329900,0.20637],[178980,329900,0.22812],[179020,329900,0.24447],[179060,329900,0.25533],[179100,329900,0.25533],[179140,329900,0.24986],[179180,329900,0.23359],[179220,329900,0.22272],[179260,329900,0.20637],[179300,329900,0.19009],[179340,329900,0.17922],[179380,329900,0.15747],[179420,329900,0.13571],[179460,329900,0.11931],[179500,329900,0.10303],[179540,329900,0.08122],[179580,329900,0.05937],[179620,329900,0.03734],[179660,329900,0.01222],[179700,329900,0.0],[178540,329860,0.0],[178580,329860,0.00136],[178620,329860,0.03167],[178660,329860,0.05936],[178700,329860,0.07569],[178740,329860,0.09216],[178780,329860,0.11394],[178820,329860,0.13569],[178860,329860,0.14109],[178900,329860,0.16285],[178940,329860,0.18461],[178980,329860,0.20097],[179020,329860,0.21184],[179060,329860,0.22811],[179100,329860,0.22809],[179140,329860,0.21184],[179180,329860,0.20636],[179220,329860,0.19009],[179260,329860,0.17922],[179300,329860,0.16285],[179340,329860,0.14658],[179380,329860,0.1357],[179420,329860,0.11394],[179460,329860,0.09216],[179500,329860,0.07569],[179540,329860,0.05936],[179580,329860,0.03734],[179620,329860,0.01222],[179660,329860,0.0],[178580,329820,0.0],[178620,329820,0.01222],[178660,329820,0.03167],[178700,329820,0.0485],[178740,329820,0.07036],[178780,329820,0.09214],[178820,329820,0.09751],[178860,329820,0.11931],[178900,329820,0.14109],[178940,329820,0.15746],[178980,329820,0.16833],[179020,329820,0.1846],[179060,329820,0.18462],[179100,329820,0.1846],[179140,329820,0.18458],[179180,329820,0.16833],[179220,329820,0.16284],[179260,329820,0.14657],[179300,329820,0.1357],[179340,329820,0.11931],[179380,329820,0.10303],[179420,329820,0.09215],[179460,329820,0.07036],[179500,329820,0.0485],[179540,329820,0.03167],[179580,329820,0.01222],[179620,329820,0.0],[178620,329780,0.0],[178660,329780,0.00136],[178700,329780,0.02647],[178740,329780,0.04848],[178780,329780,0.05379],[178820,329780,0.07569],[178860,329780,0.09751],[178900,329780,0.11393],[178940,329780,0.1248],[178980,329780,0.14108],[179020,329780,0.14657],[179060,329780,0.1628],[179100,329780,0.14656],[179140,329780,0.14108],[179180,329780,0.14105],[179220,329780,0.1248],[179260,329780,0.1193],[179300,329780,0.10302],[179340,329780,0.09215],[179380,329780,0.07569],[179420,329780,0.05936],[179460,329780,0.04849],[179500,329780,0.02647],[179540,329780,0.00136],[179580,329780,0.0],[178660,329740,0.0],[178700,329740,0.00136],[178740,329740,0.00543],[178780,329740,0.03167],[178820,329740,0.05379],[178860,329740,0.07035],[178900,329740,0.08122],[178940,329740,0.0975],[178980,329740,0.10302],[179020,329740,0.11929],[179060,329740,0.11928],[179100,329740,0.11926],[179140,329740,0.10302],[179180,329740,0.0975],[179220,329740,0.09748],[179260,329740,0.08122],[179300,329740,0.07568],[179340,329740,0.05936],[179380,329740,0.04849],[179420,329740,0.03167],[179460,329740,0.01222],[179500,329740,0.00136],[179540,329740,0.0],[178740,329700,0.0],[178780,329700,0.00543],[178820,329700,0.02646],[178860,329700,0.03734],[178900,329700,0.05378],[178940,329700,0.05936],[178980,329700,0.07566],[179020,329700,0.07569],[179060,329700,0.07568],[179100,329700,0.07566],[179140,329700,0.07566],[179180,329700,0.05936],[179220,329700,0.05378],[179260,329700,0.05377],[179300,329700,0.03734],[179340,329700,0.03166],[179380,329700,0.01222],[179420,329700,0.00136],[179460,329700,0.0],[178780,329660,0.0],[178820,329660,0.0],[178860,329660,0.00543],[178900,329660,0.01222],[178940,329660,0.03166],[178980,329660,0.03167],[179020,329660,0.04848],[179060,329660,0.03734],[179100,329660,0.03166],[179140,329660,0.03166],[179180,329660,0.03166],[179220,329660,0.01222],[179260,329660,0.00543],[179300,329660,0.00543],[179340,329660,0.0],[179380,329660,0.0],[178900,329620,0.0],[178940,329620,0.0],[178980,329620,0.00136],[179020,329620,0.00543],[179060,329620,0.00543],[179100,329620,0.0],[179140,329620,0.0],[179180,329620,0.0],[179220,329620,0.0]
+];
+const COLIDX = {cadmium:2, copper:3, lead:4, zinc:5};
+const DIST_IDX = 6;
+const CELL_M = 40; // grid spacing, meters
+
+const METAL_LABEL = {cadmium:"Cadmium", copper:"Copper", lead:"Lead", zinc:"Zinc"};
+
+/* ================= colormaps ================= */
+const VIRIDIS = [[68,1,84],[71,44,122],[59,81,139],[44,113,142],[33,144,141],
+  [39,173,129],[92,200,99],[170,220,50],[253,231,37]];
+const MAGMA = [[8,5,26],[42,11,84],[101,21,110],[159,42,99],[212,72,66],
+  [245,125,21],[250,193,39],[252,253,191]];
+const RISK = [[255,255,255],[255,237,160],[254,178,76],[240,59,32],[128,0,38]];
+function ramp(stops,t){
+  t=Math.max(0,Math.min(1,t));
+  const f=t*(stops.length-1), i=Math.floor(f), g=f-i;
+  const a=stops[i], b=stops[Math.min(i+1,stops.length-1)];
+  return [a[0]+(b[0]-a[0])*g, a[1]+(b[1]-a[1])*g, a[2]+(b[2]-a[2])*g];
+}
+function cssRamp(stops,n){
+  const s=[];for(let i=0;i<n;i++){const c=ramp(stops,i/(n-1));
+    s.push(`rgb(${c[0]|0},${c[1]|0},${c[2]|0}) ${(i/(n-1)*100).toFixed(0)}%`);}
+  return `linear-gradient(90deg,${s.join(",")})`;
+}
+
+/* ================= small stats helpers ================= */
+function mean(a){let s=0;for(const v of a)s+=v;return s/a.length;}
+function variance(a){const m=mean(a);let s=0;for(const v of a)s+=(v-m)*(v-m);return s/a.length;}
+function median(a){const s=a.slice().sort((x,y)=>x-y);const n=s.length;
+  return n%2 ? s[(n-1)/2] : (s[n/2-1]+s[n/2])/2;}
+function skewness(a){const m=mean(a),sd=Math.sqrt(variance(a));if(sd<1e-12)return 0;
+  let s=0;for(const v of a)s+=Math.pow(v-m,3);return (s/a.length)/Math.pow(sd,3);}
+function corr(a,b){
+  const ma=mean(a),mb=mean(b);let sxy=0,sxx=0,syy=0;
+  for(let i=0;i<a.length;i++){const dx=a[i]-ma,dy=b[i]-mb;sxy+=dx*dy;sxx+=dx*dx;syy+=dy*dy;}
+  const den=Math.sqrt(sxx*syy);return den>1e-12? sxy/den : 0;
+}
+function linreg(xs,ys){
+  const mx=mean(xs),my=mean(ys);let num=0,den=0;
+  for(let i=0;i<xs.length;i++){num+=(xs[i]-mx)*(ys[i]-my);den+=(xs[i]-mx)*(xs[i]-mx);}
+  const b=den>1e-9?num/den:0, a=my-b*mx; return {a,b};
+}
+function mulberry32(seed){
+  return function(){ seed|=0; seed=seed+0x6D2B79F5|0;
+    let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296; };
+}
+function seededSubset(n,k,seed){
+  const idx=Array.from({length:n},(_,i)=>i); const rnd=mulberry32(seed);
+  for(let i=n-1;i>0;i--){const j=Math.floor(rnd()*(i+1));const t=idx[i];idx[i]=idx[j];idx[j]=t;}
+  return idx.slice(0,Math.max(3,k)).sort((a,b)=>a-b);
+}
+function erf(x){
+  const sign=x<0?-1:1; x=Math.abs(x);
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const t=1/(1+p*x);
+  const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return sign*y;
+}
+function normCdf(z){ return 0.5*(1+erf(z/Math.SQRT2)); }
+
+/* ================= variogram shape ================= */
+function shape(h,P){
+  if(h<=0) return 0;
+  const a=P.range;
+  if(P.model==="spherical"){ if(h>=a) return 1; const r=h/a; return 1.5*r-0.5*r*r*r; }
+  if(P.model==="exponential") return 1-Math.exp(-3*h/a);
+  return 1-Math.exp(-3*h*h/(a*a));
+}
+function gammaN(h,P){ return h<=0?0:P.nugget+(1-P.nugget)*shape(h,P); } // normalized semivariance, sill=1
+function rho(h,P){ return h<=1e-9?1:1-gammaN(h,P); }                    // normalized correlation
+
+/* ================= linear algebra: invert (Gauss-Jordan, partial pivot) ================= */
+function invert(M){
+  const n=M.length;
+  const A=M.map((r,i)=>{const row=r.slice(); for(let j=0;j<n;j++) row.push(i===j?1:0); return row;});
+  for(let col=0;col<n;col++){
+    let piv=col, best=Math.abs(A[col][col]);
+    for(let r=col+1;r<n;r++){const v=Math.abs(A[r][col]); if(v>best){best=v;piv=r;}}
+    if(best<1e-10) return null;
+    if(piv!==col){const t=A[piv];A[piv]=A[col];A[col]=t;}
+    const d=A[col][col];
+    for(let j=0;j<2*n;j++) A[col][j]/=d;
+    for(let r=0;r<n;r++){ if(r===col) continue; const f=A[r][col];
+      if(f!==0) for(let j=0;j<2*n;j++) A[r][j]-=f*A[col][j]; }
+  }
+  return A.map(row=>row.slice(n));
+}
+function zeros(n,m){const A=new Array(n);for(let i=0;i<n;i++)A[i]=new Array(m).fill(0);return A;}
+function solveLambda(Ainv,b){
+  const m=b.length, lam=new Array(m);
+  for(let i=0;i<m;i++){let l=0;const row=Ainv[i];for(let j=0;j<m;j++)l+=row[j]*b[j];lam[i]=l;}
+  return lam;
+}
+
+/* ================= state ================= */
+const P={method:"ok", primary:"zinc", secondaries:["copper"], coverage:0.4, skMean:null,
+         model:"spherical", range:800, nugget:0.08, threshold:50};
+let SYS=null;
+let GRIDVALS=null, GRIDVARS=null, GRIDPREDLOG=null, GRIDPROB=null;
+let gLo=0,gHi=1,gVMax=1;
+
+/* ================= nearest-grid-cell lookup (for dist at arbitrary hover positions) ================= */
+function nearestGridDist(tx,ty){
+  let best=Infinity, bd=0;
+  for(let k=0;k<GRID.length;k++){
+    const dx=GRID[k][0]-tx, dy=GRID[k][1]-ty, d2=dx*dx+dy*dy;
+    if(d2<best){best=d2; bd=GRID[k][2];}
+  }
+  return bd;
+}
+
+/* ================= method builders ================= */
+function buildSK(pIdx){
+  const n=SAMPLES.length;
+  const xs=SAMPLES.map(r=>r[0]), ys=SAMPLES.map(r=>r[1]), vs=SAMPLES.map(r=>r[pIdx]);
+  const sill=Math.max(variance(vs),1e-6);
+  const sampleMean=mean(vs);
+  const lo=Math.min(...vs), hi=Math.max(...vs);
+  const skMean = (P.skMean==null) ? sampleMean : lo+P.skMean*(hi-lo);
+  const A=zeros(n,n);
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++) A[i][j]=sill*rho(Math.hypot(xs[i]-xs[j],ys[i]-ys[j]),P);
+  const Ainv=invert(A); if(!Ainv) return null;
+  function evalAt(tx,ty){
+    const b=new Array(n);
+    for(let i=0;i<n;i++) b[i]=sill*rho(Math.hypot(xs[i]-tx,ys[i]-ty),P);
+    const lam=solveLambda(Ainv,b);
+    let pred=skMean, va=sill;
+    for(let i=0;i<n;i++){ pred+=lam[i]*(vs[i]-skMean); va-=lam[i]*b[i]; }
+    return {pred, se:Math.sqrt(Math.max(va,0))};
+  }
+  return {n, xs, ys, vs, evalAt, needsDist:false, skMean};
+}
+function buildOK(pIdx){
+  const n=SAMPLES.length;
+  const xs=SAMPLES.map(r=>r[0]), ys=SAMPLES.map(r=>r[1]), vs=SAMPLES.map(r=>r[pIdx]);
+  const sill=Math.max(variance(vs),1e-6);
+  const m=n+1, A=zeros(m,m);
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++) A[i][j]=sill*rho(Math.hypot(xs[i]-xs[j],ys[i]-ys[j]),P);
+  for(let i=0;i<n;i++){A[i][n]=1;A[n][i]=1;}
+  const Ainv=invert(A); if(!Ainv) return null;
+  function evalAt(tx,ty){
+    const b=new Array(m);
+    for(let i=0;i<n;i++) b[i]=sill*rho(Math.hypot(xs[i]-tx,ys[i]-ty),P);
+    b[n]=1;
+    const lam=solveLambda(Ainv,b);
+    let pred=0; for(let i=0;i<n;i++) pred+=lam[i]*vs[i];
+    let va=sill; for(let i=0;i<m;i++) va-=lam[i]*b[i];
+    return {pred, se:Math.sqrt(Math.max(va,0))};
+  }
+  return {n, xs, ys, vs, evalAt, needsDist:false};
+}
+function buildUK(pIdx){
+  const n=SAMPLES.length;
+  const xs=SAMPLES.map(r=>r[0]), ys=SAMPLES.map(r=>r[1]), vs=SAMPLES.map(r=>r[pIdx]), ds=SAMPLES.map(r=>r[DIST_IDX]);
+  const sill=Math.max(variance(vs),1e-6);
+  const m=n+2, A=zeros(m,m);
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++) A[i][j]=sill*rho(Math.hypot(xs[i]-xs[j],ys[i]-ys[j]),P);
+  for(let i=0;i<n;i++){A[i][n]=1;A[n][i]=1; A[i][n+1]=ds[i]; A[n+1][i]=ds[i];}
+  const Ainv=invert(A); if(!Ainv) return null;
+  function evalAt(tx,ty,distAt){
+    const b=new Array(m);
+    for(let i=0;i<n;i++) b[i]=sill*rho(Math.hypot(xs[i]-tx,ys[i]-ty),P);
+    b[n]=1; b[n+1]=distAt;
+    const lam=solveLambda(Ainv,b);
+    let pred=0; for(let i=0;i<n;i++) pred+=lam[i]*vs[i];
+    let va=sill; for(let i=0;i<m;i++) va-=lam[i]*b[i];
+    return {pred, se:Math.sqrt(Math.max(va,0))};
+  }
+  return {n, xs, ys, vs, evalAt, needsDist:true};
+}
+function buildRK(pIdx){
+  const n=SAMPLES.length;
+  const xs=SAMPLES.map(r=>r[0]), ys=SAMPLES.map(r=>r[1]), vs=SAMPLES.map(r=>r[pIdx]), ds=SAMPLES.map(r=>r[DIST_IDX]);
+  const {a,b:slope}=linreg(ds, vs);
+  const resid = vs.map((v,i)=>v-(a+slope*ds[i]));
+  const sill=Math.max(variance(resid),1e-6);
+  const m=n+1, A=zeros(m,m);
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++) A[i][j]=sill*rho(Math.hypot(xs[i]-xs[j],ys[i]-ys[j]),P);
+  for(let i=0;i<n;i++){A[i][n]=1;A[n][i]=1;}
+  const Ainv=invert(A); if(!Ainv) return null;
+  function evalAt(tx,ty,distAt){
+    const b_=new Array(m);
+    for(let i=0;i<n;i++) b_[i]=sill*rho(Math.hypot(xs[i]-tx,ys[i]-ty),P);
+    b_[n]=1;
+    const lam=solveLambda(Ainv,b_);
+    let predR=0; for(let i=0;i<n;i++) predR+=lam[i]*resid[i];
+    let va=sill; for(let i=0;i<m;i++) va-=lam[i]*b_[i];
+    return {pred: a+slope*distAt+predR, se:Math.sqrt(Math.max(va,0))};
+  }
+  return {n, xs, ys, vs:resid, evalAt, needsDist:true, trendA:a, trendB:slope};
+}
+// Multivariate cokriging under a linear model of coregionalization with ONE shared
+// spatial correlation shape rho(h): every auto- and cross-covariance is that same
+// rho(h) scaled by sigma_i*sigma_j*corr(i,j). This generalizes the classical two-
+// variable "intrinsic correlation" cokriging system to K co-variables (secIdxArr),
+// each with its own unbiasedness constraint (primary: sum lambda=1; each secondary:
+// sum lambda=0). Since every secondary is known at all 155 sites (same locations),
+// the secondary-secondary and primary-secondary geometry/rho matrices are each
+// computed once and reused across all K(K+1)/2 + K blocks.
+function buildCK(pIdx,secIdxArr,coverage){
+  const N=SAMPLES.length;
+  const idx1=seededSubset(N, Math.round(coverage*N), 20240521);
+  const x1=idx1.map(i=>SAMPLES[i][0]), y1=idx1.map(i=>SAMPLES[i][1]), z1=idx1.map(i=>SAMPLES[i][pIdx]);
+  const x2=SAMPLES.map(r=>r[0]), y2=SAMPLES.map(r=>r[1]);
+  const n1=x1.length, n2=x2.length, K=secIdxArr.length;
+  const secVals=secIdxArr.map(si=>SAMPLES.map(r=>r[si]));
+
+  const sig1sq=Math.max(variance(z1),1e-6);
+  const sigsq=secVals.map(v=>Math.max(variance(v),1e-6));
+  const zKnown=idx1.map(i=>SAMPLES[i][pIdx]);
+  const r1k=secVals.map(v=>corr(zKnown, idx1.map(i=>v[i])));
+  const crossSill1k=r1k.map((r,k)=>Math.sqrt(sig1sq*sigsq[k])*r);
+  const Rkj=secVals.map((vk,k)=>secVals.map((vj,j)=>k===j?1:corr(vk,vj)));
+
+  const c0=n1+K*n2, m=c0+K+1, A=zeros(m,m);
+  for(let i=0;i<n1;i++)for(let j=0;j<n1;j++) A[i][j]=sig1sq*rho(Math.hypot(x1[i]-x1[j],y1[i]-y1[j]),P);
+
+  const rho22=zeros(n2,n2);
+  for(let i=0;i<n2;i++)for(let j=0;j<n2;j++) rho22[i][j]=rho(Math.hypot(x2[i]-x2[j],y2[i]-y2[j]),P);
+  const rho12=zeros(n1,n2);
+  for(let i=0;i<n1;i++)for(let j=0;j<n2;j++) rho12[i][j]=rho(Math.hypot(x1[i]-x2[j],y1[i]-y2[j]),P);
+  const offsets=secIdxArr.map((_,k)=>n1+k*n2);
+
+  for(let k=0;k<K;k++){
+    const ok=offsets[k];
+    for(let i=0;i<n1;i++)for(let j=0;j<n2;j++){
+      const c=crossSill1k[k]*rho12[i][j];
+      A[i][ok+j]=c; A[ok+j][i]=c;
+    }
+    for(let i=0;i<n2;i++)for(let j=0;j<n2;j++) A[ok+i][ok+j]=sigsq[k]*rho22[i][j];
+    for(let jj=k+1;jj<K;jj++){
+      const oj=offsets[jj], crossSillkj=Math.sqrt(sigsq[k]*sigsq[jj])*Rkj[k][jj];
+      for(let i=0;i<n2;i++)for(let j=0;j<n2;j++){
+        const c=crossSillkj*rho22[i][j];
+        A[ok+i][oj+j]=c; A[oj+j][ok+i]=c;
+      }
+    }
+  }
+  for(let i=0;i<n1;i++){A[i][c0]=1;A[c0][i]=1;}
+  for(let k=0;k<K;k++){ const ok=offsets[k], cc=c0+1+k;
+    for(let i=0;i<n2;i++){A[ok+i][cc]=1;A[cc][ok+i]=1;} }
+  const Ainv=invert(A); if(!Ainv) return null;
+
+  function evalAt(tx,ty){
+    const b=new Array(m).fill(0);
+    for(let i=0;i<n1;i++) b[i]=sig1sq*rho(Math.hypot(x1[i]-tx,y1[i]-ty),P);
+    for(let k=0;k<K;k++){ const ok=offsets[k];
+      for(let i=0;i<n2;i++) b[ok+i]=crossSill1k[k]*rho(Math.hypot(x2[i]-tx,y2[i]-ty),P); }
+    b[c0]=1;
+    const lam=solveLambda(Ainv,b);
+    let pred=0;
+    for(let i=0;i<n1;i++) pred+=lam[i]*z1[i];
+    for(let k=0;k<K;k++){ const ok=offsets[k]; for(let i=0;i<n2;i++) pred+=lam[ok+i]*secVals[k][i]; }
+    let va=sig1sq; for(let i=0;i<m;i++) va-=lam[i]*b[i];
+    return {pred, se:Math.sqrt(Math.max(va,0))};
+  }
+  return {n:n1, xs:x1, ys:y1, vs:z1, evalAt, needsDist:false, primarySet:new Set(idx1), K};
+}
+
+const METHOD_HINT = {
+  sk:"Simple kriging: mean assumed known everywhere (set in the card below). No unbiasedness constraint &mdash; the sparsest, most classical form.",
+  ok:"Ordinary kriging: mean assumed unknown but locally constant. The default, most widely used method.",
+  uk:"Universal kriging with an external drift: distance-to-river (<code>dist</code>) is used as a linear trend term inside the kriging system itself.",
+  rk:"Regression kriging: fit log10(metal) &sim; a + b&middot;dist by least squares first, then krige the leftover residuals and add the trend back.",
+  ck:"Co-kriging: leverages one or more correlated co-variables (known everywhere) to help predict a primary metal that is only sparsely sampled. Pick the co-variables and coverage on the Variable tab.",
+};
+
+/* ================= rebuild / evaluate (runs only on "Run") ================= */
+function rebuild(){
+  const pIdx=COLIDX[P.primary];
+  let sys;
+  if(P.method==="sk") sys=buildSK(pIdx);
+  else if(P.method==="ok") sys=buildOK(pIdx);
+  else if(P.method==="uk") sys=buildUK(pIdx);
+  else if(P.method==="rk") sys=buildRK(pIdx);
+  else sys=buildCK(pIdx, P.secondaries.map(s=>COLIDX[s]), P.coverage);
+
+  document.getElementById("predEmpty").style.display = sys?"none":"flex";
+  document.getElementById("probEmpty").style.display = sys?"none":"flex";
+  SYS=sys;
+  document.getElementById("dNUsed").textContent = sys ? (P.method==="ck"? sys.n+" + "+sys.K+"×155" : String(sys.n)) : "—";
+
+  if(!sys){
+    GRIDVALS=null; GRIDVARS=null; GRIDPREDLOG=null;
+    drawAll(); updateProbability();
+    return;
+  }
+
+  const m=GRID.length;
+  GRIDVALS=new Float64Array(m); GRIDVARS=new Float64Array(m); GRIDPREDLOG=new Float64Array(m);
+  gLo=Infinity; gHi=-Infinity; gVMax=0;
+  for(let k=0;k<m;k++){
+    const gx=GRID[k][0], gy=GRID[k][1], gd=GRID[k][2];
+    const r = sys.evalAt(gx,gy,gd);
+    const val=Math.pow(10,r.pred);
+    GRIDVALS[k]=val; GRIDVARS[k]=r.se; GRIDPREDLOG[k]=r.pred;
+    if(val<gLo)gLo=val; if(val>gHi)gHi=val; if(r.se>gVMax)gVMax=r.se;
+  }
+  if(gHi-gLo<1e-6) gHi=gLo+1;
+  if(gVMax<1e-6) gVMax=1;
+  drawAll();
+  updateProbability();
+}
+
+/* ================= map projection: real-world (m) -> canvas pixels ================= */
+const BBOX=(()=>{
+  let xmin=Infinity,xmax=-Infinity,ymin=Infinity,ymax=-Infinity;
+  for(const r of GRID){ if(r[0]<xmin)xmin=r[0]; if(r[0]>xmax)xmax=r[0]; if(r[1]<ymin)ymin=r[1]; if(r[1]>ymax)ymax=r[1]; }
+  return {xmin:xmin-CELL_M, xmax:xmax+CELL_M, ymin:ymin-CELL_M, ymax:ymax+CELL_M};
+})();
+function makeTransform(size){
+  const spanX=BBOX.xmax-BBOX.xmin, spanY=BBOX.ymax-BBOX.ymin;
+  const scale=Math.min(size/spanX, size/spanY);
+  return {scale, ox:(size-spanX*scale)/2, oy:(size-spanY*scale)/2};
+}
+const T=makeTransform(380);
+function worldToPx(wx,wy){ return [T.ox+(wx-BBOX.xmin)*T.scale, T.oy+(BBOX.ymax-wy)*T.scale]; }
+function pxToWorld(px,py){ return [BBOX.xmin+(px-T.ox)/T.scale, BBOX.ymax-(py-T.oy)/T.scale]; }
+
+/* ================= rendering: prediction / uncertainty / probability maps ================= */
+function paintGridMap(canvas, values, lo, hi, stops){
+  const ctx=canvas.getContext("2d");
+  ctx.fillStyle="#0d1017"; ctx.fillRect(0,0,canvas.width,canvas.height);
+  if(!values) return;
+  const span=(hi-lo)||1, cell=CELL_M*T.scale+0.7;
+  for(let k=0;k<GRID.length;k++){
+    const c=ramp(stops,(values[k]-lo)/span);
+    ctx.fillStyle=`rgb(${c[0]|0},${c[1]|0},${c[2]|0})`;
+    const [px,py]=worldToPx(GRID[k][0],GRID[k][1]);
+    ctx.fillRect(px-cell/2, py-cell/2, cell, cell);
+  }
+}
+function drawPoints(canvas,colorByValue){
+  if(!SYS) return;
+  const ctx=canvas.getContext("2d");
+  ctx.lineWidth=1.4;
+  const lo=Math.min(...SYS.vs), hi=Math.max(...SYS.vs);
+  for(let i=0;i<SYS.n;i++){
+    const [px,py]=worldToPx(SYS.xs[i],SYS.ys[i]);
+    ctx.beginPath(); ctx.arc(px,py,3.6,0,7);
+    if(colorByValue){ const c=ramp(VIRIDIS,((SYS.vs[i]-lo)/((hi-lo)||1)));
+      ctx.fillStyle=`rgb(${c[0]|0},${c[1]|0},${c[2]|0})`; }
+    else ctx.fillStyle="rgba(255,255,255,0.9)";
+    ctx.fill();
+    ctx.strokeStyle= colorByValue?"rgba(255,255,255,0.9)":"rgba(20,24,34,0.85)";
+    ctx.stroke();
+  }
+  if(P.method==="ck"){ // show the secondary-only ("cheap, dense") locations too, as small hollow rings
+    for(let i=0;i<SAMPLES.length;i++){
+      if(SYS.primarySet.has(i)) continue;
+      const [px,py]=worldToPx(SAMPLES[i][0],SAMPLES[i][1]);
+      ctx.beginPath(); ctx.arc(px,py,2.6,0,7);
+      ctx.fillStyle="rgba(255,255,255,0.15)"; ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,0.55)"; ctx.lineWidth=1; ctx.stroke();
+    }
+  }
+}
+function drawAll(){
+  const pc=document.getElementById("predCv"), vc=document.getElementById("varCv");
+  paintGridMap(pc,GRIDVALS,gLo,gHi,VIRIDIS); drawPoints(pc,true);
+  paintGridMap(vc,GRIDVARS,0,gVMax,MAGMA);   drawPoints(vc,false);
+  document.getElementById("pStrip").style.background=cssRamp(VIRIDIS,24);
+  document.getElementById("vStrip").style.background=cssRamp(MAGMA,24);
+  document.getElementById("pLo").textContent = GRIDVALS?gLo.toFixed(0):"–";
+  document.getElementById("pHi").textContent = GRIDVALS?gHi.toFixed(0):"–";
+  document.getElementById("vHi").textContent = GRIDVALS?gVMax.toFixed(3):"–";
+  document.getElementById("predUnit").textContent = `${METAL_LABEL[P.primary]}, mg/kg`;
+  drawVariogram();
+}
+
+/* ================= variogram plot (cheap; redraws live as sliders move) ================= */
+function drawVariogram(){
+  const cv=document.getElementById("vgCv"), ctx=cv.getContext("2d");
+  const W=cv.width, H=cv.height, L=52,R=16,T2=16,B=34;
+  const x0=L, x1=W-R, y0=H-B, y1=T2;
+  ctx.clearRect(0,0,W,H);
+  const maxLag=Math.max(P.range*1.4, 200);
+  const yMax=1.25;
+  const X=h=>x0+(h/maxLag)*(x1-x0);
+  const Y=g=>y0-(g/yMax)*(y0-y1);
+  ctx.strokeStyle="#c7cdd8"; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x0,y1);ctx.lineTo(x0,y0);ctx.lineTo(x1,y0);ctx.stroke();
+  ctx.fillStyle="#9aa1b2"; ctx.font="11px ui-monospace,Menlo,monospace";
+  for(let g=0;g<=1.2;g+=0.25){ const yy=Y(g);
+    ctx.strokeStyle="#eef0f4";ctx.beginPath();ctx.moveTo(x0,yy);ctx.lineTo(x1,yy);ctx.stroke();
+    ctx.fillText(g.toFixed(2),8,yy+3);}
+  ctx.fillText("γ (norm.)",6,y1+2);
+  ctx.fillText("lag distance h (m)",(x0+x1)/2-46,H-10);
+  const dash=(x1o,y1o,x2o,y2o)=>{ctx.setLineDash([4,4]);ctx.beginPath();
+    ctx.moveTo(x1o,y1o);ctx.lineTo(x2o,y2o);ctx.stroke();ctx.setLineDash([]);};
+  ctx.strokeStyle="#b9c0cf"; dash(x0,Y(1),x1,Y(1));
+  if(P.range<=maxLag) dash(X(P.range),y0,X(P.range),Y(1));
+  ctx.strokeStyle="#cfd5df"; if(P.nugget>0) dash(x0,Y(P.nugget),X(maxLag*0.16),Y(P.nugget));
+  ctx.fillStyle="#8b93a6";
+  ctx.fillText("sill",x1-30,Y(1)-5);
+  if(P.range<=maxLag) ctx.fillText("range",X(P.range)-16,y0-4);
+  if(P.nugget>0.02) ctx.fillText("nugget",x0+6,Y(P.nugget)-5);
+
+  if(SYS){
+    const xs=SYS.xs, ys=SYS.ys, vs=SYS.vs, n=xs.length;
+    const vr=Math.max(variance(vs),1e-9);
+    const NB=14, sum=new Array(NB).fill(0), cnt=new Array(NB).fill(0);
+    for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){
+      const h=Math.hypot(xs[i]-xs[j],ys[i]-ys[j]);
+      if(h>maxLag) continue;
+      const bi=Math.min(NB-1,Math.floor(h/maxLag*NB));
+      sum[bi]+=0.5*(vs[i]-vs[j])*(vs[i]-vs[j]); cnt[bi]++;
+    }
+    ctx.fillStyle="#5b6373";
+    for(let bi=0;bi<NB;bi++){ if(!cnt[bi]) continue;
+      const h=(bi+0.5)/NB*maxLag, g=(sum[bi]/cnt[bi])/vr;
+      ctx.beginPath();ctx.arc(X(h),Y(Math.min(g,yMax)),3.2,0,7);ctx.fill();}
+  }
+  ctx.strokeStyle="#33415c"; ctx.lineWidth=2; ctx.beginPath();
+  for(let px=0;px<=(x1-x0);px++){ const h=px/(x1-x0)*maxLag; const g=gammaN(h,P);
+    const xx=x0+px, yy=Y(g); if(px===0)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy);}
+  ctx.stroke();
+}
+
+/* ================= exploratory tab: histogram, stats, posting, trend scatter ================= */
+function drawHistogram(canvasId, raw, xlabel){
+  const cv=document.getElementById(canvasId), ctx=cv.getContext("2d");
+  const W=cv.width, H=cv.height, L=40,R=14,T2=14,B=30;
+  const x0=L,x1=W-R,y0=H-B,y1=T2;
+  ctx.clearRect(0,0,W,H);
+  const lo=Math.min(...raw), hi=Math.max(...raw);
+  const NB=14, w=((hi-lo)/NB)||1, cnt=new Array(NB).fill(0);
+  for(const v of raw){ let bi=Math.floor((v-lo)/w); if(bi>=NB)bi=NB-1; if(bi<0)bi=0; cnt[bi]++; }
+  const maxc=Math.max(...cnt,1);
+  ctx.strokeStyle="#c7cdd8"; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x0,y1);ctx.lineTo(x0,y0);ctx.lineTo(x1,y0);ctx.stroke();
+  const bw=(x1-x0)/NB;
+  ctx.fillStyle="#33415c";
+  for(let i=0;i<NB;i++){ const h=(cnt[i]/maxc)*(y0-y1); ctx.fillRect(x0+i*bw+1,y0-h,Math.max(bw-2,1),h); }
+  ctx.fillStyle="#9aa1b2"; ctx.font="11px ui-monospace,Menlo,monospace";
+  ctx.fillText(lo.toFixed(0), x0, y0+14);
+  ctx.fillText(hi.toFixed(0), x1-28, y0+14);
+  ctx.fillText(xlabel, x0, 11);
+}
+function drawPosting(canvasId, raw){
+  const cv=document.getElementById(canvasId), ctx=cv.getContext("2d");
+  ctx.fillStyle="#0d1017"; ctx.fillRect(0,0,cv.width,cv.height);
+  const lo=Math.min(...raw), hi=Math.max(...raw);
+  for(let i=0;i<SAMPLES.length;i++){
+    const [px,py]=worldToPx(SAMPLES[i][0],SAMPLES[i][1]);
+    const t=(raw[i]-lo)/((hi-lo)||1);
+    const rad=3+t*9;
+    const c=ramp(VIRIDIS,t);
+    ctx.beginPath();ctx.arc(px,py,rad,0,7);
+    ctx.fillStyle=`rgba(${c[0]|0},${c[1]|0},${c[2]|0},0.85)`;ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,0.55)";ctx.lineWidth=1;ctx.stroke();
+  }
+}
+function drawScatter(canvasId, xs, ys, xlabel){
+  const cv=document.getElementById(canvasId), ctx=cv.getContext("2d");
+  const W=cv.width,H=cv.height,L=44,R=14,T2=14,B=28;
+  const x0=L,x1=W-R,y0=H-B,y1=T2;
+  ctx.clearRect(0,0,W,H);
+  const xlo=Math.min(...xs),xhi=Math.max(...xs), ylo=Math.min(...ys),yhi=Math.max(...ys);
+  const X=v=>x0+((v-xlo)/((xhi-xlo)||1))*(x1-x0);
+  const Y=v=>y0-((v-ylo)/((yhi-ylo)||1))*(y0-y1);
+  ctx.strokeStyle="#c7cdd8"; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x0,y1);ctx.lineTo(x0,y0);ctx.lineTo(x1,y0);ctx.stroke();
+  ctx.fillStyle="rgba(91,99,115,0.75)";
+  for(let i=0;i<xs.length;i++){ ctx.beginPath();ctx.arc(X(xs[i]),Y(ys[i]),3,0,7);ctx.fill(); }
+  const {a,b}=linreg(xs,ys);
+  ctx.strokeStyle="#33415c"; ctx.lineWidth=2; ctx.beginPath();
+  ctx.moveTo(X(xlo),Y(a+b*xlo)); ctx.lineTo(X(xhi),Y(a+b*xhi)); ctx.stroke();
+  const r=corr(xs,ys);
+  ctx.fillStyle="#697086"; ctx.font="11px ui-monospace,Menlo,monospace";
+  ctx.fillText(`r = ${r.toFixed(2)}`, x1-56, y1+10);
+  ctx.fillText(xlabel, x0, 11);
+}
+function updateExploratory(){
+  const pIdx=COLIDX[P.primary];
+  const rawAll = SAMPLES.map(r=>Math.pow(10,r[pIdx]));
+  const logAll = SAMPLES.map(r=>r[pIdx]);
+  const distAll = SAMPLES.map(r=>r[DIST_IDX]);
+  document.getElementById("expTitle").textContent = METAL_LABEL[P.primary];
+  const set=(id,v)=>document.getElementById(id).textContent=v;
+  set("stN", rawAll.length);
+  set("stMinR", Math.min(...rawAll).toFixed(1));   set("stMinL", Math.min(...logAll).toFixed(3));
+  set("stMaxR", Math.max(...rawAll).toFixed(1));   set("stMaxL", Math.max(...logAll).toFixed(3));
+  set("stMeanR", mean(rawAll).toFixed(1));         set("stMeanL", mean(logAll).toFixed(3));
+  set("stMedR", median(rawAll).toFixed(1));        set("stMedL", median(logAll).toFixed(3));
+  set("stSdR", Math.sqrt(variance(rawAll)).toFixed(1)); set("stSdL", Math.sqrt(variance(logAll)).toFixed(3));
+  set("stSkR", skewness(rawAll).toFixed(2));       set("stSkL", skewness(logAll).toFixed(2));
+  drawHistogram("histCv", rawAll, METAL_LABEL[P.primary]+" (mg/kg)");
+  drawPosting("postCv", rawAll);
+  drawScatter("scatterCv", distAll, logAll, "distance to river (relative units)");
+}
+
+/* ================= probability tab ================= */
+function updateThresholdBounds(){
+  const pIdx=COLIDX[P.primary];
+  const rawAll = SAMPLES.map(r=>Math.pow(10,r[pIdx])).sort((a,b)=>a-b);
+  const lo=rawAll[0], hi=rawAll[rawAll.length-1];
+  const p75=rawAll[Math.floor(0.75*(rawAll.length-1))];
+  const el=document.getElementById("threshold");
+  el.min=Math.max(1,Math.floor(lo*0.8));
+  el.max=Math.ceil(hi*1.1);
+  el.step=Math.max(1,Math.round((hi-lo)/100));
+  el.value=Math.round(p75);
+  P.threshold=+el.value;
+  document.getElementById("threshVal").textContent=P.threshold.toFixed(0);
+}
+function drawProbability(){
+  const cv=document.getElementById("probCv");
+  paintGridMap(cv,GRIDPROB,0,1,RISK);
+  drawPoints(cv,false);
+  document.getElementById("probStrip").style.background=cssRamp(RISK,24);
+}
+function updateProbability(){
+  if(!GRIDPREDLOG){ GRIDPROB=null; document.getElementById("probFrac").textContent="—"; drawProbability(); return; }
+  const cutLog=Math.log10(Math.max(P.threshold,1e-6));
+  const m=GRID.length;
+  GRIDPROB=new Float64Array(m);
+  let exceed=0;
+  for(let k=0;k<m;k++){
+    const se=GRIDVARS[k];
+    const z = se>1e-9 ? (cutLog-GRIDPREDLOG[k])/se : (cutLog>GRIDPREDLOG[k]?1e9:-1e9);
+    const p=1-normCdf(z);
+    GRIDPROB[k]=p; if(p>=0.5) exceed++;
+  }
+  document.getElementById("probFrac").textContent=(100*exceed/m).toFixed(1)+"%";
+  drawProbability();
+}
+
+/* ================= interaction: hover-to-read only (fixed real data, nothing to add/drag) ================= */
+const predCv=document.getElementById("predCv");
+function evtPx(canvas,e){
+  const r=canvas.getBoundingClientRect();
+  return [(e.clientX-r.left)/r.width*canvas.width, (e.clientY-r.top)/r.height*canvas.height];
+}
+predCv.addEventListener("pointermove",e=>{
+  if(!SYS) return;
+  const [px,py]=evtPx(predCv,e);
+  const [wx,wy]=pxToWorld(px,py);
+  const distAt = SYS.needsDist ? nearestGridDist(wx,wy) : 0;
+  const r = SYS.evalAt(wx,wy,distAt);
+  const val=Math.pow(10,r.pred), lo=Math.pow(10,r.pred-r.se), hi=Math.pow(10,r.pred+r.se);
+  document.getElementById("rXY").textContent=wx.toFixed(0)+", "+wy.toFixed(0);
+  document.getElementById("rZ").textContent=val.toFixed(1);
+  document.getElementById("rRange").textContent=lo.toFixed(1)+" – "+hi.toFixed(1);
+  document.getElementById("rSE").textContent=r.pred.toFixed(3)+" ± "+r.se.toFixed(3);
+});
+predCv.addEventListener("pointerleave",()=>{
+  document.getElementById("rXY").textContent="—";
+  document.getElementById("rZ").textContent="—";
+  document.getElementById("rRange").textContent="—";
+  document.getElementById("rSE").textContent="—";
+});
+const probCv=document.getElementById("probCv");
+probCv.addEventListener("pointermove",e=>{
+  if(!SYS) return;
+  const [px,py]=evtPx(probCv,e);
+  const [wx,wy]=pxToWorld(px,py);
+  const distAt = SYS.needsDist ? nearestGridDist(wx,wy) : 0;
+  const r = SYS.evalAt(wx,wy,distAt);
+  const cutLog=Math.log10(Math.max(P.threshold,1e-6));
+  const z = r.se>1e-9 ? (cutLog-r.pred)/r.se : (cutLog>r.pred?1e9:-1e9);
+  const p=1-normCdf(z);
+  document.getElementById("probXY").textContent=wx.toFixed(0)+", "+wy.toFixed(0);
+  document.getElementById("probAtCursor").textContent=(100*p).toFixed(1)+"%";
+});
+probCv.addEventListener("pointerleave",()=>{
+  document.getElementById("probXY").textContent="—";
+  document.getElementById("probAtCursor").textContent="—";
+});
+
+/* ================= tab switching ================= */
+function showTab(name){
+  document.querySelectorAll("#tabbar button").forEach(b=>b.classList.toggle("on", b.dataset.tab===name));
+  document.querySelectorAll(".tabpanel").forEach(p=>p.classList.toggle("active", p.dataset.tab===name));
+}
+document.getElementById("tabbar").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return; showTab(b.dataset.tab);
+});
+
+/* ================= UI wiring ================= */
+function updateVisibility(){
+  document.querySelectorAll("[data-only]").forEach(el=>{
+    el.style.display = (el.getAttribute("data-only")===P.method) ? "block" : "none";
+  });
+  document.getElementById("methodHint").innerHTML = METHOD_HINT[P.method];
+  document.querySelectorAll("#methodSeg button").forEach(b=>b.classList.toggle("on", b.dataset.m===P.method));
+}
+const runBtn=document.getElementById("runBtn"), runHint=document.getElementById("runHint");
+function markDirty(){ runHint.textContent="Settings changed — click Run to recompute."; }
+function markClean(){ runHint.textContent="Up to date."; }
+runBtn.addEventListener("click",()=>{ runHint.textContent="Running…"; requestAnimationFrame(()=>{ rebuild(); markClean(); }); });
+
+document.getElementById("methodSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  P.method=b.dataset.m; updateVisibility(); markDirty();
+});
+// Co-variable checkboxes: a metal can't be co-kriged against itself, so whichever
+// box matches the current primary is disabled and unchecked; if that empties the
+// selection, the first still-enabled box is auto-checked (mirrors the old
+// single-<select> auto-switch behavior, generalized to 1-3 picks).
+function syncCovarChecks(){
+  const boxes=[...document.querySelectorAll("#covarChecks input[type=checkbox]")];
+  boxes.forEach(cb=>{
+    const disabled = cb.value===P.primary;
+    cb.disabled=disabled;
+    cb.closest(".checkitem").classList.toggle("disabled", disabled);
+    if(disabled) cb.checked=false;
+  });
+  let checked=boxes.filter(cb=>cb.checked && !cb.disabled).map(cb=>cb.value);
+  if(checked.length===0){
+    const fallback=boxes.find(cb=>!cb.disabled);
+    if(fallback){ fallback.checked=true; checked=[fallback.value]; }
+  }
+  P.secondaries=checked;
+}
+document.getElementById("primary").addEventListener("change",e=>{
+  P.primary=e.target.value;
+  syncCovarChecks();
+  updateExploratory(); updateThresholdBounds(); markDirty();
+});
+document.getElementById("covarChecks").addEventListener("change",e=>{
+  if(e.target.tagName!=="INPUT") return;
+  const boxes=[...document.querySelectorAll("#covarChecks input[type=checkbox]")];
+  let checked=boxes.filter(cb=>cb.checked && !cb.disabled).map(cb=>cb.value);
+  if(checked.length===0){ e.target.checked=true; checked=[e.target.value]; } // always keep >=1
+  P.secondaries=checked;
+  markDirty();
+});
+
+function bindRange(id,out,fmt,set){
+  const el=document.getElementById(id), o=document.getElementById(out);
+  el.addEventListener("input",()=>{o.textContent=fmt(el.value);set(parseFloat(el.value));markDirty();});
+}
+bindRange("range","rangeVal",v=>(+v).toFixed(0),v=>{P.range=v;drawVariogram();});
+bindRange("nugget","nugVal",v=>(+v).toFixed(2),v=>{P.nugget=v;drawVariogram();});
+bindRange("coverage","covVal",v=>Math.round(+v*100)+"%",v=>P.coverage=v);
+bindRange("skMean","skMeanVal",v=>(+v)===0?"auto":(+v).toFixed(2),v=>P.skMean=(+v)===0?null:+v);
+document.getElementById("model").addEventListener("change",e=>{P.model=e.target.value;drawVariogram();markDirty();});
+
+document.getElementById("threshold").addEventListener("input",e=>{
+  P.threshold=+e.target.value;
+  document.getElementById("threshVal").textContent=P.threshold.toFixed(0);
+  updateProbability();
+});
+
+/* ================= go ================= */
+updateVisibility();
+syncCovarChecks();
+updateExploratory();
+updateThresholdBounds();
+rebuild();
+markClean();
+})();
+</script>

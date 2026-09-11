@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=77.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pygstat"
+version = "0.1.0"
+description = "GPU-accelerated geostatistics for Python — variograms, kriging, Poisson kriging, and sequential simulation (inspired by R's gstat and GSLIB)"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE.md"]
+authors = [{name = "Zia Ahmed", email = "zia207@gmail.com"}]
+requires-python = ">=3.8"
+keywords = [
+    "geostatistics",
+    "kriging",
+    "variogram",
+    "cokriging",
+    "poisson-kriging",
+    "indicator-kriging",
+    "spatial-statistics",
+    "space-time",
+    "sequential-simulation",
+    "sgsim",
+    "sisim",
+    "GPU",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+dependencies = [
+    "numpy>=1.20",
+    "scipy>=1.7",
+    "pandas>=1.3",
+    "geopandas>=0.10",
+    "scikit-learn>=1.0",
+]
+
+[project.optional-dependencies]
+gpu = ["cupy-cuda11x"]
+plot = ["matplotlib", "contextily"]
+test = ["pytest", "pytest-cov"]
+h2o = ["h2o"]
+pytorch = ["torch"]
+tensorflow = ["tensorflow"]
+gam = ["pygam"]
+optuna = ["optuna"]
+deep = ["pygstat[h2o,pytorch,tensorflow]"]
+dev = ["pygstat[test,plot]", "build", "wheel"]
+
+[project.urls]
+Homepage = "https://zia207.github.io/pygstat/"
+Documentation = "https://zia207.github.io/pygstat/"
+Repository = "https://github.com/zia207/pygstat"
+Issues = "https://github.com/zia207/pygstat/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-q"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::FutureWarning",
+]

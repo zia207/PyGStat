@@ -1,0 +1,248 @@
+project:
+  type: website
+  output-dir: docs
+  resources:
+    - Image
+    - kriging-workbench.html
+    - LICENSE.md
+  render:
+    - index.md
+    - install.md
+    - Tutorial/00_getting_started.ipynb
+    - Tutorial/01_variogram_modeling.ipynb
+    - Tutorial/02_simple_kriging.ipynb
+    - Tutorial/03_ordinary_kriging.ipynb
+    - Tutorial/04_universal_kriging.ipynb
+    - Tutorial/05_cokriging.ipynb
+    - Tutorial/06_01_regression_kriging_scikit_learn.ipynb
+    - Tutorial/06_02_regression_kriging_H20.ipynb
+    - Tutorial/06_03_regression_kriging_pytorch.ipynb
+    - Tutorial/06_04_regression_krigingDNN_TF.ipynb
+    - Tutorial/06_05_regression_kriging_gnn.ipynb
+    - Tutorial/07_indicator_kriging.ipynb
+    - Tutorial/08_kriging_3d.ipynb
+    - Tutorial/09_soft_kriging.ipynb
+    - Tutorial/10_disjunctive_kriging.ipynb
+    - Tutorial/11_empirical_bayesian_kriging.ipynb
+    - Tutorial/12_factorial_kriging.ipynb
+    - Tutorial/13_krigingST.ipynb
+    - Tutorial/14_kriging_CNNLSTM.ipynb
+    - Tutorial/15_kriging_STGNN.ipynb
+    - Tutorial/16_kriging_STGTN.ipynb
+    - Tutorial/17_01_poisson_Kriging_ata_atp.ipynb
+    - Tutorial/17_02_poisson_cokriging.ipynb
+    - Tutorial/17_03_poisson_kriging_ST.ipynb
+    - Tutorial/18_sgsim.ipynb
+    - Tutorial/19_sisim.ipynb
+
+website:
+  title: "PyGStat"
+  description: "GPU-accelerated geostatistics for Python — variograms, kriging, Poisson kriging, and sequential simulation on CPU or GPU."
+  site-url: https://zia207.github.io/pygstat/
+  repo-url: https://github.com/zia207/pygstat
+  repo-branch: main
+  favicon: Image/pygstat_logo_light.svg
+  page-navigation: true
+  back-to-top-navigation: true
+  search:
+    location: sidebar
+    type: textbox
+  page-footer:
+    right: "This page is built with [Quarto](https://quarto.org/)."
+    left: "&copy; CC-By Zia Ahmed, Upatta Analytics, 2026"
+  navbar:
+    background: primary
+    logo: Image/pygstat_logo_light.svg
+    left:
+      - text: Home
+        href: index.md
+      - text: Getting Started
+        menu:
+          - text: Getting Started
+            href: Tutorial/00_getting_started.ipynb
+          - text: PyGStat Installation
+            href: install.md
+      - text: Tutorial
+        menu:
+          - text: Core Interpolation
+          - text: Variogram Modeling
+            href: Tutorial/01_variogram_modeling.ipynb
+          - text: Simple Kriging
+            href: Tutorial/02_simple_kriging.ipynb
+          - text: Ordinary Kriging
+            href: Tutorial/03_ordinary_kriging.ipynb
+          - text: Universal Kriging
+            href: Tutorial/04_universal_kriging.ipynb
+          - text: Cokriging
+            href: Tutorial/05_cokriging.ipynb
+          - text: 3-D Kriging (KT3D)
+            href: Tutorial/08_kriging_3d.ipynb
+          - text: "---"
+          - text: Regression Kriging
+          - text: scikit-learn
+            href: Tutorial/06_01_regression_kriging_scikit_learn.ipynb
+          - text: H2O AutoML
+            href: Tutorial/06_02_regression_kriging_H20.ipynb
+          - text: PyTorch MLP
+            href: Tutorial/06_03_regression_kriging_pytorch.ipynb
+          - text: TensorFlow / Keras
+            href: Tutorial/06_04_regression_krigingDNN_TF.ipynb
+          - text: Graph Neural Nets
+            href: Tutorial/06_05_regression_kriging_gnn.ipynb
+          - text: "---"
+          - text: Indicators, Structure, and Space–Time
+          - text: Indicator Kriging
+            href: Tutorial/07_indicator_kriging.ipynb
+          - text: Disjunctive Kriging
+            href: Tutorial/10_disjunctive_kriging.ipynb
+          - text: Empirical Bayesian Kriging
+            href: Tutorial/11_empirical_bayesian_kriging.ipynb
+          - text: Soft Kriging
+            href: Tutorial/09_soft_kriging.ipynb
+          - text: Factorial Kriging
+            href: Tutorial/12_factorial_kriging.ipynb
+          - text: Spatio-Temporal OK
+            href: Tutorial/13_krigingST.ipynb
+          - text: ConvLSTM
+            href: Tutorial/14_kriging_CNNLSTM.ipynb
+          - text: STGNN (TGCN / DCRNN)
+            href: Tutorial/15_kriging_STGNN.ipynb
+          - text: STGTN (STTN / GMAN)
+            href: Tutorial/16_kriging_STGTN.ipynb
+          - text: "---"
+          - text: Poisson Kriging
+          - text: Area-to-Area / Area-to-Point
+            href: Tutorial/17_01_poisson_Kriging_ata_atp.ipynb
+          - text: Poisson Cokriging
+            href: Tutorial/17_02_poisson_cokriging.ipynb
+          - text: Spatio-Temporal Poisson
+            href: Tutorial/17_03_poisson_kriging_ST.ipynb
+          - text: "---"
+          - text: Simulation
+          - text: SGSIM
+            href: Tutorial/18_sgsim.ipynb
+          - text: SISIM
+            href: Tutorial/19_sisim.ipynb
+      - icon: house
+        href: https://sites.google.com/view/r-data-sci-env/home
+        aria-label: Upatta Analytics
+    right:
+      - icon: box
+        href: https://pypi.org/project/pygstat/
+        aria-label: PyPI
+      - icon: github
+        href: https://github.com/zia207/pygstat
+        aria-label: GitHub
+      - icon: linkedin
+        href: https://www.linkedin.com/in/zia-ahmed207
+        aria-label: LinkedIn
+      - icon: envelope
+        href: mailto:zia207@gmail.com
+        aria-label: Email
+
+  sidebar:
+    logo: Image/pygstat_logo_light.svg
+    pinned: true
+    border: true
+    align: center
+    search: true
+    style: "docked"
+    collapse-level: 1
+    contents:
+      - text: "Package Overview"
+        href: index.md
+      - section: "**Core Interpolation**"
+        contents:
+          - href: Tutorial/01_variogram_modeling.ipynb
+            text: "Variogram Modeling"
+          - href: Tutorial/02_simple_kriging.ipynb
+            text: "Simple Kriging"
+          - href: Tutorial/03_ordinary_kriging.ipynb
+            text: "Ordinary Kriging"
+          - href: Tutorial/04_universal_kriging.ipynb
+            text: "Universal Kriging"
+          - href: Tutorial/05_cokriging.ipynb
+            text: "Cokriging"
+          - href: Tutorial/08_kriging_3d.ipynb
+            text: "3-D Kriging (KT3D)"
+      - section: "**Regression Kriging**"
+        contents:
+          - href: Tutorial/06_01_regression_kriging_scikit_learn.ipynb
+            text: "scikit-learn"
+          - href: Tutorial/06_02_regression_kriging_H20.ipynb
+            text: "H2O AutoML"
+          - href: Tutorial/06_03_regression_kriging_pytorch.ipynb
+            text: "PyTorch MLP"
+          - href: Tutorial/06_04_regression_krigingDNN_TF.ipynb
+            text: "TensorFlow / Keras"
+          - href: Tutorial/06_05_regression_kriging_gnn.ipynb
+            text: "Graph Neural Nets"
+      - section: "**Indicators, Structure, and Space–Time**"
+        contents:
+          - href: Tutorial/07_indicator_kriging.ipynb
+            text: "Indicator Kriging"
+          - href: Tutorial/10_disjunctive_kriging.ipynb
+            text: "Disjunctive Kriging"
+          - href: Tutorial/11_empirical_bayesian_kriging.ipynb
+            text: "Empirical Bayesian Kriging"
+          - href: Tutorial/09_soft_kriging.ipynb
+            text: "Soft Kriging"
+          - href: Tutorial/12_factorial_kriging.ipynb
+            text: "Factorial Kriging"
+          - href: Tutorial/13_krigingST.ipynb
+            text: "Spatio-Temporal OK"
+          - href: Tutorial/14_kriging_CNNLSTM.ipynb
+            text: "ConvLSTM"
+          - href: Tutorial/15_kriging_STGNN.ipynb
+            text: "STGNN (TGCN / DCRNN)"
+          - href: Tutorial/16_kriging_STGTN.ipynb
+            text: "STGTN (STTN / GMAN)"
+      - section: "**Poisson Kriging**"
+        contents:
+          - href: Tutorial/17_01_poisson_Kriging_ata_atp.ipynb
+            text: "Area-to-Area / Area-to-Point"
+          - href: Tutorial/17_02_poisson_cokriging.ipynb
+            text: "Poisson Cokriging"
+          - href: Tutorial/17_03_poisson_kriging_ST.ipynb
+            text: "Spatio-Temporal Poisson"
+      - section: "**Simulation**"
+        contents:
+          - href: Tutorial/18_sgsim.ipynb
+            text: "SGSIM"
+          - href: Tutorial/19_sisim.ipynb
+            text: "SISIM"
+
+tbl-cap-location: top
+title-block-banner: true
+
+execute:
+  enabled: false
+  echo: true
+  warning: false
+  message: false
+  freeze: auto
+
+format:
+  html:
+    theme:
+      light: cosmo
+      dark: darkly
+    highlight-style: github
+    fontsize: 1.1em
+    linestretch: 1.6
+    code-fold: show
+    code-tools: false
+    code-copy: true
+    code-link: true
+    smooth-scroll: true
+    toc: true
+    toc-depth: 4
+    toc-title: "On This Page"
+    number-sections: false
+    fig-align: center
+    df-print: paged
+    grid:
+      sidebar-width: 350px
+      body-width: 1200px
+      margin-width: 250px
+      gutter-width: 1.5rem
