@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pygstat"
-version = "0.1.0"
+version = "0.1.1"
 description = "GPU-accelerated geostatistics for Python — variograms, kriging, Poisson kriging, and sequential simulation (inspired by R's gstat and GSLIB)"
 readme = "README.md"
 license = "MIT"
@@ -60,10 +60,10 @@ deep = ["pygstat[h2o,pytorch,tensorflow]"]
 dev = ["pygstat[test,plot]", "build", "wheel"]
 
 [project.urls]
-Homepage = "https://zia207.github.io/pygstat/"
-Documentation = "https://zia207.github.io/pygstat/"
-Repository = "https://github.com/zia207/pygstat"
-Issues = "https://github.com/zia207/pygstat/issues"
+Homepage = "https://zia207.github.io/PyGStat/"
+Documentation = "https://zia207.github.io/PyGStat/"
+Repository = "https://github.com/zia207/PyGStat"
+Issues = "https://github.com/zia207/PyGStat/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

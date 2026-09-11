@@ -37,7 +37,7 @@ def _synthetic(n=24, seed=0):
 
 
 def test_version_and_public_api():
-    assert pygstat.__version__ == "0.1.0"
+    assert pygstat.__version__ == "0.1.1"
     for name in pygstat.__all__:
         assert hasattr(pygstat, name), f"public name {name!r} is missing"
 

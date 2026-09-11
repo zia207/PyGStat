@@ -74,10 +74,10 @@ Heavy optional backends (H2O, PyTorch, TensorFlow) are imported lazily, so `impo
 | | |
 |---|---|
 | **Name** | `PyGStat` |
-| **Version** | 0.1.0 |
+| **Version** | 0.1.1 |
 | **PyPI** | [pypi.org/project/pygstat](https://pypi.org/project/pygstat/) |
-| **Documentation** | [zia207.github.io/pygstat](https://zia207.github.io/pygstat/) |
-| **Repository** | [github.com/zia207/pygstat](https://github.com/zia207/pygstat) |
+| **Documentation** | [zia207.github.io/PyGStat](https://zia207.github.io/PyGStat/) |
+| **Repository** | [github.com/zia207/PyGStat](https://github.com/zia207/PyGStat) |
 | **License** | MIT |
 | **Python** | ≥ 3.8 |
 | **Author** | Zia Ahmed, Upatta Analytic |

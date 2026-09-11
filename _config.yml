@@ -1,6 +1,6 @@
 # GitHub Pages (Jekyll) — pygstat
 # Enable at: Settings → Pages → Deploy from a branch → main → /docs
-# Site URL: https://zia207.github.io/pygstat/
+# Site URL: https://zia207.github.io/PyGStat/
 
 title: pygstat
 tagline: GPU-accelerated geostatistics for Python
@@ -11,21 +11,21 @@ lang: en
 timezone: UTC
 
 url: https://zia207.github.io
-baseurl: /pygstat
+baseurl: /PyGStat
 
 author:
   name: Zia Ahmed
   email: zia207@gmail.com
   affiliation: Upatta Analytic
 
-version: 0.1.0
+version: 0.1.1
 python: ">= 3.8"
 license: MIT
 
-repository: zia207/pygstat
+repository: zia207/PyGStat
 pypi: https://pypi.org/project/pygstat/
-github: https://github.com/zia207/pygstat
-issues: https://github.com/zia207/pygstat/issues
+github: https://github.com/zia207/PyGStat
+issues: https://github.com/zia207/PyGStat/issues
 
 markdown: kramdown
 kramdown:

@@ -162,7 +162,7 @@ from .soft_kriging import (
 from .factorial_kriging import FactorialKriging, fit_nested_variogram
 
 # Version
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 # Public API
 __all__ = [

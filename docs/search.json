@@ -2718,7 +2718,7 @@
     "href": "install.html#from-github",
     "title": "PyGStat Installation",
     "section": "From GitHub",
-    "text": "From GitHub\nClone the repository and install in editable mode:\ngit clone https://github.com/zia207/pygstat.git\ncd pygstat\npython3 -m venv .venv\nsource .venv/bin/activate\npip install --upgrade pip\npip install -e .\n# Optional: install extras\npip install -e \".[plot,test,gpu]\""
+    "text": "From GitHub\nClone the repository and install in editable mode:\ngit clone https://github.com/zia207/PyGStat.git\ncd PyGStat\npython3 -m venv .venv\nsource .venv/bin/activate\npip install --upgrade pip\npip install -e .\n# Optional: install extras\npip install -e \".[plot,test,gpu]\""
   },
   {
     "objectID": "install.html#from-source-editable-install",
@@ -2782,7 +2782,7 @@
     "href": "index.html#python-package",
     "title": "PyGStat",
     "section": "Python Package",
-    "text": "Python Package\n\n\n\nName\nPyGStat\n\n\nVersion\n0.1.0\n\n\nPyPI\npypi.org/project/pygstat\n\n\nDocumentation\nzia207.github.io/pygstat\n\n\nRepository\ngithub.com/zia207/pygstat\n\n\nLicense\nMIT\n\n\nPython\n≥ 3.8\n\n\nAuthor\nZia Ahmed, Upatta Analytic\n\n\n\nSee PyGStat Installation for PyPI, GitHub, extras, and GPU setup.",
+    "text": "Python Package\n\n\n\nName\nPyGStat\n\n\nVersion\n0.1.1\n\n\nPyPI\npypi.org/project/pygstat\n\n\nDocumentation\nzia207.github.io/PyGStat\n\n\nRepository\ngithub.com/zia207/PyGStat\n\n\nLicense\nMIT\n\n\nPython\n≥ 3.8\n\n\nAuthor\nZia Ahmed, Upatta Analytic\n\n\n\nSee PyGStat Installation for PyPI, GitHub, extras, and GPU setup.",
     "crumbs": [
       "Home",
       "Package Overview"
@@ -2918,7 +2918,7 @@
     "href": "Tutorial/00_getting_started.html#installation",
     "title": "Getting Started with Geostatistical Analysis in PyGStat",
     "section": "Installation",
-    "text": "Installation\n\nFrom GitHub\nClone the repository and install in editable mode:\ngit clone https://github.com/zia207/pygstat.git\ncd pygstat\npython3 -m venv .venv\nsource .venv/bin/activate\npip install --upgrade pip\npip install -e .\n# Optional: install extras\npip install -e \".[plot,test,gpu]\"\n\n\nFrom PyPI\n# Core\npip install pygstat\n\n# Plotting\npip install pygstat[plot]\n\n# GPU (CUDA 11.x extra)\npip install pygstat[gpu]\n\n# GPU (CUDA 12.x) — install CuPy separately\npip install pygstat\npip install cupy-cuda12x\n\n# Deep / AutoML backends\npip install pygstat[h2o]\npip install pygstat[pytorch]\npip install pygstat[tensorflow]\npip install pygstat[deep]          # all three\n\n\nFrom source (editable install)\ncd /path/to/PyGStat\n\npython3 -m venv .venv\nsource .venv/bin/activate          # Linux/macOS\n\npip install --upgrade pip\npip install -e .\npip install -e \".[plot,test]\"      # optional extras\nConfirm the install:\npython3 -c \"import pygstat; print(pygstat.__version__)\""
+    "text": "Installation\n\nFrom GitHub\nClone the repository and install in editable mode:\ngit clone https://github.com/zia207/PyGStat.git\ncd PyGStat\npython3 -m venv .venv\nsource .venv/bin/activate\npip install --upgrade pip\npip install -e .\n# Optional: install extras\npip install -e \".[plot,test,gpu]\"\n\n\nFrom PyPI\n# Core\npip install pygstat\n\n# Plotting\npip install pygstat[plot]\n\n# GPU (CUDA 11.x extra)\npip install pygstat[gpu]\n\n# GPU (CUDA 12.x) — install CuPy separately\npip install pygstat\npip install cupy-cuda12x\n\n# Deep / AutoML backends\npip install pygstat[h2o]\npip install pygstat[pytorch]\npip install pygstat[tensorflow]\npip install pygstat[deep]          # all three\n\n\nFrom source (editable install)\ncd /path/to/PyGStat\n\npython3 -m venv .venv\nsource .venv/bin/activate          # Linux/macOS\n\npip install --upgrade pip\npip install -e .\npip install -e \".[plot,test]\"      # optional extras\nConfirm the install:\npython3 -c \"import pygstat; print(pygstat.__version__)\""
   },
   {
     "objectID": "Tutorial/00_getting_started.html#quick-start",

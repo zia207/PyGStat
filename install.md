@@ -33,8 +33,8 @@ pip install pygstat[deep]          # all three
 Clone the repository and install in editable mode:
 
 ```bash
-git clone https://github.com/zia207/pygstat.git
-cd pygstat
+git clone https://github.com/zia207/PyGStat.git
+cd PyGStat
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip

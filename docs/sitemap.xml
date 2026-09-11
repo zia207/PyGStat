@@ -1,115 +1,115 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/19_sisim.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/19_sisim.html</loc>
     <lastmod>2026-09-11T16:19:25.378Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/17_03_poisson_kriging_ST.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/17_03_poisson_kriging_ST.html</loc>
     <lastmod>2026-09-11T13:34:52.757Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/17_01_poisson_Kriging_ata_atp.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/17_01_poisson_Kriging_ata_atp.html</loc>
     <lastmod>2026-09-11T13:07:38.647Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/15_kriging_STGNN.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/15_kriging_STGNN.html</loc>
     <lastmod>2026-09-11T16:31:45.704Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/13_krigingST.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/13_krigingST.html</loc>
     <lastmod>2026-09-11T03:36:30.379Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/11_empirical_bayesian_kriging.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/11_empirical_bayesian_kriging.html</loc>
     <lastmod>2026-09-09T19:37:25.172Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/09_soft_kriging.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/09_soft_kriging.html</loc>
     <lastmod>2026-09-11T02:26:10.020Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/07_indicator_kriging.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/07_indicator_kriging.html</loc>
     <lastmod>2026-09-11T01:25:23.823Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/06_04_regression_krigingDNN_TF.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/06_04_regression_krigingDNN_TF.html</loc>
     <lastmod>2026-09-11T01:03:34.242Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/06_02_regression_kriging_H20.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/06_02_regression_kriging_H20.html</loc>
     <lastmod>2026-09-11T16:29:30.291Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/05_cokriging.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/05_cokriging.html</loc>
     <lastmod>2026-09-11T16:29:30.230Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/03_ordinary_kriging.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/03_ordinary_kriging.html</loc>
     <lastmod>2026-09-10T23:49:22.650Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/01_variogram_modeling.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/01_variogram_modeling.html</loc>
     <lastmod>2026-09-10T23:31:31.110Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/install.html</loc>
-    <lastmod>2026-09-11T16:27:35.649Z</lastmod>
+    <loc>https://zia207.github.io/PyGStat/install.html</loc>
+    <lastmod>2026-09-11T17:15:42.253Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/index.html</loc>
-    <lastmod>2026-09-11T16:27:35.463Z</lastmod>
+    <loc>https://zia207.github.io/PyGStat/index.html</loc>
+    <lastmod>2026-09-11T17:15:41.554Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/00_getting_started.html</loc>
-    <lastmod>2026-09-10T23:18:35.164Z</lastmod>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/00_getting_started.html</loc>
+    <lastmod>2026-09-11T17:15:45.941Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/02_simple_kriging.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/02_simple_kriging.html</loc>
     <lastmod>2026-09-10T23:51:06.289Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/04_universal_kriging.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/04_universal_kriging.html</loc>
     <lastmod>2026-09-10T23:53:53.343Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/06_01_regression_kriging_scikit_learn.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/06_01_regression_kriging_scikit_learn.html</loc>
     <lastmod>2026-09-11T00:44:55.768Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/06_03_regression_kriging_pytorch.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/06_03_regression_kriging_pytorch.html</loc>
     <lastmod>2026-09-11T00:59:08.914Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/06_05_regression_kriging_gnn.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/06_05_regression_kriging_gnn.html</loc>
     <lastmod>2026-09-11T01:11:55.649Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/08_kriging_3d.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/08_kriging_3d.html</loc>
     <lastmod>2026-09-11T01:55:12.581Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/10_disjunctive_kriging.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/10_disjunctive_kriging.html</loc>
     <lastmod>2026-09-11T02:40:21.567Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/12_factorial_kriging.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/12_factorial_kriging.html</loc>
     <lastmod>2026-09-11T02:52:24.739Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/14_kriging_CNNLSTM.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/14_kriging_CNNLSTM.html</loc>
     <lastmod>2026-09-11T16:31:40.634Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/16_kriging_STGTN.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/16_kriging_STGTN.html</loc>
     <lastmod>2026-09-11T16:31:46.620Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/17_02_poisson_cokriging.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/17_02_poisson_cokriging.html</loc>
     <lastmod>2026-09-11T13:21:11.114Z</lastmod>
   </url>
   <url>
-    <loc>https://zia207.github.io/pygstat/Tutorial/18_sgsim.html</loc>
+    <loc>https://zia207.github.io/PyGStat/Tutorial/18_sgsim.html</loc>
     <lastmod>2026-09-11T15:53:31.228Z</lastmod>
   </url>
 </urlset>

@@ -38,8 +38,8 @@ project:
 website:
   title: "PyGStat"
   description: "GPU-accelerated geostatistics for Python — variograms, kriging, Poisson kriging, and sequential simulation on CPU or GPU."
-  site-url: https://zia207.github.io/pygstat/
-  repo-url: https://github.com/zia207/pygstat
+  site-url: https://zia207.github.io/PyGStat
+  repo-url: https://github.com/zia207/PyGStat
   repo-branch: main
   favicon: Image/pygstat_logo_light.svg
   page-navigation: true
@@ -131,7 +131,7 @@ website:
         href: https://pypi.org/project/pygstat/
         aria-label: PyPI
       - icon: github
-        href: https://github.com/zia207/pygstat
+        href: https://github.com/zia207/PyGStat
         aria-label: GitHub
       - icon: linkedin
         href: https://www.linkedin.com/in/zia-ahmed207
